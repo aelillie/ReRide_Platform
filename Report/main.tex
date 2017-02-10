@@ -1,0 +1,62 @@
+\documentclass[]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[hidelinks]{hyperref}
+
+\begin{document}
+\pagenumbering{gobble} %remove page numbering
+\begin{titlepage}
+	
+	\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for the horizontal lines, change thickness here
+	
+	\center % Center everything on the page
+	
+	\textsc{\LARGE IT University of Copenhagen}\\[1.5cm] % Name of university
+	\textsc{\Large Software Development BSc}\\[0.5cm] % Major heading
+	\textsc{\large Bachelor project}\\[0.5cm] % Minor heading
+	
+	\HRule \\[0.4cm]
+	{ \huge \bfseries ReRide IoT platform}\\[0.4cm] % Title of document
+	\HRule \\[1.5cm]
+
+	\begin{minipage}{0.4\textwidth}
+		\begin{flushleft} \large
+			\emph{Author:}\\
+			Anders Edelbo \textsc{Lillie} % My name
+		\end{flushleft}
+	\end{minipage}
+	~
+	\begin{minipage}{0.4\textwidth}
+		\begin{flushright} \large
+			\emph{Supervisor:} \\
+			Tomas \textsc{Sokoler} % Supervisor's Name
+		\end{flushright}
+	\end{minipage}\\[4cm]
+	
+	{\large \today}\\[3cm] 
+	
+	\vfill % Fill the rest of the page with whitespace
+	
+\end{titlepage}
+
+\begin{abstract}
+	Lorem ipsum
+\end{abstract}
+\clearpage
+
+\tableofcontents
+\clearpage
+\pagenumbering{arabic} %reset page numbering
+
+%sections
+\input{sections/intro.tex}
+\input{sections/problem.tex}
+\input{sections/analysis.tex}
+\input{sections/method.tex}
+\input{sections/example.tex}
+\input{sections/technical.tex}
+\input{sections/discussion.tex}
+\input{sections/conclusion.tex}
+\input{sections/references}
+\input{sections/appendix.tex}
+
+\end{document}

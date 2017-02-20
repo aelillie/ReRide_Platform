@@ -1,7 +1,16 @@
 \section{Problem analysis}
 \subsection{Internet of Things}
+\subsubsection{Origin}
+
+\subsubsection{Spime}
+%Spime begrebet af Bruce Sterling
+
+\subsubsection{Cloud-based computing}
+%Hvor mødes IoT med dette?
+
 \subsection{Cloud based IoT platform}
-What is a Cloud based IoT platform? 
+\subsubsection{Platform and services}
+In order to be able to understand what a cloud based IoT platform is, it is necessary to understand the difference between a platform and a service, as these terms seem to be used frequently for this topic.
 
 \subsubsection{Google Cloud Platform}
 \paragraph{Overview} 
@@ -83,7 +92,7 @@ Figure \ref{fig:aws:example} is an example of the IoT Platform and illustrates h
 \paragraph{Services}
 As mentioned in the overview, the Rules Engine allows for inbound data to be routed to other services. One worth mentioned is AWS Lambda, which executes computations in the cloud. It is even possible to write code in e.g. C\# and upload code snippets to the project. This service has the property of removing the need for a serer, as well as automatically scaling with the size of the workload. Other services like "DynamoDB" offers a NoSQL cloud database, and "Kinesis" for data analytics.  
 
-\subsection{Microsoft Azure}
+\subsubsection{Microsoft Azure}
 \textit{Azure IoT Hub is a fully managed service that helps enable reliable and secure bi-directional communications between millions of devices and a solution back end.} REF(https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide)
 
 Microsoft is another big player in the field of IoT Cloud computing, and offers their own IoT platform. Much confusingly they offer an IoT \textit{Suite}, as well as an IoT \textit{Hub}. The difference is that the IoT Suite is \textit{a collection of preconfigured solutions} REF(https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-what-is-azure-iot). This means that they have actually made customizable solutions based on common IoT scenarios, such as remote monitoring and asset management. The IoT Suite is however also the platform including the IoT Hub, which is the most important service in the IoT infrastructure, as it takes care of bidirectional connection with devices and the cloud. Figure REF(https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-what-is-iot-hub) illustrates the infrastructure of the platform from a device to the back end services. 
@@ -94,14 +103,44 @@ The IoT Hub keeps records of so called "Device twins", which are JSON documents 
 \paragraph{Services}
 Returning to the IoT Suite, a handful of services like Azure Stream Analytics, Storage, DocumentDB, WEb Apps, and Power BI are available for integration with the IoT Hub. Together they provide means for data analytics, storage, visualization, and integration with back-office systems. REF(https://docs.microsoft.com/da-dk/azure/iot-suite/iot-suite-overview). Telemetry can be routed to an Azure service by user-defined rules in the IoT Hub, and requires no code. As mentioned the IoT Suite contains preconfigured solutions, which are labeled "Remote monitoring" and "Predictive maintenance". These solutions are the way to start building an IoT platform, and are customizable and extensible. 
 
-\subsection{IBM Watson IoT}
+\subsubsection{IBM Watson IoT}
 \textit{Watson IoT Platform is designed to simplify cognitive IoT development so you can harness the full potential of the Internet of Things} REF(https://www.ibm.com/internet-of-things/).
 
-IBM has a lot of different domain specific products and solutions in regards to IoT. They offer different solutions based on the business application, e.g. "Asset management", "Facilities management", and "Product development" REF(https://www.ibm.com/internet-of-things/iot-solutions/). They are all hosted on the IBM Bluemix cloud platform, which essentially is a big collection of offered products and services for cloud computing. One of them is the Watson IoT Platform, which provides a "powerful application access to IoT devices and data to help you rapidly create analytics applications, visualization dashboards, and mobile IoT apps" REF(https://console.ng.bluemix.net/docs/starters/IoT/iot500.html).  
+IBM has a lot of different domain specific products and solutions in regards to IoT. They offer different solutions based on the business application, e.g. "Asset management", "Facilities management", and "Product development" REF(https://www.ibm.com/internet-of-things/iot-solutions/). They are all hosted on the IBM Bluemix cloud platform, which essentially is a big collection of offered products and services for cloud computing. One of them is the Watson IoT Platform, which provides a "powerful application access to IoT devices and data to help you rapidly create analytics applications, visualization dashboards, and mobile IoT apps" REF(https://console.ng.bluemix.net/docs/starters/IoT/iot500.html). The infrastructure of the platform is depicted in figure \ref{fig:ibm:infrastructure}.
 
-Watson IoT Platform offers two ways for data analytics; "Boards and cards" and "Rules and actions".
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=\textwidth]{figures/ibm/infrastructure.png}
+	\caption{Infrastructure of the Bluemix service "Watson IoT Platform"}
+	\label{fig:ibm:infrastructure}
+\end{figure}
 
-% Lightweight platforms:
-%- PubNub
+
+The Watson IoT Platform is described through six different concepts: organizations, devices, gateways, applications, events, and commands REF(https://console.ng.bluemix.net/docs/services/IoT/iotplatform\_overview.html\#about\_iotplatform). An organization is a way of separating systems and ensure data security through a unique identifier. This way, devices and applications are logically bound to a single organization and communication with other organizations can only happen with an explicit application for this purpose. Devices are divided into two classes; \textit{managed} and \textit{unmanaged} devices. The former contains a device management agent, which allows interactions with the Watson IoT Platform Device Management service. Such devices can perform operations which unmanaged devices cannot. This includes device management request and device management operations such as updates, downloads and reboots. Devices that cannot connect directly to the Watson IoT Platform can do so through a gateway. A gateway is both a device and an application that serves as an access point for other devices. Watson IoT Platform uses the HTTP and MQTT protocols for all communication. All devices and gateways must be registered in the Watson IoT Platform before they can connect to a service. Device manipulation and data interaction is controlled through applications, which do so with an API key and a unique application ID, all tied to a specific organization. Any application can subscribe to an event, which is triggered by a device and published to the Watson IoT Platform. Conversely, applications can communicate with devices through commands. The overall architecture of the Watson IoT is depicted in figure \ref{fig:ibm:architecture}, which resembles figure \ref{fig:ibm:infrastructure}, but is more elaborate
+
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=\textwidth]{figures/ibm/architecture.png}
+	\caption{Architecture of the Watson IoT platform}
+	\label{fig:ibm:architecture}
+\end{figure}
+
+\paragraph{Services}
+Watson IoT Platform provides a way of representing data set values of different devices in the GUI for a quick overview, through "boards and cards". Analytics rules are defines to specify the conditions that trigger actions. \textit{Cloud} rules trigger rules for devices connected directly to Watson IoT Platform, while \textit{edge} rules trigger rules for devices connected through gateways. Rules can trigger actions, which can be either of the following types: "Send email", "IFTTT", "Node-RED", "Webhook". \\
+
+Developing for Watson IoT Platform is supported by several SDKs and languages, such as C, C++, C\#, Node.js, and Java. Furthermore "Node-RED" is supported for the platform, which is an integrated visual tool to develop applications, devices, and gateways. \\
+
+As Watson IoT Platform is one of the IBM Bluemix services, it can be integrated with other \textit{compatible} services that are hosted on Bluemix, e.g. for storage with "Cloudant NoSQL DB for Bluemix" or data to blockchain transactions with "Bluemix Blockchain" REF(https://console.ng.bluemix.net/docs/services/IoT/reference/extensions/index.html).
+
+\subsubsection{External IoT services}
+Apart from the big and popular IoT platforms investigated above, a lot of different more "lightweight" IoT services exist, and some even effortlessly integrate with one another. Below, some are mentioned, and what they offer.
+\paragraph{PubNub} offers a "Data Stream Network" for serverless device connections and message relaying.
+\paragraph{IFTTT} stand for "If this then that", and is a rules engine for triggering actions through a variety of compatible systems, such as Philips Hue, and Weather Underground. REF(https://ifttt.com/about).
+
+%Ved ikke om dette er relevant?
+
+\subsubsection{Comparison}
+\paragraph{What is offered?}
+%Hvad er det der rent faktisk tilbydes. Platform? Service? Domænespecifikt?
 
 \subsection{Alternatives}

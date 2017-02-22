@@ -4,13 +4,13 @@
 
 \subsubsection{Spime}
 %Spime begrebet af Bruce Sterling
+%Device shadow
 
 \subsubsection{Cloud-based computing}
 %Hvor mødes IoT med dette?
 
 \subsection{Cloud based IoT platform}
-\subsubsection{Platform and services}
-In order to be able to understand what a cloud based IoT platform is, it is necessary to understand the difference between a platform and a service, as these terms seem to be used frequently for this topic.
+This section will investigate some of the big platforms for IoT cloud-based computing in order to be able to tell what they actually offer and how/if they differ in their product. 
 
 \subsubsection{Google Cloud Platform}
 \paragraph{Overview} 
@@ -28,6 +28,7 @@ Several terms are used to describe what devices constitute, but the most importa
 	\label{fig:gcp:infrastructure}
 \end{figure}
 
+\paragraph{Services}
 Google calls each of these components \textit{services}, and are categorized by their functionality and role in the infrastructure. Communication between the services are called \textit{pipelines}, which includes transforming, computing, combining, and moving data. The Cloud Platform also provides means for storing data in Google Firebase\cite{website:firebase}
 and is especially used for continuously mirroring device states and exposing them to clients (See figure \ref{fig:gcp:firebase}).
 
@@ -38,23 +39,12 @@ and is especially used for continuously mirroring device states and exposing the
 	\label{fig:gcp:firebase}
 \end{figure}
 
-The most interesting services are the "rule processing" and "streaming analytics", which allows for programmers to write custom logic for handling data triggered by device events. What you can do is to essentially trigger alerts, filter data, and invoke other APIs. This property of quick data processing is described as \textit{key} in the Cloud Platform. The "Cloud Dataflow" service provides means for \textit{more sophisticated} analytics. 
+The most interesting services are the "rule processing" and "streaming analytics", which allows for programmers to write custom logic for handling data triggered by device events. What you can do is to essentially trigger alerts, filter data, and invoke other APIs. This property of quick data processing is described as \textit{key} in the Cloud Platform. 
 
-\paragraph{Services}
-Google Cloud Platform is not just for IoT, but provides a plethora of products. The following is a list of the categories and \textit{some} of the services:
+Google Cloud Platform is not just for IoT, but provides a plethora of products. Some of these can be utilized through integration with the Cloud Platform and include different storage services like Cloud SQL, data warehouse for analytics in BigQuery, data processing in Cloud Dataflow, as well as identity and access management in Cloud IAM.
 
-\begin{itemize}
-	\item Compute: Compute Engine, App Engine, Cloud Functions
-	\item Storage \& Databases: Cloud Storage, Cloud SQL
-	\item Networking: Cloud Virtual Network
-	\item Big Data: Cloud Pub/Sub, BigQuery
-	\item Machine Learning: Cloud Machine Learning Platform, Cloud Natural Language API
-	\item Identity \& Security: Cloud IAM, Cloud Resource Manager
-	\item Management Tools: Monitoring, Logging, Trace, Cloud APIs
-	\item Developer Tools: Cloud SDK, Cloud Deployment Manager
-\end{itemize}
+Apart from the Cloud Platform, Google has created an Android-based IoT platform called "Android Things" (formerly known as "Brillo"), as well as a communication platform for IoT devices called "Weave". This has however not had much success and will not be investigated here.
 
-Some of the above mentioned services are self-explanatory, and some are just listed for reference. The IoT solution is a combination of only some of these services, and form the infrastructure explained in the overview. 
 
 \subsubsection{Amazon Web Services}
 \paragraph{Overview} \textit{AWS IoT is a managed cloud platform that lets connected devices easily and securely interact with cloud applications and other devices.}\cite{website:aws}.
@@ -95,13 +85,21 @@ As mentioned in the overview, the Rules Engine allows for inbound data to be rou
 \subsubsection{Microsoft Azure}
 \textit{Azure IoT Hub is a fully managed service that helps enable reliable and secure bi-directional communications between millions of devices and a solution back end.} REF(https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide)
 
-Microsoft is another big player in the field of IoT Cloud computing, and offers their own IoT platform. Much confusingly they offer an IoT \textit{Suite}, as well as an IoT \textit{Hub}. The difference is that the IoT Suite is \textit{a collection of preconfigured solutions} REF(https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-what-is-azure-iot). This means that they have actually made customizable solutions based on common IoT scenarios, such as remote monitoring and asset management. The IoT Suite is however also the platform including the IoT Hub, which is the most important service in the IoT infrastructure, as it takes care of bidirectional connection with devices and the cloud. Figure REF(https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-what-is-iot-hub) illustrates the infrastructure of the platform from a device to the back end services. 
+Microsoft is another big player in the field of IoT Cloud computing, and offers their own IoT platform. Much confusingly they offer an IoT \textit{Suite}, as well as an IoT \textit{Hub}. The difference is that the IoT Suite is \textit{a collection of preconfigured solutions} REF(https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-what-is-azure-iot). This means that they have actually made customizable solutions based on common IoT scenarios, such as remote monitoring and asset management. The IoT Suite is however also the platform including the IoT Hub, which is the most important service in the IoT infrastructure, as it takes care of bidirectional connection with devices and the cloud. Figure \ref{fig:azure:infrastructure} illustrates the infrastructure of the platform from a device to the back end services. 
+
+\begin{figure}[h!]
+	\centering
+	\includegraphics[width=\textwidth]{figures/azure/infrastructure.png}
+	\caption{The Azure IoT Hub internal infrastructure.}
+	\label{fig:azure:infrastructure}
+\end{figure}
+
 
 The IoT Hub keeps records of so called "Device twins", which are JSON documents containing device state and metadata information, for all connected devices. An identity registry enables devices to authenticate securely to the IoT Hub, which allows for full control of connecting devices. Devices communicate with the cloud though a device SDK or \textit{gateway}. The gateway is meant to be used when the offered SDKs do not support the device. Two types of gateways are offered, one being the \textit{protocol} gateway and the other being the \textit{field} gateway. The former is deployed in the cloud and performs protocol translation for MQTT, AMQP, and HTTP. The latter is deployed locally, i.e. physically close to the device(s), and enables also protocol translation, but also has the property of being able to actively manage devices, and the information mediated to the cloud. \\
 
 
 \paragraph{Services}
-Returning to the IoT Suite, a handful of services like Azure Stream Analytics, Storage, DocumentDB, WEb Apps, and Power BI are available for integration with the IoT Hub. Together they provide means for data analytics, storage, visualization, and integration with back-office systems. REF(https://docs.microsoft.com/da-dk/azure/iot-suite/iot-suite-overview). Telemetry can be routed to an Azure service by user-defined rules in the IoT Hub, and requires no code. As mentioned the IoT Suite contains preconfigured solutions, which are labeled "Remote monitoring" and "Predictive maintenance". These solutions are the way to start building an IoT platform, and are customizable and extensible. 
+Returning to the IoT Suite, a handful of services like Azure Stream Analytics, Storage, DocumentDB, Web Apps, and Power BI are available for integration with the IoT Hub. Together they provide means for data analytics, storage, visualization, and integration with back-office systems. REF(https://docs.microsoft.com/da-dk/azure/iot-suite/iot-suite-overview). Telemetry can be routed to an Azure service by user-defined rules in the IoT Hub, and requires no code. As mentioned the IoT Suite contains preconfigured solutions, which are labeled "Remote monitoring" and "Predictive maintenance". These solutions are the way to start building an IoT platform, and are customizable and extensible. 
 
 \subsubsection{IBM Watson IoT}
 \textit{Watson IoT Platform is designed to simplify cognitive IoT development so you can harness the full potential of the Internet of Things} REF(https://www.ibm.com/internet-of-things/).
@@ -126,21 +124,63 @@ The Watson IoT Platform is described through six different concepts: organizatio
 \end{figure}
 
 \paragraph{Services}
-Watson IoT Platform provides a way of representing data set values of different devices in the GUI for a quick overview, through "boards and cards". Analytics rules are defines to specify the conditions that trigger actions. \textit{Cloud} rules trigger rules for devices connected directly to Watson IoT Platform, while \textit{edge} rules trigger rules for devices connected through gateways. Rules can trigger actions, which can be either of the following types: "Send email", "IFTTT", "Node-RED", "Webhook". \\
+Watson IoT Platform provides a way of representing data set values of different devices in the GUI for a quick overview, through "boards and cards". Analytics rules are defines to specify the conditions that trigger actions. \textit{Cloud} rules trigger rules for devices connected directly to Watson IoT Platform, while \textit{edge} rules trigger rules for devices connected through gateways. Rules can trigger actions, which can be either of the following types: "Send email", "IFTTT"(Mentioned later), "Node-RED"(see below), "Webhook"(a means for altering a web page or application through callbacks). \\
 
 Developing for Watson IoT Platform is supported by several SDKs and languages, such as C, C++, C\#, Node.js, and Java. Furthermore "Node-RED" is supported for the platform, which is an integrated visual tool to develop applications, devices, and gateways. \\
 
 As Watson IoT Platform is one of the IBM Bluemix services, it can be integrated with other \textit{compatible} services that are hosted on Bluemix, e.g. for storage with "Cloudant NoSQL DB for Bluemix" or data to blockchain transactions with "Bluemix Blockchain" REF(https://console.ng.bluemix.net/docs/services/IoT/reference/extensions/index.html).
 
 \subsubsection{External IoT services}
-Apart from the big and popular IoT platforms investigated above, a lot of different more "lightweight" IoT services exist, and some even effortlessly integrate with one another. Below, some are mentioned, and what they offer.
+Apart from the big and popular IoT platforms investigated above, a lot of different IoT services exist, and some even effortlessly integrate with one another. Below, some are mentioned, and what they offer.
 \paragraph{PubNub} offers a "Data Stream Network" for serverless device connections and message relaying.
 \paragraph{IFTTT} stand for "If this then that", and is a rules engine for triggering actions through a variety of compatible systems, such as Philips Hue, and Weather Underground. REF(https://ifttt.com/about).
+\paragraph{Cisco Jasper} provides an automated connectivity management with the "Control Center" to link devices to global networks and back-end systems. 
+\paragraph{Oracle IoT Cloud Service} offers fast connection and integration with real time data analysis.
 
 %Ved ikke om dette er relevant?
 
 \subsubsection{Comparison}
-\paragraph{What is offered?}
-%Hvad er det der rent faktisk tilbydes. Platform? Service? Domænespecifikt?
+This section will compare the four IoT platforms from Google, Amazon, Microsoft, and IBM, analyzed in the above sections. It is interesting to find out the differences and what they actually offer and for what purpose. First off a technical comparison can quickly give an overview of the specifications along some of the key features for an IoT cloud platform including the following:
+\paragraph{Device management:} Keeping track of devices, their status and operations.
+\paragraph{Integration:} Access to operations and data that needs to be exposed from the platform.
+\paragraph{Protocols:} How data communication is transmitted. Important in regards to scalability.
+\paragraph{Analytics:} The data collected from devices needs to be analyzed in some way.
+The specifications to these parameters are illustrated in figure \ref{fig:tab:comparison}.
+
+\begin{center}
+	\rowcolors{1}{lightgray}{}
+	\begin{tabular}{ | p{2cm} | p{2cm} | p{2cm} | p{2cm} | p{2cm} | }
+		\hline
+		IoT \newline Platform & Device \newline management & Integration & Protocols & Analytics \\ 
+		\hiderowcolors
+		\hline
+		\cellcolor[gray]{0.9}
+		Google Cloud \newline Platform & Firebase & REST API & HTTP, gRPC, \newline and gateway & Cloud Dataflow \\ 
+		\hline
+		\cellcolor[gray]{0.9}
+		AWS IoT \newline Platform & Device Shadow & REST API & MQTT, HTTP, WebSocket, \newline and gateway & Amazon Kinesis, \newline AWS Lambda \\
+		\hline
+		\cellcolor[gray]{0.9}
+		Microsoft Azure \newline IoT Hub & Device Twin & REST API & MQTT, AMQP, HTTP, \newline and gateway & Azure Stream \newline Analytics \\
+		\hline
+		\cellcolor[gray]{0.9}
+		IBM Watson IoT & Dashboard & REST API & MQTT, HTTP, \newline and gateway & IBM IoT \newline Real-Time Insights \\
+		\hline
+	\end{tabular}
+	\label{fig:tab:comparison}
+\end{center}
+REF(https://dzone.com/articles/iot-software-platform-comparison)
+REF(https://blogs.endjin.com/2016/08/aws-vs-azure-vs-google-cloud-platform-internet-of-things/)
+
+An important property of data analytics in IoT cloud computing is real-time behavior, which all of the above platforms offer. Apart from the different analytics services they offer, they differ in some of the communication protocols. Amazon, Microsoft, and IBM have adopted the popular MQTT protocol, while Google offers the "general RPC framework" (gRPC) with their Cloud Pub/Sub service. REF(https://cloud.google.com/pubsub/grpc-overview). All of them support the HTTP protocol through a REST API. 
+
+When it comes to device management they all have some way of keeping statistics of registered devices. AWS uses "Device Shadow" as a virtual mirror of the device similar to Azure's "Device Twin". IBM uses the same concept and keeps a list of connected devices in the platform dashboard. Google on the other hand has no "real" integration of this concept, but uses the stand-alone Firebase service to maintain records of devices. 
+
+With this said, the four platforms seem very identical, at least in regards to technical features. Using the platforms and reading their documentation however, they seem to have primary focus on different application domains. Azure for instance comes with two preconfigured IoT solutions directly aimed a business analytics and remote monitoring. AWS highlights the Lambda service together with the Rule Engine as one of the key features, making it possible to completely customize the cloud computed behavior. Watson IoT Platform focuses on application development and its integration with IoT, but offers different platforms for different needs, which is a design choice to not keep it all under same roof. Google seems to be a bit behind the others in regards to a full cloud IoT platform solution, but offers a real-time analytics service as the main feature together with the Cloud Platform.
+
+
+\subsubsection{Platform and services}
+The words "platform" and "services" have thus far been used interchangeably, but what is the actual difference in regards to this topic? TechTarget (REF(http://searchservervirtualization.techtarget.com/definition/platform)) defines it as \textit{any hardware or software used to host an application or service.} With this definition a platform could be anything from an operating system to a vending machine. What is actually offered from the cloud platforms are services for e.g. cloud computing, tracking, storing, and messaging, and the ability to integrate these with one another through the Internet. Another term "Platform as a service" (Paas) seems to fit quite well on this concept, as its definition states that it is a \textit{cloud computing model that delivers applications over the Internet} REF(http://searchcloudcomputing.techtarget.com/definition/Platform-as-a-Service-PaaS). This means that it is a platform, but as it is \textit{delivered} to the user, it is a service. Instead of having a in-house platform with an internal infrastructure offering different services, a PaaS provides this on the Internet as a single service.
 
 \subsection{Alternatives}
+%Hvad skal dette?

@@ -5,7 +5,7 @@ The term "Internet of Things" was coined by Peter T. Lewis in September 1985 and
 
 \subsubsection{Concepts}
 %Spime begrebet af Bruce Sterling
-Characteristics to the Internet of Things is discussed by Bruce Sterling in his book "Shaping Things", where he uses the word \textit{Spime} for objects which can be tracked through space and time (Sp-ime). The term was coined by Sterling and is a neologism for a "futuristic object" with these properties. He describes Spimes as something that can be created through six technologies: small inexpensive remote control, location awareness, data mining, virtual construction, rapid prototyping, and effective recycling. His idea of a Spime is an interesting concept in regard to the Internet of Things, as the concept very much can be realized in today's technological world through the Internet of Things.
+Characteristics to the Internet of Things is discussed by Bruce Sterling in his book "Shaping Things"\cite{books:shaping-things}, where he uses the word \textit{Spime} for objects which can be tracked through space and time (Sp-ime). The term was coined by Sterling and is a neologism for a "futuristic object" with these properties. He describes Spimes as something that can be created through six technologies: small inexpensive remote control, location awareness, data mining, virtual construction, rapid prototyping, and effective recycling. His idea of a Spime is an interesting concept in regard to the Internet of Things, as the concept very much can be realized in today's technological world through the Internet of Things.
 
 Another neologism in the IoT language, which resembles Sterling's idea of a way to virtually construct an object, is the device "shadow". This is a concept heavily used to represent an object in the Cloud, and is used in all the IoT platform discussed in section \ref{iot_platforms}, but with different names. Having a virtual mirror of an object makes it possible to not depend solely on e.g. an object's Internet connection, as it can be synced with its shadow, when reestablished. 
 %Device shadow
@@ -13,6 +13,18 @@ Another neologism in the IoT language, which resembles Sterling's idea of a way 
 \subsubsection{Cloud-based computing}
 What really makes IoT efficient and beneficial for a consumer is the property of a device to be always connected. This is realized through Cloud computing. Instead of relying on a storage device physically close to the object, having it connected to the Internet enables scalable real-time Cloud computing. 
 %Hvor mødes IoT med dette?
+
+The main characteristics and forces of Cloud computing is the resource usage and on-demand self-service. This has also been labeled "autonomic computing", while the "Cloud computing" refers to a distributed system that is distinguished from other systems through interconnection. In autonomic computing human intervention is reduced in the deployment of services, and the influence of the location of resources is diminishing compared to previous emerged distributed systems. In \cite[p. 4-5]{books:cloud-computing} the characteristics Cloud Computing are more formally described as follows:
+
+\begin{enumerate}
+	\item \textit{involves distributed computing resources and software services which instance number varies by adapting to unpredictable changes}
+	\item \textit{performs a contextual behavior through methods of self-management, self-tuning, self-configuration, self-diagnosis, and self-healing}
+	\item \textit{hides intrinsic complexity to operators and users, as implementing techniques for designing, building, deploying and managing computing systems with minimal human involvement and presents itself as a robust, fault tolerant and easy to manage and operate architecture and deployment}
+\end{enumerate}
+
+From point 1 it translates to a system being able to auto-scale, which is a very important feature in a large business with even thousands of customers. It also involves load-balancing, scheduling, and adaptive resource provisioning, which is the hardware aspect of it. Point 2 stands for actual self-maintenance and the ability to detect and act according to the environment and pre-defined policies. Point 3 addresses the importance of reliability, together with the property of easy deployment and minimal human involvement. One approach to deal with these applications is a platform-as-a-service (PaaS). Informally its definition states that it is a \textit{cloud computing model that delivers applications over the Internet} REF(http://searchcloudcomputing.techtarget.com/definition/Platform-as-a-Service-PaaS). What it is supposed to deliver is \textit{a Cloud-based approach that provides enterprises with all the functionalities for developing, deploying, and administering services, without the burden of installing, configuring, and managing the underlying middleware, operating system, and hardware} \cite[p. 9]{books:cloud-computing}. Examples of these in regards to IoT is further investigated in section \ref{iot_platforms}. 
+
+\cite{books:big-data}
 
 \subsection{Cloud based IoT platform}
 \label{iot_platforms}

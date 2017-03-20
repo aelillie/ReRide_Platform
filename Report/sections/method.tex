@@ -1,1 +1,22 @@
 \section{Method}
+\label{method}
+The method for carrying out this project is based on the "Step Wise" plan introduced in \cite{books:software-project} and can be seen in figure REF. The approach consists of several logically ordered steps for managing and carrying out a software project. This section will present the findings for step 3, \textit{Analyse project characteristics}, which objective is to determine a development methodology.
+
+\subsection{Project characteristics}
+\label{proj_chars}
+Projects may be distinguished by whether their aim is to produce a product or to meet certain objectives. The objective for this project has already been set, as this is the motivation for it to be carried out, which means that this project is product-driven. The system to be developed is both data and process-oriented, as collected data must be streamed and in a way be processed this way. It will be application specific, and not a general tool, as the processing will expose an API for monitoring back posture. The system, however, could easily be used for similar purposes with few changes. The system requires a distributed real-time analytics tool, which is provided through the cloud platform. The system will ultimately be used as an expert system, meaning that the evaluation of data relies on some parameters in order to perform analytics. The nature of the environment for the system only depend on a flex sensor and some sort of microprocessor able to transmit data over Bluetooth. The actual computing will be distributed autonomous computing.
+
+\subsection{Project risks}
+The high-level project risks can be identified through three parameters: 
+\paragraph{Product uncertainty} The project with ReRide is an ongoing work, and the requirements for the system is unspecified. The system requirements is just to expose some sort of API to allow self-monitoring, but the actual analytics is undefined and may come underway, but is otherwise in a test state.
+
+\paragraph{Process uncertainty} The product will be developed through prototyping in an agile environment. Uncertainties like wasted time and, deadlines and increments might be an obstacle and rise confusion.
+
+\paragraph{Resource uncertainty} The system development might require extensive knowledge of JavaScript and the Bluetooth Low Energy protocol, which is deemed uncertain how great a toll this might take in regards to available resource and time constraints.
+
+\subsection{Development methodology}
+Due to imprecise user requirements and since the system consist of the connection between multiple hardware devices as well as a distributed cloud platform, evolutionary prototyping is to be used as the life-cycle approach. Prototyping is one way for buying knowledge and reducing uncertainty. It is a working model of one or more aspects of the projected system. It is constructed and tested quickly and inexpensively in order to test out assumptions. An evolutionary prototype is modified until it is in a final form, in contrast to the throw-away prototype, which discards tested implementations and may be based on alternative resources. 
+
+One of the strengths of this approach is learning by doing, which will benefit this project, as there is some uncertainty, as described above. The context could be seen as a pilot project, and the development technique as a rather new one, which is another reason why a prototype is well suited. A problem to prototyping is changes during development, but as discussed above, this will be minimal.
+
+

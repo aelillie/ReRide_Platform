@@ -1,7 +1,7 @@
 package com.example.anders.flexsensor;
 
 /**
- * Created by Anders on 24-Mar-17.
+ * Representation of the flex sensor
  */
 
 public class FlexSensorStatus {

@@ -43,6 +43,8 @@ captures/
 .idea/gradle.xml
 .idea/dictionaries
 .idea/libraries
+#Personally added:
+.idea/inspectionProfiles
 
 # Keystore files
 *.jks

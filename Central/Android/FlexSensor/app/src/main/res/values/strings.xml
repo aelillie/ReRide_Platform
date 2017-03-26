@@ -6,4 +6,5 @@
     <string name="bleScanText">Scan for BLE device</string>
     <string name="connectText">Connect to BLE device</string>
     <string name="deviceInfoDescription">Device name</string>
+    <string name="connectStateDescription">Whether a GATT connection is established or not</string>
 </resources>

@@ -24,7 +24,8 @@ import com.example.anders.flexsensor.R;
  * Source: https://developer.android.com/guide/topics/connectivity/bluetooth-le.html
  */
 
-public class BLEActivity extends Activity implements BLEDeviceScanner.ScanResultCallback {
+public class BLEActivity extends Activity
+        implements BLEDeviceScanner.ScanResultCallback, BLEDeviceControl.GATTCommunicator {
     public static final int REQUEST_ENABLE_BT = 1; //Request code for BLE Intent
     private BluetoothAdapter bluetoothAdapter;
     private BLEDeviceScanner deviceScanner;
@@ -33,6 +34,7 @@ public class BLEActivity extends Activity implements BLEDeviceScanner.ScanResult
 
     private TextView deviceInfo;
     private Button connectButton;
+    private TextView connectionState;
 
 
     @Override
@@ -47,6 +49,7 @@ public class BLEActivity extends Activity implements BLEDeviceScanner.ScanResult
         deviceScanner.attach(this);
 
         deviceInfo = (TextView) findViewById(R.id.deviceInfoText);
+        connectionState = (TextView) findViewById(R.id.connectStateText);
         connectButton = (Button) findViewById(R.id.connectButton);
         connectButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -87,6 +90,7 @@ public class BLEActivity extends Activity implements BLEDeviceScanner.ScanResult
 
     private void initializeConnection() {
         deviceControl = new BLEDeviceControl(device);
+        deviceControl.attach(this);
         deviceControl.connect(this);
     }
 
@@ -103,5 +107,21 @@ public class BLEActivity extends Activity implements BLEDeviceScanner.ScanResult
     @Override
     public void deviceNotFound() {
         Toast.makeText(this, "No device found!", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void connected(final boolean isConnected) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                String status = isConnected ? "Connected" : "Not connected";
+                connectionState.setText(status);
+            }
+        });
+    }
+
+    @Override
+    public void dataReceived(String data) {
+        //TODO: This data should be transmitted to the cloud
     }
 }

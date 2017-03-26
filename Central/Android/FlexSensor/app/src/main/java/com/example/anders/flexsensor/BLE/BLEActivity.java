@@ -40,7 +40,6 @@ public class BLEActivity extends Activity implements BLEDeviceScanner.ScanResult
         enableBLE();
         deviceScanner = new BLEDeviceScanner(bluetoothAdapter);
         deviceScanner.attach(this);
-        startScan();
 
         deviceInfo = (TextView) findViewById(R.id.deviceInfoText);
         connectButton = (Button) findViewById(R.id.connectButton);
@@ -50,6 +49,8 @@ public class BLEActivity extends Activity implements BLEDeviceScanner.ScanResult
                 initializeConnection();
             }
         });
+
+        startScan();
     }
 
     private void enableBLE() {
@@ -61,7 +62,13 @@ public class BLEActivity extends Activity implements BLEDeviceScanner.ScanResult
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        //TODO: Handle this
+        if (requestCode == BLEActivity.REQUEST_ENABLE_BT) {
+            if (resultCode == RESULT_OK) {
+                Toast.makeText(this, "BLE enabled", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "BLE activation failed", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     public static boolean isBLESupported(Context context) {

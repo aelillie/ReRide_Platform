@@ -1,7 +1,6 @@
 package com.example.anders.flexsensor;
 
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -9,6 +8,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.example.anders.flexsensor.BLE.BLEActivity;
 
 public class MainActivity extends AppCompatActivity implements FlexSensorManager.CallBack{
 
@@ -18,30 +19,17 @@ public class MainActivity extends AppCompatActivity implements FlexSensorManager
     private EditText angleText;
     private Button updateButton;
     private Button refresh;
+    private Button scanner;
 
     private FlexSensorManager flexSensorManager;
-    private BLEManager bleManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+
         flexSensorManager = new FlexSensorManager(this);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            if (BLEManager.isBLESupported(getApplicationContext())) {
-                bleManager = new BLEManager(getApplicationContext());
-            } else {
-                Toast.makeText(this, "BLE not supported", Toast.LENGTH_LONG).show();
-                return; //TODO: Handle this correctly
-            }
-        } else {
-            Toast.makeText(this, "Higher API required", Toast.LENGTH_LONG).show();
-            return; //TODO: Handle this correctly
-        }
-
-        checkBLE();
-
         stateText = (TextView) findViewById(R.id.stateText);
         angleText = (EditText) findViewById(R.id.angle_text);
         updateButton = (Button) findViewById(R.id.updateAngle);
@@ -59,6 +47,13 @@ public class MainActivity extends AppCompatActivity implements FlexSensorManager
                 flexSensorManager.getShadow();
             }
         });
+        scanner = (Button) findViewById(R.id.bleScanButton);
+        scanner.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                scanForDevice();
+            }
+        });
     }
 
     @Override
@@ -66,11 +61,12 @@ public class MainActivity extends AppCompatActivity implements FlexSensorManager
         //angleText.setText(newState);
     }
 
-    private void checkBLE() {
-        Intent enableBLEIntent = bleManager.enableBLE();
-        if (enableBLEIntent != null) {
-            startActivityForResult(enableBLEIntent, BLEManager.REQUEST_ENABLE_BT);
+    private void scanForDevice() {
+        if (BLEActivity.isBLESupported(this)) {
+            Intent intent = new Intent(this, BLEActivity.class);
+            startActivity(intent);
+        } else {
+            Toast.makeText(this, "BLE not supported", Toast.LENGTH_LONG).show();
         }
-        //TODO: Handle result
     }
 }

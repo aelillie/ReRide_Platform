@@ -3,4 +3,7 @@
     <string name="updateAngleButton">Update shadow!</string>
     <string name="refreshShadowButton">Refresh!</string>
     <string name="state_description">Desired state</string>
+    <string name="bleScanText">Scan for BLE device</string>
+    <string name="connectText">Connect to BLE device</string>
+    <string name="deviceInfoDescription">Device name</string>
 </resources>

@@ -1,4 +1,4 @@
-package com.example.anders.flexsensor;
+package com.example.anders.flexsensor.BLE;
 
 import android.app.Service;
 import android.bluetooth.BluetoothGatt;
@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import java.util.UUID;
@@ -18,8 +17,7 @@ import java.util.UUID;
  * Manages connection and operations on a GATT server
  */
 
-@RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN_MR2)
-public class BLEService extends Service{
+class BLEService extends Service{
     private static final String TAG = BLEService.class.getSimpleName();
     private static final int STATE_DISCONNECTED = 0;
     private static final int STATE_CONNECTING = 1;
@@ -113,6 +111,7 @@ public class BLEService extends Service{
         }
         sendBroadcast(intent);
     }
+
 
 
     @Nullable

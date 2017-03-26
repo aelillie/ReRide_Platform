@@ -22,6 +22,7 @@ class BLEDeviceScanner {
     private ScanSettings settings;
     private BLECallback callback;
     private ScanResultCallback resultCallback;
+    private boolean deviceFound;
 
     // Stops scanning after 10 seconds.
     private static final long SCAN_PERIOD = 10000;
@@ -54,6 +55,9 @@ class BLEDeviceScanner {
                 public void run() {
                     scanning = false;
                     scanner.stopScan(callback);
+                    if (!deviceFound) {
+                        resultCallback.deviceNotFound();
+                    }
                 }
             }, SCAN_PERIOD);
 
@@ -68,6 +72,7 @@ class BLEDeviceScanner {
     private class BLECallback extends ScanCallback {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
+            deviceFound = true;
             BluetoothDevice bleDevice = result.getDevice();
             resultCallback.foundDevice(bleDevice);
         }
@@ -81,5 +86,6 @@ class BLEDeviceScanner {
 
     interface ScanResultCallback {
         void foundDevice(BluetoothDevice device);
+        void deviceNotFound();
     }
 }

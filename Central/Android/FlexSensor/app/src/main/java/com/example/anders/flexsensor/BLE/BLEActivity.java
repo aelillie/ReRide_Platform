@@ -79,10 +79,16 @@ public class BLEActivity extends Activity implements BLEDeviceScanner.ScanResult
 
     @Override
     public void foundDevice(BluetoothDevice device) {
+        deviceScanner.scanBLEDevice(false);
         this.device = device;
-        Toast.makeText(getApplicationContext(), "Found device!", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Found device!", Toast.LENGTH_SHORT).show();
         String deviceName = device.getName();
         deviceInfo.setText(deviceName);
         connectButton.setEnabled(true);
+    }
+
+    @Override
+    public void deviceNotFound() {
+        Toast.makeText(this, "No device found!", Toast.LENGTH_SHORT).show();
     }
 }

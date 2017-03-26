@@ -4,10 +4,13 @@ import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.view.View;
 import android.widget.Button;
@@ -26,6 +29,7 @@ public class BLEActivity extends Activity implements BLEDeviceScanner.ScanResult
     private BluetoothAdapter bluetoothAdapter;
     private BLEDeviceScanner deviceScanner;
     private BluetoothDevice device;
+    private BLEDeviceControl deviceControl;
 
     private TextView deviceInfo;
     private Button connectButton;
@@ -34,6 +38,7 @@ public class BLEActivity extends Activity implements BLEDeviceScanner.ScanResult
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_ble);
         final BluetoothManager bluetoothManager = (BluetoothManager)
                 getApplicationContext().getSystemService(Context.BLUETOOTH_SERVICE);
         bluetoothAdapter = bluetoothManager.getAdapter();
@@ -52,6 +57,7 @@ public class BLEActivity extends Activity implements BLEDeviceScanner.ScanResult
 
         startScan();
     }
+
 
     private void enableBLE() {
         if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
@@ -80,8 +86,8 @@ public class BLEActivity extends Activity implements BLEDeviceScanner.ScanResult
     }
 
     private void initializeConnection() {
-        Intent connectService = new Intent(this, BLEService.class);
-        startService(connectService);
+        deviceControl = new BLEDeviceControl(device);
+        deviceControl.connect(this);
     }
 
     @Override

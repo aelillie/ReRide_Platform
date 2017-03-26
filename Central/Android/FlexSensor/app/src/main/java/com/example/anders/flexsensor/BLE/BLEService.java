@@ -1,16 +1,20 @@
 package com.example.anders.flexsensor.BLE;
 
 import android.app.Service;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
 import android.content.Intent;
+import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -23,7 +27,10 @@ class BLEService extends Service{
     private static final int STATE_CONNECTING = 1;
     private static final int STATE_CONNECTED = 2;
 
+    private final IBinder binder = new LocalBinder();
+
     private BluetoothGatt bluetoothGatt;
+    private String bluetoothDeviceAddress;
     private int connectionState = STATE_DISCONNECTED;
 
     //GATT actions
@@ -74,6 +81,12 @@ class BLEService extends Service{
                 broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
             }
         }
+
+        @Override
+        public void onCharacteristicChanged(BluetoothGatt gatt,
+                                            BluetoothGattCharacteristic characteristic) {
+            broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
+        }
     };
 
     private void broadcastUpdate(final String action) {
@@ -112,11 +125,67 @@ class BLEService extends Service{
         sendBroadcast(intent);
     }
 
-
+    public class LocalBinder extends Binder {
+        BLEService getService() {
+            return BLEService.this;
+        }
+    }
 
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
-        return null;
+        return binder;
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        close();
+        return super.onUnbind(intent);
+    }
+
+    public boolean connect(BluetoothDevice device) {
+        if (bluetoothDeviceAddress != null &&
+                device.getAddress().equals(bluetoothDeviceAddress)) {
+            Log.d(TAG, "Trying to use an existing bluetooth gatt for connection.");
+            if (bluetoothGatt.connect()) {
+                connectionState = STATE_CONNECTING;
+                return true;
+            } else return false;
+        }
+        //No existing GATT connection established. Find new
+        bluetoothGatt = device.connectGatt(this, false, gattCallback);
+        Log.d(TAG, "Trying to create a new connection.");
+        bluetoothDeviceAddress = device.getAddress();
+        connectionState = STATE_CONNECTING;
+        return true;
+
+    }
+
+    public void disconnect() {
+        bluetoothGatt.disconnect();
+    }
+
+    public void close() {
+        if (bluetoothGatt == null) {
+            return;
+        }
+        bluetoothGatt.close();
+        bluetoothGatt = null;
+    }
+
+    public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
+        bluetoothGatt.readCharacteristic(characteristic);
+    }
+
+    public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic,
+                                              boolean enabled) {
+        bluetoothGatt.setCharacteristicNotification(characteristic, enabled);
+
+        //TODO: This should never be called??
+    }
+
+    public List<BluetoothGattService> getSupportedGattServices() {
+        if (bluetoothGatt == null) return null;
+        return bluetoothGatt.getServices();
     }
 }

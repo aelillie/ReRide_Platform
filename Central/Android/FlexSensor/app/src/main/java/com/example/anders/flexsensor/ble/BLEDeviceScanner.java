@@ -44,7 +44,7 @@ class BLEDeviceScanner {
         ScanSettings.Builder settingsBuilder = new ScanSettings.Builder();
         int scanMode = ScanSettings.SCAN_MODE_BALANCED;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            settingsBuilder.setScanMode(ScanSettings.CALLBACK_TYPE_FIRST_MATCH);
+            scanMode = ScanSettings.CALLBACK_TYPE_FIRST_MATCH;
         }
         settingsBuilder.setScanMode(scanMode);
         settings = settingsBuilder.build();

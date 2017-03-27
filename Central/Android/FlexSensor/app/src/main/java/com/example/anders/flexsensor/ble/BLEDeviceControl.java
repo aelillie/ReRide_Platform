@@ -118,6 +118,7 @@ class BLEDeviceControl {
                         currentCharaData.put(LIST_UUID, uuid);
                         currentCharaData.put(LIST_NAME, charaName);
                         gattCharacteristicData.add(currentCharaData);
+                        bleService.readCharacteristic(gattCharacteristic); //TODO: Stream this
                         break;
                     }
                 }

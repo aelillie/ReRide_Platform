@@ -12,10 +12,10 @@ voltage at A0 should decrease.
 
 //###BLE Characteristics###
 BLEPeripheral blePeripheral;       // BLE Peripheral Device (the board you're programming)
-BLEService batteryService("0x180F"); // BLE Battery Service
+BLEService batteryService("180F"); // BLE Battery Service
 
 // BLE Battery Level Characteristic
-BLEUnsignedCharCharacteristic batteryLevelChar("0x2A19",  // standard 16-bit characteristic UUID
+BLEUnsignedCharCharacteristic batteryLevelChar("2A19",  // standard 16-bit characteristic UUID
     BLERead | BLENotify);     // remote clients will be able to get notifications if this characteristic changes
 
 //###Flex sensor properties###

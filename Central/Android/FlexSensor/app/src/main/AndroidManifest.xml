@@ -22,6 +22,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".ble.BLEActivity"/>
+        <service android:name=".ble.BLEService"/>
     </application>
 
 </manifest>

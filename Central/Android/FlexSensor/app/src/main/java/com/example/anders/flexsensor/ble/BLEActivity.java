@@ -50,8 +50,8 @@ public class BLEActivity extends Activity
         deviceScanner = new BLEDeviceScanner(bluetoothAdapter);
         deviceScanner.attach(this);
         Log.d(TAG, "Scanner created");
-        deviceControl = new BLEDeviceControl(device);
-        deviceControl.attach(this);
+        deviceControl = new BLEDeviceControl(this);
+        deviceControl.attachCallback(this);
 
         deviceInfo = (TextView) findViewById(R.id.deviceInfoText);
         connectionState = (TextView) findViewById(R.id.connectStateText);
@@ -114,7 +114,7 @@ public class BLEActivity extends Activity
     }
 
     private void initializeConnection() {
-        deviceControl.connect(this);
+        deviceControl.connect(device);
     }
 
     @Override

@@ -28,15 +28,17 @@ class BLEDeviceControl {
     private BLEService bleService;
     private BluetoothDevice device;
     private boolean connected;
+    private boolean serviceBound;
 
+    private Context context;
     private GATTCommunicator gattCommunicator;
 
-    BLEDeviceControl(BluetoothDevice device) {
-        this.device = device;
+    BLEDeviceControl(Context context) {
+        this.context = context;
 
     }
 
-    public void attach(GATTCommunicator gattCommunicator) {
+    public void attachCallback(GATTCommunicator gattCommunicator) {
         this.gattCommunicator = gattCommunicator;
     }
 
@@ -129,20 +131,24 @@ class BLEDeviceControl {
     void reConnect() {
         if (bleService != null) {
             final boolean result = bleService.connect(device);
+            serviceBound = true;
             Log.d(TAG, "Connect request result=" + result);
         }
     }
 
 
-    void connect(Context context) {
+    void connect(BluetoothDevice device) {
+        this.device = device;
         Intent gattServiceIntent = new Intent(context, BLEService.class);
         context.bindService(gattServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+        serviceBound = true;
     }
 
     void disconnect(Context context) {
-        //if (bleService.) TODO: Only disconnect if service is bound
+        if (serviceBound) return;
         context.unbindService(serviceConnection);
         bleService = null;
+        serviceBound = false;
     }
 
     interface GATTCommunicator {

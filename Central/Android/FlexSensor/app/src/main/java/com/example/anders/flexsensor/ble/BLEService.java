@@ -20,7 +20,7 @@ import java.util.UUID;
  * Manages connection and operations on a GATT server
  */
 
-class BLEService extends Service{
+public class BLEService extends Service{
     private static final String TAG = BLEService.class.getSimpleName();
     private static final int STATE_DISCONNECTED = 0;
     private static final int STATE_CONNECTING = 1;
@@ -44,7 +44,8 @@ class BLEService extends Service{
     public static final String EXTRA_DATA =
             "com.example.anders.flexsensor.EXTRA_DATA";
 
-    public final static UUID UUID_BATTERY_SERVICE = UUID.fromString("0x180F");
+    public final static UUID UUID_BATTERY_LEVEL =
+            UUID.fromString(GattAttributes.BATTERY_LEVEL);
 
     private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
         @Override
@@ -97,7 +98,7 @@ class BLEService extends Service{
                                  final BluetoothGattCharacteristic characteristic) {
         final Intent intent = new Intent(action);
 
-        if (UUID_BATTERY_SERVICE.equals(characteristic.getUuid())) {
+        if (UUID_BATTERY_LEVEL.equals(characteristic.getUuid())) {
             int flag = characteristic.getProperties();
             int format;
             if ((flag & 0x01) != 0) { //TODO: Not sure about this

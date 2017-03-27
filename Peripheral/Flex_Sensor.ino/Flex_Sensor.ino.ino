@@ -19,10 +19,10 @@ Arduino 1.6.7
 
 //###BLE Characteristics###
 BLEPeripheral blePeripheral;       // BLE Peripheral Device (the board you're programming)
-BLEService batteryService("180F"); // BLE Battery Service
+BLEService batteryService("0x180F"); // BLE Battery Service
 
 // BLE Battery Level Characteristic
-BLEUnsignedCharCharacteristic batteryLevelChar("2A19",  // standard 16-bit characteristic UUID
+BLEUnsignedCharCharacteristic batteryLevelChar("0x2A19",  // standard 16-bit characteristic UUID
     BLERead | BLENotify);     // remote clients will be able to get notifications if this characteristic changes
 
 //###Flex sensor properties###
@@ -65,7 +65,7 @@ void setup()
 // This function is called continuously, after setup() completes.
 void loop() 
 {
-  // listen for BLE peripherals to connect:
+  // listen for BLE centrals to connect:
   BLECentral central = blePeripheral.central();
 
   // if a central is connected to peripheral:

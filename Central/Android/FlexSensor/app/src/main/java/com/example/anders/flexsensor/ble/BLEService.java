@@ -1,4 +1,4 @@
-package com.example.anders.flexsensor.BLE;
+package com.example.anders.flexsensor.ble;
 
 import android.app.Service;
 import android.bluetooth.BluetoothDevice;
@@ -9,7 +9,6 @@ import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
 import android.content.Intent;
 import android.os.Binder;
-import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;

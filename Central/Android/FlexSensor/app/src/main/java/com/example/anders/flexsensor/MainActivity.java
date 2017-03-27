@@ -9,7 +9,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.anders.flexsensor.BLE.BLEActivity;
+import com.example.anders.flexsensor.ble.BLEActivity;
 
 public class MainActivity extends AppCompatActivity implements FlexSensorManager.CallBack{
 
@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity implements FlexSensorManager
 
     @Override
     public void updatedState(int newState) {
-        angleText.setText(newState);
+//        angleText.setText(newState);
     }
 
     private void scanForDevice() {

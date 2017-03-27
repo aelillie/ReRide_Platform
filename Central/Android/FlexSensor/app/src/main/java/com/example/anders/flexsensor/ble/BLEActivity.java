@@ -1,17 +1,15 @@
-package com.example.anders.flexsensor.BLE;
+package com.example.anders.flexsensor.ble;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -26,6 +24,8 @@ import com.example.anders.flexsensor.R;
 
 public class BLEActivity extends Activity
         implements BLEDeviceScanner.ScanResultCallback, BLEDeviceControl.GATTCommunicator {
+    private static final String TAG = BLEActivity.class.getSimpleName();
+
     public static final int REQUEST_ENABLE_BT = 1; //Request code for BLE Intent
     private BluetoothAdapter bluetoothAdapter;
     private BLEDeviceScanner deviceScanner;
@@ -45,9 +45,13 @@ public class BLEActivity extends Activity
         final BluetoothManager bluetoothManager = (BluetoothManager)
                 getApplicationContext().getSystemService(Context.BLUETOOTH_SERVICE);
         bluetoothAdapter = bluetoothManager.getAdapter();
+        Log.d(TAG, "BLE adapter found");
         enableBLE();
         deviceScanner = new BLEDeviceScanner(bluetoothAdapter);
         deviceScanner.attach(this);
+        Log.d(TAG, "Scanner created");
+        deviceControl = new BLEDeviceControl(device);
+        deviceControl.attach(this);
 
         deviceInfo = (TextView) findViewById(R.id.deviceInfoText);
         connectionState = (TextView) findViewById(R.id.connectStateText);
@@ -110,8 +114,6 @@ public class BLEActivity extends Activity
     }
 
     private void initializeConnection() {
-        deviceControl = new BLEDeviceControl(device);
-        deviceControl.attach(this);
         deviceControl.connect(this);
     }
 

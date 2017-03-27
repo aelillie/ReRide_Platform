@@ -1,4 +1,4 @@
-package com.example.anders.flexsensor.BLE;
+package com.example.anders.flexsensor.ble;
 
 import java.util.HashMap;
 

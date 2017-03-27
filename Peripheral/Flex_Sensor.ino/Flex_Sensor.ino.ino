@@ -1,18 +1,11 @@
 /******************************************************************************
-Flex_Sensor_Example.ino
-Example sketch for SparkFun's flex sensors
-  (https://www.sparkfun.com/products/10264)
-Jim Lindblom @ SparkFun Electronics
-April 28, 2016
+Source: https://learn.sparkfun.com/tutorials/flex-sensor-hookup-guide
 
 Create a voltage divider circuit combining a flex sensor with a 47k resistor.
 - The resistor should connect from A0 to GND.
 - The flex sensor should connect from A0 to 3.3V
 As the resistance of the flex sensor increases (meaning it's being bent), the
 voltage at A0 should decrease.
-
-Development environment specifics:
-Arduino 1.6.7
 ******************************************************************************/
 // Include BLE files.
 #include <CurieBLE.h>
@@ -43,7 +36,7 @@ void setup()
 {
   Serial.begin(9600);
   pinMode(FLEX_PIN, INPUT);
-
+  Serial.println("Attached flex pin");
   /* Set a local name for the BLE device
      This name will appear in advertising packets
      and can be used by remote devices to identify this BLE device
@@ -53,7 +46,7 @@ void setup()
   blePeripheral.addAttribute(batteryService);   // Add the BLE Battery service
   blePeripheral.addAttribute(batteryLevelChar); // add the battery level characteristic
   batteryLevelChar.setValue(oldFlexAngle);   // initial value for this characteristic
-
+  Serial.println("Configured BLE");
   /* Now activate the BLE device.  It will start continuously transmitting BLE
      advertising packets and will be visible to remote BLE central devices
      until it receives a new connection */

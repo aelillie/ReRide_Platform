@@ -129,7 +129,8 @@ public class BLEActivity extends Activity
 
     @Override
     public void deviceNotFound() {
-        Toast.makeText(this, "No device found!", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "No device found! Trying again..", Toast.LENGTH_SHORT).show();
+        startScan();
     }
 
     @Override

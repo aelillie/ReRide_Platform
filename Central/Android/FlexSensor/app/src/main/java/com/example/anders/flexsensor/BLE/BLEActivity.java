@@ -35,6 +35,7 @@ public class BLEActivity extends Activity
     private TextView deviceInfo;
     private Button connectButton;
     private TextView connectionState;
+    private TextView angleTextView;
 
 
     @Override
@@ -57,10 +58,30 @@ public class BLEActivity extends Activity
                 initializeConnection();
             }
         });
+        angleTextView = (TextView) findViewById(R.id.angleTextView);
 
         startScan();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(deviceControl.getGattUpdateReceiver(),
+                BLEDeviceControl.makeGattUpdateIntentFilter());
+        deviceControl.reConnect();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(deviceControl.getGattUpdateReceiver());
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        deviceControl.disconnect(this);
+    }
 
     private void enableBLE() {
         if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
@@ -122,6 +143,6 @@ public class BLEActivity extends Activity
 
     @Override
     public void dataReceived(String data) {
-        //TODO: This data should be transmitted to the cloud
+        angleTextView.setText(data);
     }
 }

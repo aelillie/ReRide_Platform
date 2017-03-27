@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity implements FlexSensorManager
 
     @Override
     public void updatedState(int newState) {
-        //angleText.setText(newState);
+        angleText.setText(newState);
     }
 
     private void scanForDevice() {

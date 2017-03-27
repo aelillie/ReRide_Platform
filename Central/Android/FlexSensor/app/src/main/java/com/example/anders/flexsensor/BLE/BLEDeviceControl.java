@@ -7,8 +7,10 @@ import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,8 +22,6 @@ import java.util.List;
 
 class BLEDeviceControl {
     private final static String TAG = BLEDeviceControl.class.getSimpleName();
-    static final String EXTRAS_DEVICE_NAME = "DEVICE_NAME";
-    static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
     private final String LIST_NAME = "NAME";
     private final String LIST_UUID = "UUID";
 
@@ -71,7 +71,6 @@ class BLEDeviceControl {
                     break;
                 }
                 case BLEService.ACTION_GATT_SERVICES_DISCOVERED: {
-                    // Show all the supported services and characteristics on the user interface.
                     searchGattServices(bleService.getSupportedGattServices());
                     break;
                 }
@@ -123,13 +122,24 @@ class BLEDeviceControl {
         }
     }
 
+    BroadcastReceiver getGattUpdateReceiver() {
+        return gattUpdateReceiver;
+    }
 
-    public void connect(Context context) {
+    void reConnect() {
+        if (bleService != null) {
+            final boolean result = bleService.connect(device);
+            Log.d(TAG, "Connect request result=" + result);
+        }
+    }
+
+
+    void connect(Context context) {
         Intent gattServiceIntent = new Intent(context, BLEService.class);
         context.bindService(gattServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
 
-    public void disconnect(Context context) {
+    void disconnect(Context context) {
         context.unbindService(serviceConnection);
         bleService = null;
     }
@@ -137,5 +147,14 @@ class BLEDeviceControl {
     interface GATTCommunicator {
         void connected(boolean isConnected);
         void dataReceived(String data);
+    }
+
+    static IntentFilter makeGattUpdateIntentFilter() {
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(BLEService.ACTION_GATT_CONNECTED);
+        intentFilter.addAction(BLEService.ACTION_GATT_DISCONNECTED);
+        intentFilter.addAction(BLEService.ACTION_GATT_SERVICES_DISCOVERED);
+        intentFilter.addAction(BLEService.ACTION_DATA_AVAILABLE);
+        return intentFilter;
     }
 }

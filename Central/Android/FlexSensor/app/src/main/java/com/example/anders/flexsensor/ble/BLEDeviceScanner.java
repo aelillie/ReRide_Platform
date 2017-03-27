@@ -7,6 +7,7 @@ import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
+import android.os.Build;
 import android.os.Handler;
 import android.util.Log;
 
@@ -41,7 +42,11 @@ class BLEDeviceScanner {
         filters.add(builder.build());
         callback = new BLECallback();
         ScanSettings.Builder settingsBuilder = new ScanSettings.Builder();
-        settingsBuilder.setScanMode(ScanSettings.SCAN_MODE_LOW_POWER);
+        int scanMode = ScanSettings.SCAN_MODE_BALANCED;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            settingsBuilder.setScanMode(ScanSettings.CALLBACK_TYPE_FIRST_MATCH);
+        }
+        settingsBuilder.setScanMode(scanMode);
         settings = settingsBuilder.build();
     }
 
@@ -57,19 +62,19 @@ class BLEDeviceScanner {
     void scanBLEDevice(final boolean enable) {
         if (enable) {
             // Stops scanning after a pre-defined scan period.
-//            new Handler().postDelayed(new Runnable() {
-//                @Override
-//                public void run() {
-//                    scanning = false;
-//                    scanner.stopScan(callback);
-//                    if (!deviceFound) {
-//                        resultCallback.deviceNotFound();
-//                    }
-//                }
-//            }, SCAN_PERIOD);
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    scanning = false;
+                    scanner.stopScan(callback);
+                    if (!deviceFound) {
+                        resultCallback.deviceNotFound();
+                    }
+                }
+            }, SCAN_PERIOD);
 
             scanning = true;
-            scanner.startScan(callback); //Filters could be used
+            scanner.startScan(filters, settings, callback); //Filters could be used
         } else {
             scanning = false;
             scanner.stopScan(callback);
@@ -82,7 +87,7 @@ class BLEDeviceScanner {
             deviceFound = true;
             BluetoothDevice bleDevice = result.getDevice();
             Log.d(TAG, "Found device: " + bleDevice.getName());
-            devices.add(bleDevice);
+            //devices.add(bleDevice);
             resultCallback.foundDevice(bleDevice);
         }
 

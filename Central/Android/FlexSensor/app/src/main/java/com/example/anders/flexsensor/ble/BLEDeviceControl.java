@@ -63,20 +63,22 @@ class BLEDeviceControl {
                 case BLEService.ACTION_GATT_CONNECTED: {
                     connected = true;
                     //UI info on connection
-                    gattCommunicator.connected(true);
+                    gattCommunicator.announceStatus("Connected");
                     break;
                 }
                 case BLEService.ACTION_GATT_DISCONNECTED: {
                     connected = false;
                     //UI info on disconnection
-                    gattCommunicator.connected(false);
+                    gattCommunicator.announceStatus("Not announceStatus");
                     break;
                 }
                 case BLEService.ACTION_GATT_SERVICES_DISCOVERED: {
+                    gattCommunicator.announceStatus("Services discovered");
                     searchGattServices(bleService.getSupportedGattServices());
                     break;
                 }
                 case BLEService.ACTION_DATA_AVAILABLE: {
+                    gattCommunicator.announceStatus("Data available");
                     handleData(intent.getStringExtra(BLEService.EXTRA_DATA));
                     break;
                 }
@@ -152,7 +154,7 @@ class BLEDeviceControl {
     }
 
     interface GATTCommunicator {
-        void connected(boolean isConnected);
+        void announceStatus(String status);
         void dataReceived(String data);
     }
 

@@ -134,11 +134,11 @@ public class BLEActivity extends Activity
     }
 
     @Override
-    public void connected(final boolean isConnected) {
+    public void announceStatus(final String status) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                String status = isConnected ? "Connected" : "Not connected";
+                Toast.makeText(getApplicationContext(), status, Toast.LENGTH_SHORT).show();
                 connectionState.setText(status);
             }
         });

@@ -22,6 +22,7 @@ class BLEDeviceScanner {
 
     private boolean scanning;
     private BluetoothLeScanner scanner;
+    private List<BluetoothDevice> devices;
     private List<ScanFilter> filters;
     private ScanSettings settings;
     private BLECallback callback;
@@ -33,6 +34,7 @@ class BLEDeviceScanner {
 
     BLEDeviceScanner(BluetoothAdapter bluetoothAdapter) {
         scanner = bluetoothAdapter.getBluetoothLeScanner();
+        devices = new ArrayList<>();
         ScanFilter.Builder builder = new ScanFilter.Builder();
         builder.setDeviceName("ReRide");
         filters = new ArrayList<>();
@@ -55,19 +57,19 @@ class BLEDeviceScanner {
     void scanBLEDevice(final boolean enable) {
         if (enable) {
             // Stops scanning after a pre-defined scan period.
-            new Handler().postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    scanning = false;
-                    scanner.stopScan(callback);
-                    if (!deviceFound) {
-                        resultCallback.deviceNotFound();
-                    }
-                }
-            }, SCAN_PERIOD);
+//            new Handler().postDelayed(new Runnable() {
+//                @Override
+//                public void run() {
+//                    scanning = false;
+//                    scanner.stopScan(callback);
+//                    if (!deviceFound) {
+//                        resultCallback.deviceNotFound();
+//                    }
+//                }
+//            }, SCAN_PERIOD);
 
             scanning = true;
-            scanner.startScan(filters, settings, callback);
+            scanner.startScan(callback); //Filters could be used
         } else {
             scanning = false;
             scanner.stopScan(callback);
@@ -80,13 +82,22 @@ class BLEDeviceScanner {
             deviceFound = true;
             BluetoothDevice bleDevice = result.getDevice();
             Log.d(TAG, "Found device: " + bleDevice.getName());
+            devices.add(bleDevice);
             resultCallback.foundDevice(bleDevice);
         }
 
         @Override
         public void onScanFailed(int errorCode) {
-            super.onScanFailed(errorCode);
-            //TODO: Handle a failure
+            switch (errorCode) {
+                case SCAN_FAILED_ALREADY_STARTED:
+                    Log.d(TAG, "already started"); break;
+                case SCAN_FAILED_APPLICATION_REGISTRATION_FAILED:
+                    Log.d(TAG, "cannot be registered"); break;
+                case SCAN_FAILED_FEATURE_UNSUPPORTED:
+                    Log.d(TAG, "power optimized scan not supported"); break;
+                case SCAN_FAILED_INTERNAL_ERROR:
+                    Log.d(TAG, "internal error"); break;
+            }
         }
     }
 

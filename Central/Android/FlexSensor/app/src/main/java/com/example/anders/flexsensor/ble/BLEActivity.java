@@ -119,18 +119,18 @@ public class BLEActivity extends Activity
 
     @Override
     public void foundDevice(BluetoothDevice device) {
-        deviceScanner.scanBLEDevice(false);
+        //deviceScanner.scanBLEDevice(false);
         this.device = device;
-        Toast.makeText(this, "Found device!", Toast.LENGTH_SHORT).show();
         String deviceName = device.getName();
-        deviceInfo.setText(deviceName);
-        connectButton.setEnabled(true);
+        Toast.makeText(this, "Found: " + deviceName,
+                Toast.LENGTH_SHORT).show();
+        //deviceInfo.setText(deviceName);
+        //connectButton.setEnabled(true);
     }
 
     @Override
     public void deviceNotFound() {
-        Toast.makeText(this, "No device found! Trying again..", Toast.LENGTH_SHORT).show();
-        startScan();
+        Toast.makeText(this, "No device found!", Toast.LENGTH_SHORT).show();
     }
 
     @Override

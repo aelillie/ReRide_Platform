@@ -23,7 +23,7 @@ public class FlexSensorManager {
         void updatedState(int newState);
     }
 
-    private static final String LOG_TAG = MainActivity.LOG_TAG;
+    private static final String LOG_TAG = MainActivity.TAG;
 
     // --- Constants to modify per your configuration ---
 

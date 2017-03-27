@@ -140,6 +140,7 @@ class BLEDeviceControl {
     }
 
     void disconnect(Context context) {
+        //if (bleService.) TODO: Only disconnect if service is bound
         context.unbindService(serviceConnection);
         bleService = null;
     }

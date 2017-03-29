@@ -32,6 +32,7 @@ class BLEDeviceControl {
 
     private Context context;
     private GATTCommunicator gattCommunicator;
+    private BluetoothGattCharacteristic notifyCharacteristic;
 
     BLEDeviceControl(Context context) {
         this.context = context;
@@ -92,38 +93,42 @@ class BLEDeviceControl {
 
     private void searchGattServices(List<BluetoothGattService> supportedGattServices) {
         if (supportedGattServices == null) return;
-        HashMap<String, String> gattServiceData = new HashMap<>();
-        ArrayList<HashMap<String, String>> gattCharacteristicData =
-                new ArrayList<>();
         String uuid;
         for (BluetoothGattService gattService : supportedGattServices) {
             uuid = gattService.getUuid().toString();
             String serviceName = GattAttributes.lookup(uuid, "unknown");
             if (serviceName.equals("Battery Service")) {
-                gattServiceData.put(LIST_NAME, serviceName);
-                gattServiceData.put(LIST_UUID, uuid);
-
                 List<BluetoothGattCharacteristic> gattCharacteristics =
                         gattService.getCharacteristics();
-                ArrayList<BluetoothGattCharacteristic> charas =
-                        new ArrayList<>();
-
                 for(BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
-                    charas.add(gattCharacteristic);
-                    HashMap<String, String> currentCharaData = new HashMap<>();
                     uuid = gattCharacteristic.getUuid().toString();
-                    String charaName = GattAttributes.lookup(
-                            GattAttributes.BATTERY_LEVEL, "unknown");
+                    String charaName = GattAttributes.lookup(uuid, "unknown");
                     if (charaName.equals("Battery Level")) {
-                        currentCharaData.put(LIST_UUID, uuid);
-                        currentCharaData.put(LIST_NAME, charaName);
-                        gattCharacteristicData.add(currentCharaData);
-                        bleService.readCharacteristic(gattCharacteristic); //TODO: Stream this
+                        readCharacteristic(gattCharacteristic); //TODO: Stream this
                         break;
                     }
                 }
                 break;
             }
+        }
+    }
+
+    private void readCharacteristic(BluetoothGattCharacteristic characteristic) {
+        final int charaProp = characteristic.getProperties();
+        if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
+            // If there is an active notification on a characteristic, clear
+            // it first so it doesn't update the data field on the user interface.
+            if (notifyCharacteristic != null) {
+                bleService.setCharacteristicNotification(
+                        notifyCharacteristic, false);
+                notifyCharacteristic = null;
+            }
+            bleService.readCharacteristic(characteristic);
+        }
+        if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
+            notifyCharacteristic = characteristic;
+            bleService.setCharacteristicNotification(
+                    characteristic, true);
         }
     }
 

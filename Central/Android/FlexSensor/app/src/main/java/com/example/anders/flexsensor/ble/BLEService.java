@@ -48,6 +48,10 @@ public class BLEService extends Service{
             UUID.fromString(GattAttributes.BATTERY_LEVEL);
 
     private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
+        /*
+        Callback indicating when GATT client has
+        connected/disconnected to/from a remote GATT server.
+         */
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             String intentAction;
@@ -66,6 +70,10 @@ public class BLEService extends Service{
             }
         }
 
+        /*
+        Callback invoked when the list of remote services, characteristics and descriptors
+        for the remote device have been updated, ie new services have been discovered.
+         */
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
@@ -75,6 +83,7 @@ public class BLEService extends Service{
             }
         }
 
+        //Callback reporting the result of a characteristic read operation.
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
@@ -82,6 +91,8 @@ public class BLEService extends Service{
             }
         }
 
+
+        // Callback triggered as a result of a remote characteristic notification.
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
@@ -101,7 +112,7 @@ public class BLEService extends Service{
         if (UUID_BATTERY_LEVEL.equals(characteristic.getUuid())) {
             int flag = characteristic.getProperties();
             int format;
-            if ((flag & 0x01) != 0) { //TODO: Not sure about this
+            if ((flag & 0x01) != 0) {
                 format = BluetoothGattCharacteristic.FORMAT_UINT16;
                 Log.d(TAG, "Battery service format UINT16.");
             } else {
@@ -180,8 +191,6 @@ public class BLEService extends Service{
     public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic,
                                               boolean enabled) {
         bluetoothGatt.setCharacteristicNotification(characteristic, enabled);
-
-        //TODO: This should never be called??
     }
 
     public List<BluetoothGattService> getSupportedGattServices() {

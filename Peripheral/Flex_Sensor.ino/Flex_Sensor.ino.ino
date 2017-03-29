@@ -12,40 +12,42 @@ voltage at A0 should decrease.
 
 //###BLE Characteristics###
 BLEPeripheral blePeripheral;       // BLE Peripheral Device (the board you're programming)
-BLEService batteryService("180F"); // BLE Battery Service
+BLEService sensingService("181A"); // BLE "Environmental Sensing"
 
 // BLE Battery Level Characteristic
-BLEUnsignedCharCharacteristic batteryLevelChar("2A19",  // standard 16-bit characteristic UUID
+BLEUnsignedCharCharacteristic windDirChar("2A73",  // standard 16-bit characteristic UUID
     BLERead | BLENotify);     // remote clients will be able to get notifications if this characteristic changes
 
 //###Flex sensor properties###
 const int FLEX_PIN = A0; // Pin connected to voltage divider output
+const int LED_PIN = 13;
 
 // Measure the voltage at 5V and the actual resistance of your 47k resistor, and enter them below:
 const float VCC = 4.98;       // Measured voltage of Ardunio 5V line
 const float R_DIV = 47500.0;  // Measured resistance of 3.3k resistor
 
 // Following can be adjusted to be more precise
-const float STRAIGHT_RESISTANCE = 37300.0; // resistance when straight
-const float BEND_RESISTANCE = 90000.0; // resistance at 90 deg
+const float STRAIGHT_RESISTANCE = 13000.0; // resistance when straight
+const float BEND_RESISTANCE = 20000.0; // resistance at 90 deg
 
-float oldFlexAngle = 0;  // last flex angle reading from analog input
+int oldFlexAngle = 0;  // last flex angle reading from analog input
 long previousMillis = 0;  // last time the flex angle level was checked, in ms
 
 void setup() 
 {
   Serial.begin(9600);
-  pinMode(FLEX_PIN, INPUT);
+  pinMode(FLEX_PIN, INPUT); // initialize serial communication
+  pinMode(LED_PIN, OUTPUT); // initialize the LED on pin 13 to indicate when a central is connected
   Serial.println("Attached flex pin");
   /* Set a local name for the BLE device
      This name will appear in advertising packets
      and can be used by remote devices to identify this BLE device
      The name can be changed but maybe be truncated based on space left in advertisement packet */
   blePeripheral.setLocalName("ReRide");
-  blePeripheral.setAdvertisedServiceUuid(batteryService.uuid());  // add the service UUID
-  blePeripheral.addAttribute(batteryService);   // Add the BLE Battery service
-  blePeripheral.addAttribute(batteryLevelChar); // add the battery level characteristic
-  batteryLevelChar.setValue(oldFlexAngle);   // initial value for this characteristic
+  blePeripheral.setAdvertisedServiceUuid(sensingService.uuid());  // add the service UUID
+  blePeripheral.addAttribute(sensingService);   // Add the BLE Battery service
+  blePeripheral.addAttribute(windDirChar); // add the battery level characteristic
+  windDirChar.setValue(oldFlexAngle);   // initial value for this characteristic
   Serial.println("Configured BLE");
   /* Now activate the BLE device.  It will start continuously transmitting BLE
      advertising packets and will be visible to remote BLE central devices
@@ -58,6 +60,11 @@ void setup()
 // This function is called continuously, after setup() completes.
 void loop() 
 {
+  updateFlexAngle();
+  delay(500);
+}
+
+void listenBLE() {
   // listen for BLE centrals to connect:
   BLECentral central = blePeripheral.central();
 
@@ -66,6 +73,8 @@ void loop()
     Serial.print("Connected to central: ");
     // print the central's MAC address:
     Serial.println(central.address());
+    // turn on the LED to indicate the connection:
+    digitalWrite(LED_PIN, HIGH);
     // check the flex angle every 200ms as long as the central is still connected:
     while (central.connected()) {
       long currentMillis = millis();
@@ -77,6 +86,8 @@ void loop()
     }
     Serial.print("Disconnected from central: ");
     Serial.println(central.address());
+    // when the central disconnects, turn off the LED:
+    digitalWrite(LED_PIN, LOW);
   }
 }
 
@@ -87,13 +98,13 @@ void updateFlexAngle() {
   float flexR = R_DIV * (VCC / flexV - 1.0);
 
   // Use the calculated resistance to estimate the sensor's bend angle:
-  float angle = map(flexR, STRAIGHT_RESISTANCE, BEND_RESISTANCE, 0, 90.0);
-
+  int angle = (int) map(flexR, STRAIGHT_RESISTANCE, BEND_RESISTANCE, 0, 90.0);
+  uint16_t uangle = (uint16_t) abs(angle);
   if (angle != oldFlexAngle) {
     Serial.println("Resistance: " + String(flexR) + " ohms");
-    Serial.println("Bend: " + String(angle) + " degrees");
+    Serial.println("Bend: " + String(uangle) + " degrees");
     Serial.println();
-    batteryLevelChar.setValue(angle);
+    windDirChar.setValue(angle);
     oldFlexAngle = angle;
   }
 }

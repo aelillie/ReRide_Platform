@@ -153,7 +153,7 @@ class BLEDeviceControl {
     }
 
     void disconnect(Context context) {
-        if (serviceBound) return;
+        if (serviceBound) return; //TODO: This does not work
         context.unbindService(serviceConnection);
         bleService = null;
         serviceBound = false;

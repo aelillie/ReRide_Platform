@@ -1,6 +1,5 @@
 package com.example.anders.flexsensor.ble;
 
-import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
 import android.content.BroadcastReceiver;
@@ -9,45 +8,41 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.os.Bundle;
 import android.os.IBinder;
+import android.support.annotation.Nullable;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.TextView;
+import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import com.example.anders.flexsensor.R;
+
 import java.util.List;
 
 /**
  * Controls operations on a GATT server
  */
 
-class BLEDeviceControl {
-    private final static String TAG = BLEDeviceControl.class.getSimpleName();
-    private final String LIST_NAME = "NAME";
-    private final String LIST_UUID = "UUID";
+public class BLEDeviceControlActivity extends AppCompatActivity {
+    private final static String TAG = BLEDeviceControlActivity.class.getSimpleName();
+
+    public static final String EXTRAS_DEVICE_NAME = "DEVICE_NAME";
+    public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
 
     private BLEService bleService;
-    private BluetoothDevice device;
     private boolean connected;
-    private boolean serviceBound;
 
-    private Context context;
-    private GATTCommunicator gattCommunicator;
     private BluetoothGattCharacteristic notifyCharacteristic;
 
-    BLEDeviceControl(Context context) {
-        this.context = context;
-
-    }
-
-    public void attachCallback(GATTCommunicator gattCommunicator) {
-        this.gattCommunicator = gattCommunicator;
-    }
 
     private final ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
             bleService = ((BLEService.LocalBinder) service).getService();
-            bleService.connect(device);
+            bleService.connect(deviceAddress);
         }
 
         @Override
@@ -64,22 +59,26 @@ class BLEDeviceControl {
                 case BLEService.ACTION_GATT_CONNECTED: {
                     connected = true;
                     //UI info on connection
-                    gattCommunicator.announceStatus("Connected");
+                    updateConnectionState(R.string.conected);
+                    announce("Connected");
+                    invalidateOptionsMenu();
                     break;
                 }
                 case BLEService.ACTION_GATT_DISCONNECTED: {
                     connected = false;
                     //UI info on disconnection
-                    gattCommunicator.announceStatus("Not announceStatus");
+                    announce("Disconnected");
+                    updateConnectionState(R.string.disconnected);
+                    invalidateOptionsMenu();
+                    clearUI();
                     break;
                 }
                 case BLEService.ACTION_GATT_SERVICES_DISCOVERED: {
-                    gattCommunicator.announceStatus("Services discovered");
+                    announce("Services discovered");
                     searchGattServices(bleService.getSupportedGattServices());
                     break;
                 }
                 case BLEService.ACTION_DATA_AVAILABLE: {
-                    gattCommunicator.announceStatus("Data available");
                     handleData(intent.getStringExtra(BLEService.EXTRA_DATA));
                     break;
                 }
@@ -87,8 +86,52 @@ class BLEDeviceControl {
         }
     };
 
-    private void handleData(String stringExtra) {
-        gattCommunicator.dataReceived(stringExtra);
+    private void announce(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+    }
+
+    private void updateConnectionState(final int resourceId) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                connectionState.setText(resourceId);
+            }
+        });
+    }
+
+
+    private void clearUI() {
+        dataField.setText(R.string.no_data);
+    }
+
+    private String deviceName;
+    private String deviceAddress;
+    private TextView connectionState;
+    private TextView dataField;
+
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_ble);
+
+        final Intent intent = getIntent();
+        deviceName = intent.getStringExtra(EXTRAS_DEVICE_NAME);
+        deviceAddress = intent.getStringExtra(EXTRAS_DEVICE_ADDRESS);
+
+        ((TextView) findViewById(R.id.deviceInfoText)).setText(deviceAddress);
+        connectionState = (TextView) findViewById(R.id.connection_state);
+        dataField = (TextView) findViewById(R.id.data_value);
+
+        getActionBar().setTitle(deviceName);
+        getActionBar().setDisplayHomeAsUpEnabled(true);
+        Intent gattServiceIntent = new Intent(this, BLEService.class);
+        bindService(gattServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+    }
+
+
+
+    private void handleData(String data) {
+        dataField.setText(data);
     }
 
     private void searchGattServices(List<BluetoothGattService> supportedGattServices) {
@@ -111,6 +154,58 @@ class BLEDeviceControl {
         }
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(gattUpdateReceiver, makeGattUpdateIntentFilter());
+        if (bleService != null) {
+            final boolean result = bleService.connect(deviceAddress);
+            Log.d(TAG, "Connect request result=" + result);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(gattUpdateReceiver);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unbindService(serviceConnection);
+        bleService = null;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.ble_periphiral, menu);
+        if (connected) {
+            menu.findItem(R.id.menu_connect).setVisible(false);
+            menu.findItem(R.id.menu_disconnect).setVisible(true);
+        } else {
+            menu.findItem(R.id.menu_connect).setVisible(true);
+            menu.findItem(R.id.menu_disconnect).setVisible(false);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch(item.getItemId()) {
+            case R.id.menu_connect:
+                bleService.connect(deviceAddress);
+                return true;
+            case R.id.menu_disconnect:
+                bleService.disconnect();
+                return true;
+            case android.R.id.home:
+                onBackPressed();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
     private void readCharacteristic(BluetoothGattCharacteristic characteristic) {
         final int charaProp = characteristic.getProperties();
         if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
@@ -128,38 +223,6 @@ class BLEDeviceControl {
             bleService.setCharacteristicNotification(
                     characteristic, true);
         }
-    }
-
-    BroadcastReceiver getGattUpdateReceiver() {
-        return gattUpdateReceiver;
-    }
-
-    void reConnect() {
-        if (bleService != null) {
-            final boolean result = bleService.connect(device);
-            serviceBound = true;
-            Log.d(TAG, "Connect request result=" + result);
-        }
-    }
-
-
-    void connect(BluetoothDevice device) {
-        this.device = device;
-        Intent gattServiceIntent = new Intent(context, BLEService.class);
-        context.bindService(gattServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
-        serviceBound = true;
-    }
-
-    void disconnect(Context context) {
-        if (serviceBound) return; //TODO: This does not work
-        context.unbindService(serviceConnection);
-        bleService = null;
-        serviceBound = false;
-    }
-
-    interface GATTCommunicator {
-        void announceStatus(String status);
-        void dataReceived(String data);
     }
 
     static IntentFilter makeGattUpdateIntentFilter() {

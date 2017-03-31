@@ -153,9 +153,9 @@ public class BLEService extends Service{
         return super.onUnbind(intent);
     }
 
-    public boolean connect(BluetoothDevice device) {
+    public boolean connect(String deviceAddress) {
         if (bluetoothDeviceAddress != null &&
-                device.getAddress().equals(bluetoothDeviceAddress)) {
+                deviceAddress.equals(bluetoothDeviceAddress)) {
             Log.d(TAG, "Trying to use an existing bluetooth gatt for connection.");
             if (bluetoothGatt.connect()) {
                 connectionState = STATE_CONNECTING;

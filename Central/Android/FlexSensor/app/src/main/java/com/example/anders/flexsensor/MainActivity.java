@@ -1,6 +1,6 @@
 package com.example.anders.flexsensor;
 
-import com.example.anders.flexsensor.ble.BLEDeviceControl;
+import com.example.anders.flexsensor.ble.BLEDeviceControlActivity;
 import com.example.anders.flexsensor.ble.BLEDeviceScanner;
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
@@ -14,9 +14,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 
@@ -118,9 +115,9 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void foundDevice(String deviceName, String deviceAddress) {
         Toast.makeText(this, "Success", Toast.LENGTH_SHORT).show();
-        final Intent intent = new Intent(this, BLEDeviceControl.class);
-        intent.putExtra(BLEDeviceControl.EXTRAS_DEVICE_NAME, deviceName);
-        intent.putExtra(BLEDeviceControl.EXTRAS_DEVICE_ADDRESS, deviceAddress);
+        final Intent intent = new Intent(this, BLEDeviceControlActivity.class);
+        intent.putExtra(BLEDeviceControlActivity.EXTRAS_DEVICE_NAME, deviceName);
+        intent.putExtra(BLEDeviceControlActivity.EXTRAS_DEVICE_ADDRESS, deviceAddress);
         if (bleDeviceScanner.isScanning()) {
             bleDeviceScanner.scanBLEDevice(false);
         }

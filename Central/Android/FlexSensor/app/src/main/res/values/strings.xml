@@ -7,4 +7,17 @@
     <string name="connectText">Connect to BLE device</string>
     <string name="deviceInfoDescription">Device name</string>
     <string name="connectStateDescription">Whether a GATT connection is established or not</string>
+    <string name="menu_scan">Scan</string>
+    <string name="menu_stop">Stop</string>
+    <string name="app_title">ReRide</string>
+    <string name="ble_not_supported">BLE is not supported</string>
+    <string name="label_device_name">Device name:</string>
+    <string name="label_state">State:</string>
+    <string name="disconnected">Disconnected</string>
+    <string name="label_data">Data:</string>
+    <string name="no_data">No data</string>
+    <string name="label_device_address">Address:</string>
+    <string name="menu_connect">Connect</string>
+    <string name="menu_disconnect">Disconnect</string>
+    <string name="conected">Connected</string>
 </resources>

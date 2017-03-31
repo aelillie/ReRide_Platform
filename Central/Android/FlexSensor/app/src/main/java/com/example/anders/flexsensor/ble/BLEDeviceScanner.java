@@ -2,13 +2,17 @@ package com.example.anders.flexsensor.ble;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
+import android.content.Context;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import java.util.ArrayList;
@@ -18,7 +22,7 @@ import java.util.List;
  * Responsible for scanning for BLE devices
  */
 
-class BLEDeviceScanner {
+public class BLEDeviceScanner {
     private static final String TAG = BLEDeviceScanner.class.getSimpleName();
 
     private boolean scanning;
@@ -28,12 +32,29 @@ class BLEDeviceScanner {
     private ScanSettings settings;
     private BLECallback callback;
     private ScanResultCallback resultCallback;
+    private BluetoothAdapter bluetoothAdapter;
     private boolean deviceFound;
 
     // Stops scanning after 10 seconds.
     private static final long SCAN_PERIOD = 20000;
 
-    BLEDeviceScanner(BluetoothAdapter bluetoothAdapter) {
+    public BLEDeviceScanner(Context context) {
+        final BluetoothManager bluetoothManager = (BluetoothManager)
+                context.getSystemService(Context.BLUETOOTH_SERVICE);
+        bluetoothAdapter = bluetoothManager.getAdapter();
+        Log.d(TAG, "BLE adapter found");
+    }
+
+    public boolean bleIsEnabled() {
+        return bluetoothAdapter == null || !bluetoothAdapter.isEnabled();
+    }
+
+    /**
+     * Start or stop a scan for BLE devices
+     * @param enable If true, enables a scan, which will stop after
+     *               SCAN_PERIOD, otherwise stops a scan
+     */
+    public void scanBLEDevice(final boolean enable) {
         scanner = bluetoothAdapter.getBluetoothLeScanner();
         devices = new ArrayList<>();
         ScanFilter.Builder builder = new ScanFilter.Builder();
@@ -48,18 +69,6 @@ class BLEDeviceScanner {
         }
         settingsBuilder.setScanMode(scanMode);
         settings = settingsBuilder.build();
-    }
-
-    void attach(ScanResultCallback callback) {
-        resultCallback = callback;
-    }
-
-    /**
-     * Start or stop a scan for BLE devices
-     * @param enable If true, enables a scan, which will stop after
-     *               SCAN_PERIOD, otherwise stops a scan
-     */
-    void scanBLEDevice(final boolean enable) {
         if (enable) {
             // Stops scanning after a pre-defined scan period.
             new Handler().postDelayed(new Runnable() {
@@ -88,7 +97,7 @@ class BLEDeviceScanner {
             BluetoothDevice bleDevice = result.getDevice();
             Log.d(TAG, "Found device: " + bleDevice.getName());
             //devices.add(bleDevice);
-            resultCallback.foundDevice(bleDevice);
+            resultCallback.foundDevice(bleDevice.getName(), bleDevice.getAddress());
         }
 
         @Override
@@ -106,8 +115,12 @@ class BLEDeviceScanner {
         }
     }
 
-    interface ScanResultCallback {
-        void foundDevice(BluetoothDevice device);
+    public interface ScanResultCallback {
+        void foundDevice(String deviceName, String deviceAddress);
         void deviceNotFound();
+    }
+
+    public boolean isScanning() {
+        return scanning;
     }
 }

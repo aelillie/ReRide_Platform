@@ -15,7 +15,7 @@ BLEPeripheral blePeripheral;       // BLE Peripheral Device (the board you're pr
 BLEService sensingService("181A"); // BLE "Environmental Sensing"
 
 // BLE Battery Level Characteristic
-BLEUnsignedCharCharacteristic windDirChar("2A73",  // standard 16-bit characteristic UUID
+BLEUnsignedIntCharacteristic windDirChar("2A73",  // standard 16-bit characteristic UUID
     BLERead | BLENotify);     // remote clients will be able to get notifications if this characteristic changes
 
 //###Flex sensor properties###
@@ -60,7 +60,7 @@ void setup()
 // This function is called continuously, after setup() completes.
 void loop() 
 {
-  updateFlexAngle();
+  listenBLE();
   delay(500);
 }
 
@@ -104,7 +104,7 @@ void updateFlexAngle() {
     Serial.println("Resistance: " + String(flexR) + " ohms");
     Serial.println("Bend: " + String(uangle) + " degrees");
     Serial.println();
-    windDirChar.setValue(angle);
+    windDirChar.setValue(uangle);
     oldFlexAngle = angle;
   }
 }

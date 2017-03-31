@@ -45,6 +45,10 @@ public class BLEDeviceScanner {
         Log.d(TAG, "BLE adapter found");
     }
 
+    public void attachCallback(ScanResultCallback callback) {
+        resultCallback = callback;
+    }
+
     public boolean bleIsEnabled() {
         return bluetoothAdapter == null || !bluetoothAdapter.isEnabled();
     }

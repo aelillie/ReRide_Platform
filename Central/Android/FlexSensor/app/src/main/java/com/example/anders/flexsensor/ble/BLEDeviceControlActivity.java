@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -115,6 +116,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ble);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_ble);
 
         final Intent intent = getIntent();
         String deviceAddress = intent.getStringExtra(EXTRAS_DEVICE_ADDRESS);
@@ -127,8 +129,8 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         connectionState = (TextView) findViewById(R.id.connection_state);
         dataField = (TextView) findViewById(R.id.data_value);
 
-        getActionBar().setTitle(bluetoothDevice.getName());
-        getActionBar().setDisplayHomeAsUpEnabled(true);
+        toolbar.setTitle(bluetoothDevice.getName());
+        setSupportActionBar(toolbar);
         Intent gattServiceIntent = new Intent(this, BLEService.class);
         bindService(gattServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
     }

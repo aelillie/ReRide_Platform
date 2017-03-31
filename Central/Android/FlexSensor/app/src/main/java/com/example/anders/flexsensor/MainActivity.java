@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -30,12 +31,16 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getActionBar().setTitle(R.string.app_name);
+        setContentView(R.layout.activity_main);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_main);
+        toolbar.setTitle(R.string.device_scan_title);
+        setSupportActionBar(toolbar);
 
         checkForBLESupport();
         askForLocationPermission();
         flexSensorManager = new FlexSensorManager(this);
         bleDeviceScanner = new BLEDeviceScanner(this);
+        bleDeviceScanner.attachCallback(this);
 
     }
 
@@ -87,9 +92,12 @@ public class MainActivity extends AppCompatActivity
         if (bleDeviceScanner.isScanning()) {
             menu.findItem(R.id.menu_scan).setVisible(false);
             menu.findItem(R.id.menu_stop).setVisible(true);
+            menu.findItem(R.id.menu_refresh).setActionView(null);
         } else {
             menu.findItem(R.id.menu_scan).setVisible(true);
             menu.findItem(R.id.menu_stop).setVisible(false);
+            menu.findItem(R.id.menu_refresh).setActionView(
+                    R.layout.actionbar_intermediate_status);
         }
         return true;
     }

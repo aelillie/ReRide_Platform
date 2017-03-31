@@ -1,5 +1,6 @@
 <resources>
-    <string name="app_name">FlexSensor</string>
+    <string name="app_name">ReRide BLE</string>
+    <string name="device_scan_title">BLE Control</string>
     <string name="updateAngleButton">Update shadow!</string>
     <string name="refreshShadowButton">Refresh!</string>
     <string name="state_description">Desired state</string>
@@ -9,7 +10,6 @@
     <string name="connectStateDescription">Whether a GATT connection is established or not</string>
     <string name="menu_scan">Scan</string>
     <string name="menu_stop">Stop</string>
-    <string name="app_title">ReRide</string>
     <string name="ble_not_supported">BLE is not supported</string>
     <string name="label_device_name">Device name:</string>
     <string name="label_state">State:</string>

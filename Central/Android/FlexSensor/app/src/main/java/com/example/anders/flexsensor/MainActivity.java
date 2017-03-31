@@ -116,7 +116,6 @@ public class MainActivity extends AppCompatActivity
     public void foundDevice(String deviceName, String deviceAddress) {
         Toast.makeText(this, "Success", Toast.LENGTH_SHORT).show();
         final Intent intent = new Intent(this, BLEDeviceControlActivity.class);
-        intent.putExtra(BLEDeviceControlActivity.EXTRAS_DEVICE_NAME, deviceName);
         intent.putExtra(BLEDeviceControlActivity.EXTRAS_DEVICE_ADDRESS, deviceAddress);
         if (bleDeviceScanner.isScanning()) {
             bleDeviceScanner.scanBLEDevice(false);

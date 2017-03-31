@@ -1,7 +1,10 @@
 package com.example.anders.flexsensor.ble;
 
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattService;
+import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -29,20 +32,22 @@ import java.util.List;
 public class BLEDeviceControlActivity extends AppCompatActivity {
     private final static String TAG = BLEDeviceControlActivity.class.getSimpleName();
 
-    public static final String EXTRAS_DEVICE_NAME = "DEVICE_NAME";
     public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
 
-    private BLEService bleService;
+    //UI information
     private boolean connected;
+    private TextView connectionState;
+    private TextView dataField;
 
     private BluetoothGattCharacteristic notifyCharacteristic;
-
+    private BLEService bleService;
+    private BluetoothDevice bluetoothDevice;
 
     private final ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
             bleService = ((BLEService.LocalBinder) service).getService();
-            bleService.connect(deviceAddress);
+            bleService.connect(bluetoothDevice);
         }
 
         @Override
@@ -86,6 +91,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         }
     };
 
+
     private void announce(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
@@ -104,10 +110,6 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         dataField.setText(R.string.no_data);
     }
 
-    private String deviceName;
-    private String deviceAddress;
-    private TextView connectionState;
-    private TextView dataField;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -115,14 +117,17 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         setContentView(R.layout.activity_ble);
 
         final Intent intent = getIntent();
-        deviceName = intent.getStringExtra(EXTRAS_DEVICE_NAME);
-        deviceAddress = intent.getStringExtra(EXTRAS_DEVICE_ADDRESS);
+        String deviceAddress = intent.getStringExtra(EXTRAS_DEVICE_ADDRESS);
 
-        ((TextView) findViewById(R.id.deviceInfoText)).setText(deviceAddress);
+        BluetoothAdapter bluetoothAdapter = ((BluetoothManager)
+                getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
+        bluetoothDevice = bluetoothAdapter.getRemoteDevice(deviceAddress);
+
+        ((TextView) findViewById(R.id.device_address)).setText(deviceAddress);
         connectionState = (TextView) findViewById(R.id.connection_state);
         dataField = (TextView) findViewById(R.id.data_value);
 
-        getActionBar().setTitle(deviceName);
+        getActionBar().setTitle(bluetoothDevice.getName());
         getActionBar().setDisplayHomeAsUpEnabled(true);
         Intent gattServiceIntent = new Intent(this, BLEService.class);
         bindService(gattServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
@@ -159,7 +164,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         super.onResume();
         registerReceiver(gattUpdateReceiver, makeGattUpdateIntentFilter());
         if (bleService != null) {
-            final boolean result = bleService.connect(deviceAddress);
+            final boolean result = bleService.connect(bluetoothDevice);
             Log.d(TAG, "Connect request result=" + result);
         }
     }
@@ -194,7 +199,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
             case R.id.menu_connect:
-                bleService.connect(deviceAddress);
+                bleService.connect(bluetoothDevice);
                 return true;
             case R.id.menu_disconnect:
                 bleService.disconnect();

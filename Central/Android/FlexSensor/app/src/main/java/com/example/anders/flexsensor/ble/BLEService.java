@@ -153,9 +153,9 @@ public class BLEService extends Service{
         return super.onUnbind(intent);
     }
 
-    public boolean connect(String deviceAddress) {
-        if (bluetoothDeviceAddress != null &&
-                deviceAddress.equals(bluetoothDeviceAddress)) {
+    public boolean connect(BluetoothDevice bluetoothDevice) {
+        if (bluetoothDeviceAddress != null && bluetoothGatt != null
+            && bluetoothDevice.getAddress().equals(bluetoothDeviceAddress)) {
             Log.d(TAG, "Trying to use an existing bluetooth gatt for connection.");
             if (bluetoothGatt.connect()) {
                 connectionState = STATE_CONNECTING;
@@ -163,9 +163,9 @@ public class BLEService extends Service{
             } else return false;
         }
         //No existing GATT connection established. Find new
-        bluetoothGatt = device.connectGatt(this, false, gattCallback);
+        bluetoothGatt = bluetoothDevice.connectGatt(this, false, gattCallback);
         Log.d(TAG, "Trying to create a new connection.");
-        bluetoothDeviceAddress = device.getAddress();
+        bluetoothDeviceAddress = bluetoothDevice.getAddress();
         connectionState = STATE_CONNECTING;
         return true;
 

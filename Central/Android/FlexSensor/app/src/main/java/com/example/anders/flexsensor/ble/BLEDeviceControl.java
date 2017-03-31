@@ -96,14 +96,12 @@ class BLEDeviceControl {
         String uuid;
         for (BluetoothGattService gattService : supportedGattServices) {
             uuid = gattService.getUuid().toString();
-            String serviceName = GattAttributes.lookup(uuid, "unknown");
-            if (serviceName.equals("Battery Service")) {
+            if (uuid.equals(GattAttributes.APPARENT_WIND_DIRECTION)) {
                 List<BluetoothGattCharacteristic> gattCharacteristics =
                         gattService.getCharacteristics();
                 for(BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
                     uuid = gattCharacteristic.getUuid().toString();
-                    String charaName = GattAttributes.lookup(uuid, "unknown");
-                    if (charaName.equals("Battery Level")) {
+                    if (uuid.equals(GattAttributes.APPARENT_WIND_DIRECTION)) {
                         readCharacteristic(gattCharacteristic); //TODO: Stream this
                         break;
                     }

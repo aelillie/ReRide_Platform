@@ -12,11 +12,12 @@ class GattAttributes {
     private static HashMap<String, String> attributes = new HashMap<>();
     //static String BATTERY_LEVEL = uuidSStringFromUInt16("2a19");
     static String APPARENT_WIND_DIRECTION = uuidSStringFromUInt16("2a73");
+    static String ENVIRONMENTAL_SENSING = uuidSStringFromUInt16("181a");
 
     static {
         //Services
         //attributes.put(uuidSStringFromUInt16("180f"), "Battery Service");
-        attributes.put(uuidSStringFromUInt16("181a"), "Environmental Sensing");
+        attributes.put(ENVIRONMENTAL_SENSING, "Environmental Sensing");
 
         //Characteristics
         //attributes.put(BATTERY_LEVEL, "Battery Level");

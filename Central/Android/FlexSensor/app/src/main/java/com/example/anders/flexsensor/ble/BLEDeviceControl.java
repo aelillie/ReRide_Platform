@@ -96,7 +96,7 @@ class BLEDeviceControl {
         String uuid;
         for (BluetoothGattService gattService : supportedGattServices) {
             uuid = gattService.getUuid().toString();
-            if (uuid.equals(GattAttributes.APPARENT_WIND_DIRECTION)) {
+            if (uuid.equals(GattAttributes.ENVIRONMENTAL_SENSING)) {
                 List<BluetoothGattCharacteristic> gattCharacteristics =
                         gattService.getCharacteristics();
                 for(BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {

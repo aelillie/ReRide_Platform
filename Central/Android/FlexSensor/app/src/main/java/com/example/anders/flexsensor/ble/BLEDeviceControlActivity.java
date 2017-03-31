@@ -131,6 +131,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
 
         toolbar.setTitle(bluetoothDevice.getName());
         setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         Intent gattServiceIntent = new Intent(this, BLEService.class);
         bindService(gattServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
     }

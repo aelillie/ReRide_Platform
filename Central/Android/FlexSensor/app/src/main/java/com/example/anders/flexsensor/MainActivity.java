@@ -53,7 +53,6 @@ public class MainActivity extends AppCompatActivity
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
-        bleDeviceScanner.scanBLEDevice(true);
     }
 
     @Override
@@ -106,12 +105,12 @@ public class MainActivity extends AppCompatActivity
         switch (item.getItemId()) {
             case R.id.menu_scan:
                 bleDeviceScanner.scanBLEDevice(true);
-                break;
+                return true;
             case R.id.menu_stop:
                 bleDeviceScanner.scanBLEDevice(false);
-                break;
+                return true;
+            default: return super.onOptionsItemSelected(item);
         }
-        return true;
     }
 
 

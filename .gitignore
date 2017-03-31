@@ -44,7 +44,7 @@ captures/
 .idea/dictionaries
 .idea/libraries
 #Personally added:
-.idea/inspectionProfiles/
+.idea/inspectionProfiles
 
 # Keystore files
 *.jks

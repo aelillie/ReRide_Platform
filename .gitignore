@@ -45,6 +45,8 @@ captures/
 .idea/libraries
 #Personally added:
 .idea/**
+.idea/**/
+.idea/inspectionProfiles/
 
 # Keystore files
 *.jks

@@ -19,6 +19,8 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -39,6 +41,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private boolean connected;
     private TextView connectionState;
     private TextView dataField;
+    private Button getDataButton;
 
     private BluetoothGattCharacteristic notifyCharacteristic;
     private BLEService bleService;
@@ -65,9 +68,10 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                 case BLEService.ACTION_GATT_CONNECTED: {
                     connected = true;
                     //UI info on connection
-                    updateConnectionState(R.string.conected);
                     announce("Connected");
+                    updateConnectionState(R.string.conected);
                     invalidateOptionsMenu();
+                    updateUI();
                     break;
                 }
                 case BLEService.ACTION_GATT_DISCONNECTED: {
@@ -92,6 +96,10 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         }
     };
 
+    private void updateUI() {
+        getDataButton.setEnabled(true);
+    }
+
 
     private void announce(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
@@ -109,6 +117,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
 
     private void clearUI() {
         dataField.setText(R.string.no_data);
+        getDataButton.setEnabled(false);
     }
 
 
@@ -128,6 +137,14 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         ((TextView) findViewById(R.id.device_address)).setText(deviceAddress);
         connectionState = (TextView) findViewById(R.id.connection_state);
         dataField = (TextView) findViewById(R.id.data_value);
+        getDataButton = (Button) findViewById(R.id.get_data_button);
+        getDataButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                getDataButton.setEnabled(false);
+                streamData();
+            }
+        });
 
         toolbar.setTitle(bluetoothDevice.getName());
         setSupportActionBar(toolbar);
@@ -136,6 +153,9 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         bindService(gattServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
 
+    private void streamData() {
+        announce("Streaming data!");
+    }
 
 
     private void handleData(String data) {
@@ -169,6 +189,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         if (bleService != null) {
             final boolean result = bleService.connect(bluetoothDevice);
             Log.d(TAG, "Connect request result=" + result);
+            if (result) getDataButton.setEnabled(true);
         }
     }
 
@@ -176,6 +197,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         unregisterReceiver(gattUpdateReceiver);
+        getDataButton.setEnabled(false);
     }
 
     @Override

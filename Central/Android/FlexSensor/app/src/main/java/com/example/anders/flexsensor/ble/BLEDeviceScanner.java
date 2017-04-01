@@ -27,7 +27,6 @@ public class BLEDeviceScanner {
 
     private boolean scanning;
     private BluetoothLeScanner scanner;
-    private List<BluetoothDevice> devices;
     private List<ScanFilter> filters;
     private ScanSettings settings;
     private BLECallback callback;
@@ -43,6 +42,19 @@ public class BLEDeviceScanner {
                 context.getSystemService(Context.BLUETOOTH_SERVICE);
         bluetoothAdapter = bluetoothManager.getAdapter();
         Log.d(TAG, "BLE adapter found");
+        scanner = bluetoothAdapter.getBluetoothLeScanner();
+        ScanFilter.Builder builder = new ScanFilter.Builder();
+        builder.setDeviceName("ReRide");
+        filters = new ArrayList<>();
+        filters.add(builder.build());
+        callback = new BLECallback();
+        ScanSettings.Builder settingsBuilder = new ScanSettings.Builder();
+        int scanMode = ScanSettings.SCAN_MODE_BALANCED;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            scanMode = ScanSettings.CALLBACK_TYPE_FIRST_MATCH;
+        }
+        settingsBuilder.setScanMode(scanMode);
+        settings = settingsBuilder.build();
     }
 
     public void attachCallback(ScanResultCallback callback) {
@@ -59,20 +71,6 @@ public class BLEDeviceScanner {
      *               SCAN_PERIOD, otherwise stops a scan
      */
     public void scanBLEDevice(final boolean enable) {
-        scanner = bluetoothAdapter.getBluetoothLeScanner();
-        devices = new ArrayList<>();
-        ScanFilter.Builder builder = new ScanFilter.Builder();
-        builder.setDeviceName("ReRide");
-        filters = new ArrayList<>();
-        filters.add(builder.build());
-        callback = new BLECallback();
-        ScanSettings.Builder settingsBuilder = new ScanSettings.Builder();
-        int scanMode = ScanSettings.SCAN_MODE_BALANCED;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            scanMode = ScanSettings.CALLBACK_TYPE_FIRST_MATCH;
-        }
-        settingsBuilder.setScanMode(scanMode);
-        settings = settingsBuilder.build();
         if (enable) {
             // Stops scanning after a pre-defined scan period.
             new Handler().postDelayed(new Runnable() {

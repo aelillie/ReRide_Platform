@@ -62,5 +62,16 @@
                   android:text="@string/no_data"
                   android:textSize="18sp"/>
     </LinearLayout>
+    <LinearLayout android:orientation="horizontal"
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_margin="10dp">
+        <Button
+            android:id="@+id/get_data_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/get_data_button_text"
+            android:enabled="false"/>
+    </LinearLayout>
 
 </LinearLayout>

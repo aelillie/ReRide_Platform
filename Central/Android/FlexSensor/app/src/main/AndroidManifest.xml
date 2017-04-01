@@ -21,7 +21,9 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".ble.BLEDeviceControlActivity"/>
+        <activity android:name=".ble.BLEDeviceControlActivity"
+            android:parentActivityName=".MainActivity">
+        </activity>
         <service android:name=".ble.BLEService"/>
     </application>
 

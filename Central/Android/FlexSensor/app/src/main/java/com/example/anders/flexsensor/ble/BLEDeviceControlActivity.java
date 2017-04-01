@@ -195,7 +195,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
             menu.findItem(R.id.menu_connect).setVisible(true);
             menu.findItem(R.id.menu_disconnect).setVisible(false);
         }
-        return true;
+        return super.onCreateOptionsMenu(menu);
     }
 
     @Override
@@ -207,11 +207,8 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
             case R.id.menu_disconnect:
                 bleService.disconnect();
                 return true;
-            case android.R.id.home:
-                onBackPressed();
-                return true;
+            default: return super.onOptionsItemSelected(item);
         }
-        return super.onOptionsItemSelected(item);
     }
 
     private void readCharacteristic(BluetoothGattCharacteristic characteristic) {

@@ -20,4 +20,5 @@
     <string name="menu_connect">Connect</string>
     <string name="menu_disconnect">Disconnect</string>
     <string name="conected">Connected</string>
+    <string name="action_settings">Settings</string>
 </resources>

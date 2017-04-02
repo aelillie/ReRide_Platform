@@ -5,6 +5,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
 import android.content.Intent;
@@ -45,6 +46,8 @@ public class BLEService extends Service{
             "com.example.anders.flexsensor.ACTION_DATA_AVAILABLE";
     public static final String EXTRA_DATA =
             "com.example.anders.flexsensor.EXTRA_DATA";
+    public static final String ACTION_WRITE =
+            "com.example.anders.flexsensor.ACTION_WRITE";
 
     private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
         /*
@@ -84,7 +87,8 @@ public class BLEService extends Service{
 
         //Callback reporting the result of a characteristic read operation.
         @Override
-        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+        public void onCharacteristicRead(BluetoothGatt gatt,
+                                         BluetoothGattCharacteristic characteristic, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
             }
@@ -96,6 +100,16 @@ public class BLEService extends Service{
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
             broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
+        }
+
+        @Override
+        public void onDescriptorWrite(BluetoothGatt gatt,
+                                      BluetoothGattDescriptor descriptor, int status) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                broadcastUpdate(ACTION_WRITE);
+            }else {
+                Log.w(TAG, "onDescriptorWrite received: " + status);
+            }
         }
     };
 
@@ -183,13 +197,17 @@ public class BLEService extends Service{
         bluetoothGatt = null;
     }
 
+    public boolean writeDescriptor(BluetoothGattDescriptor descriptor) {
+        return bluetoothGatt.writeDescriptor(descriptor);
+    }
+
     public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
         bluetoothGatt.readCharacteristic(characteristic);
     }
 
-    public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic,
+    public boolean setCharacteristicNotification(BluetoothGattCharacteristic characteristic,
                                               boolean enabled) {
-        bluetoothGatt.setCharacteristicNotification(characteristic, enabled);
+        return bluetoothGatt.setCharacteristicNotification(characteristic, enabled);
     }
 
     public List<BluetoothGattService> getSupportedGattServices() {

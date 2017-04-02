@@ -3,6 +3,7 @@ package com.example.anders.flexsensor.ble;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
@@ -91,6 +92,11 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                     handleData(intent.getStringExtra(BLEService.EXTRA_DATA));
                     break;
                 }
+                case BLEService.ACTION_WRITE: {
+                    announce("Descriptor written");
+                    break;
+                }
+                default: Log.d(TAG, "Action not implemented"); break;
             }
         }
     };
@@ -182,6 +188,19 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                     uuid = gattCharacteristic.getUuid().toString();
                     if (uuid.equals(GattAttributes.APPARENT_WIND_DIRECTION)) {
                         mGattCharacteristic = gattCharacteristic;
+                        List<BluetoothGattDescriptor> descriptors =
+                                gattCharacteristic.getDescriptors();
+                        for (BluetoothGattDescriptor descriptor : descriptors) {
+                            uuid = descriptor.getUuid().toString();
+                            if (uuid.equals(GattAttributes.CLIENT_CHARACTERISTIC_CONFIGURATION)){
+                                descriptor.setValue(
+                                        BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                                if (!bleService.writeDescriptor(descriptor)) {
+                                    Log.d(TAG, "Unable to write descriptor");
+                                }
+                                break;
+                            }
+                        }
                         break;
                     }
                 }
@@ -218,20 +237,22 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
 
     private void readCharacteristic(BluetoothGattCharacteristic characteristic) {
         final int charaProp = characteristic.getProperties();
-        if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
-            // If there is an active notification on a characteristic, clear
-            // it first so it doesn't update the data field on the user interface.
-            if (notifyCharacteristic != null) {
-                bleService.setCharacteristicNotification(
-                        notifyCharacteristic, false);
-                notifyCharacteristic = null;
-            }
-            bleService.readCharacteristic(characteristic);
-        }
+//        if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
+//            // If there is an active notification on a characteristic, clear
+//            // it first so it doesn't update the data field on the user interface.
+//            if (notifyCharacteristic != null) {
+//                bleService.setCharacteristicNotification(
+//                        notifyCharacteristic, false);
+//                notifyCharacteristic = null;
+//            }
+//            bleService.readCharacteristic(characteristic);
+//        }
         if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
             notifyCharacteristic = characteristic;
-            bleService.setCharacteristicNotification(
-                    characteristic, true);
+            if (!bleService.setCharacteristicNotification(characteristic, true)) {
+                Toast.makeText(this, "Enable notifications failed",
+                        Toast.LENGTH_SHORT).show();
+            }
         }
     }
 

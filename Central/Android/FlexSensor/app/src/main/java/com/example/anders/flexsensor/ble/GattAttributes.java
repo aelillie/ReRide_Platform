@@ -13,6 +13,7 @@ class GattAttributes {
     //static String BATTERY_LEVEL = uuidSStringFromUInt16("2a19");
     static String APPARENT_WIND_DIRECTION = uuidSStringFromUInt16("2a73");
     static String ENVIRONMENTAL_SENSING = uuidSStringFromUInt16("181a");
+    static String CLIENT_CHARACTERISTIC_CONFIGURATION = uuidSStringFromUInt16("2902");
 
     static {
         //Services
@@ -22,6 +23,9 @@ class GattAttributes {
         //Characteristics
         //attributes.put(BATTERY_LEVEL, "Battery Level");
         attributes.put(APPARENT_WIND_DIRECTION, "Apparent Wind Direction");
+
+        //Descriptors
+        attributes.put(CLIENT_CHARACTERISTIC_CONFIGURATION, "Client Characteristic Configuration");
     }
 
     static String lookup(String uuid, String defaultName) {

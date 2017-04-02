@@ -67,7 +67,7 @@ void loop()
 void listenBLE() {
   // listen for BLE centrals to connect:
   BLECentral central = blePeripheral.central();
-
+ 
   // if a central is connected to peripheral:
   if (central) {
     Serial.print("Connected to central: ");

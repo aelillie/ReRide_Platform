@@ -17,8 +17,6 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -69,7 +67,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                     connected = true;
                     //UI info on connection
                     announce("Connected");
-                    updateConnectionState(R.string.conected);
+                    updateConnectionState(R.string.connected);
                     invalidateOptionsMenu();
                     updateUI();
                     break;
@@ -196,6 +194,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        bleService.disconnect();
         unregisterReceiver(gattUpdateReceiver);
         getDataButton.setEnabled(false);
     }
@@ -205,35 +204,6 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         super.onDestroy();
         unbindService(serviceConnection);
         bleService = null;
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.ble_periphiral, menu);
-        if (connected) {
-            menu.findItem(R.id.menu_connect).setVisible(false);
-            menu.findItem(R.id.menu_disconnect).setVisible(true);
-        } else {
-            menu.findItem(R.id.menu_connect).setVisible(true);
-            menu.findItem(R.id.menu_disconnect).setVisible(false);
-        }
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()) {
-            case R.id.menu_connect:
-                bleService.connect(bluetoothDevice);
-                return true;
-            case R.id.menu_disconnect:
-                bleService.disconnect();
-                return true;
-            case android.R.id.home:
-                onBackPressed();
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     private void readCharacteristic(BluetoothGattCharacteristic characteristic) {

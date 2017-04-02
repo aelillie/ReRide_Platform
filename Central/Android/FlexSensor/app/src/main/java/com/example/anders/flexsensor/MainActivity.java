@@ -44,8 +44,6 @@ public class MainActivity extends AppCompatActivity implements FlexSensorManager
     private static final long SCAN_PERIOD = 10000; // Stops scanning after 10 seconds.
     private static final String DEVICE_NAME = "ReRide";
 
-    private FlexSensorManager flexSensorManager;
-
     private List<BluetoothDevice> devices;
 
     private ViewAdapter adapter;
@@ -96,7 +94,6 @@ public class MainActivity extends AppCompatActivity implements FlexSensorManager
 
         checkForBLESupport();
         askForLocationPermission();
-        flexSensorManager = new FlexSensorManager(this);
         setupScanSettings();
     }
 

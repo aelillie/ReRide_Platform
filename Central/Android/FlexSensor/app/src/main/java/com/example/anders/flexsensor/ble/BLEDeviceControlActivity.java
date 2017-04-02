@@ -22,6 +22,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.anders.flexsensor.FlexSensorManager;
 import com.example.anders.flexsensor.R;
 
 import java.util.List;
@@ -93,6 +94,8 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
             }
         }
     };
+    private BluetoothGattCharacteristic mGattCharacteristic;
+    private FlexSensorManager mAWSManager;
 
     private void updateUI() {
         getDataButton.setEnabled(true);
@@ -125,6 +128,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         setContentView(R.layout.activity_ble);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_ble);
 
+        mAWSManager = new FlexSensorManager(this);
         final Intent intent = getIntent();
         String deviceAddress = intent.getStringExtra(EXTRAS_DEVICE_ADDRESS);
 
@@ -153,11 +157,17 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
 
     private void streamData() {
         announce("Streaming data!");
+        if (mGattCharacteristic != null) {
+            readCharacteristic(mGattCharacteristic);
+        } else {
+            announce("No characteristic available");
+        }
     }
 
 
     private void handleData(String data) {
         dataField.setText(data);
+        mAWSManager.update(data);
     }
 
     private void searchGattServices(List<BluetoothGattService> supportedGattServices) {
@@ -171,7 +181,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                 for(BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
                     uuid = gattCharacteristic.getUuid().toString();
                     if (uuid.equals(GattAttributes.APPARENT_WIND_DIRECTION)) {
-                        readCharacteristic(gattCharacteristic); //TODO: Stream this
+                        mGattCharacteristic = gattCharacteristic;
                         break;
                     }
                 }

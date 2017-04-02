@@ -1,5 +1,6 @@
 package com.example.anders.flexsensor;
 
+import android.content.Context;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -41,13 +42,10 @@ public class FlexSensorManager {
 
     private AWSIotDataClient iotDataClient;
 
-    private CallBack callBack;
-
-    public FlexSensorManager(MainActivity callBack) {
-        this.callBack = callBack;
+    public FlexSensorManager(Context context) {
         // Initialize the Amazon Cognito credentials provider
         credentialsProvider = new CognitoCachingCredentialsProvider(
-                callBack.getApplicationContext(),
+                context,
                 COGNITO_POOL_ID, // Identity Pool ID
                 MY_REGION // Region
         );
@@ -76,8 +74,6 @@ public class FlexSensorManager {
 
         Log.i(LOG_TAG, String.format("angle:  %d", ts.state.desired.angle));
         Log.i(LOG_TAG, String.format("curState: %s", ts.state.desired.curState));
-
-        callBack.updatedState(ts.state.desired.angle);
     }
 
     private class GetShadowTask extends AsyncTask<Void, Void, AsyncTaskResult<String>> {

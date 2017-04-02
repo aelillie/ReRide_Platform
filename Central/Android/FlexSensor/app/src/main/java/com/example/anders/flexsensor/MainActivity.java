@@ -58,6 +58,7 @@ public class MainActivity extends AppCompatActivity implements FlexSensorManager
 
     private BluetoothAdapter bluetoothAdapter;
     private boolean mDeviceFound;
+    private Handler mHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +67,11 @@ public class MainActivity extends AppCompatActivity implements FlexSensorManager
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_main);
         toolbar.setTitle(R.string.device_scan_title);
         setSupportActionBar(toolbar);
+        mHandler = new Handler();
+
+        askForLocationPermission();
+        checkForBLESupport();
+        setupScanSettings();
 
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.devices_recycler_view);
         //recyclerView.setHasFixedSize(true);
@@ -84,17 +90,13 @@ public class MainActivity extends AppCompatActivity implements FlexSensorManager
                     scanBLEDevice(false);
                     onScanStop();
                 } else { //Initiate scan
+                    resetScanResult();
                     mProgressBar.setVisibility(View.VISIBLE);
                     scanBLEDevice(true);
                     mScanButton.setText(R.string.stop);
                 }
             }
         });
-
-
-        checkForBLESupport();
-        askForLocationPermission();
-        setupScanSettings();
     }
 
     private void onScanStop() {
@@ -129,14 +131,14 @@ public class MainActivity extends AppCompatActivity implements FlexSensorManager
     protected void onPause() {
         super.onPause();
         scanBLEDevice(false);
+        resetScanResult();
+    }
+
+    private void resetScanResult() {
+        if (devices.isEmpty()) return;
         devices.clear();
         adapter.clear();
         adapter.notifyDataSetChanged();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
     }
 
     @Override
@@ -216,7 +218,10 @@ public class MainActivity extends AppCompatActivity implements FlexSensorManager
                             BLEDeviceControlActivity.class);
                     intent.putExtra(BLEDeviceControlActivity.EXTRAS_DEVICE_ADDRESS,
                             device.getAddress());
-                    scanBLEDevice(false);
+                    if (scanning) {
+                        scanner.stopScan(callback);
+                        scanning = false;
+                    }
                     startActivity(intent);
                 }
             });
@@ -249,10 +254,13 @@ public class MainActivity extends AppCompatActivity implements FlexSensorManager
      *               SCAN_PERIOD, otherwise stops a scan
      */
     private void scanBLEDevice(final boolean enable) {
-
+        if (bluetoothAdapter == null) {
+            Toast.makeText(this, "BT not enabled",
+                    Toast.LENGTH_LONG).show();
+        }
         if (enable) {
             // Stops scanning after a pre-defined scan period.
-            new Handler().postDelayed(new Runnable() {
+            mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     scanning = false;
@@ -262,7 +270,7 @@ public class MainActivity extends AppCompatActivity implements FlexSensorManager
             }, SCAN_PERIOD);
 
             scanning = true;
-            scanner.startScan(filters, settings,callback);
+            scanner.startScan(callback); //filters, settings
         } else {
             scanning = false;
             scanner.stopScan(callback);
@@ -276,10 +284,7 @@ public class MainActivity extends AppCompatActivity implements FlexSensorManager
             mDeviceFound = true;
             BluetoothDevice bleDevice = result.getDevice();
             Log.d(TAG, "Found device");
-            devices.add(bleDevice);
-            adapter.notifyItemChanged(devices.indexOf(bleDevice));
-            if (callbackType != ScanSettings.CALLBACK_TYPE_FIRST_MATCH
-                    && devices.contains(bleDevice)) return;
+            if (devices.contains(bleDevice)) return;
             devices.add(bleDevice);
             adapter.notifyItemChanged(devices.indexOf(bleDevice));
         }

@@ -18,12 +18,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.anders.flexsensor.ble.BLEDeviceControlActivity;
 import com.example.anders.flexsensor.ble.BLEDeviceScanner;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -54,8 +56,26 @@ public class MainActivity extends AppCompatActivity
         recyclerView.setHasFixedSize(true);
         layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
+        devices = new ArrayList<>();
         adapter = new ViewAdapter(devices);
         recyclerView.setAdapter(adapter);
+
+        final Button scanButton = (Button) findViewById(R.id.scan_button);
+        final ProgressBar progressBar = (ProgressBar) findViewById(R.id.scan_progress);
+        scanButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (bleDeviceScanner.isScanning()) {
+                    progressBar.setVisibility(View.INVISIBLE);
+                    bleDeviceScanner.scanBLEDevice(false);
+                    scanButton.setText(R.string.scan);
+                } else { //Initiate scan
+                    progressBar.setVisibility(View.VISIBLE);
+                    bleDeviceScanner.scanBLEDevice(true);
+                    scanButton.setText(R.string.stop);
+                }
+            }
+        });
 
 
         checkForBLESupport();

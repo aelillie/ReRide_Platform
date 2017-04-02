@@ -17,8 +17,6 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -65,7 +63,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                 case BLEService.ACTION_GATT_CONNECTED: {
                     connected = true;
                     //UI info on connection
-                    updateConnectionState(R.string.conected);
+                    updateConnectionState(R.string.connected);
                     announce("Connected");
                     invalidateOptionsMenu();
                     break;
@@ -134,7 +132,6 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         Intent gattServiceIntent = new Intent(this, BLEService.class);
         bindService(gattServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
-        bleService.connect(bluetoothDevice);
     }
 
 

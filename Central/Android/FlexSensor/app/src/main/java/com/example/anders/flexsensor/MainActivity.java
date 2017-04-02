@@ -1,9 +1,8 @@
 package com.example.anders.flexsensor;
 
-import com.example.anders.flexsensor.ble.BLEDeviceControlActivity;
-import com.example.anders.flexsensor.ble.BLEDeviceScanner;
 import android.Manifest;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -11,11 +10,21 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.example.anders.flexsensor.ble.BLEDeviceControlActivity;
+import com.example.anders.flexsensor.ble.BLEDeviceScanner;
+
+import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity
@@ -27,6 +36,11 @@ public class MainActivity extends AppCompatActivity
 
     private FlexSensorManager flexSensorManager;
     private BLEDeviceScanner bleDeviceScanner;
+    private List<BluetoothDevice> devices;
+
+    private RecyclerView recyclerView;
+    private RecyclerView.Adapter adapter;
+    private RecyclerView.LayoutManager layoutManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +49,14 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_main);
         toolbar.setTitle(R.string.device_scan_title);
         setSupportActionBar(toolbar);
+
+        recyclerView = (RecyclerView) findViewById(R.id.devices_recycler_view);
+        recyclerView.setHasFixedSize(true);
+        layoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(layoutManager);
+        adapter = new ViewAdapter(devices);
+        recyclerView.setAdapter(adapter);
+
 
         checkForBLESupport();
         askForLocationPermission();
@@ -85,34 +107,6 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main, menu);
-        if (bleDeviceScanner.isScanning()) {
-            menu.findItem(R.id.menu_scan).setVisible(false);
-            menu.findItem(R.id.menu_stop).setVisible(true);
-            menu.findItem(R.id.menu_refresh).setActionView(
-                    R.layout.actionbar_intermediate_status);
-        } else {
-            menu.findItem(R.id.menu_scan).setVisible(true);
-            menu.findItem(R.id.menu_stop).setVisible(false);
-            menu.findItem(R.id.menu_refresh).setActionView(null);
-        }
-        return super.onCreateOptionsMenu(menu);
-    }
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.menu_scan:
-                bleDeviceScanner.scanBLEDevice(true);
-                return true;
-            case R.id.menu_stop:
-                bleDeviceScanner.scanBLEDevice(false);
-                return true;
-            default: return super.onOptionsItemSelected(item);
-        }
-    }
-
 
     @Override
     public void updatedState(int newState) {
@@ -120,18 +114,63 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void foundDevice(String deviceName, String deviceAddress) {
+    public void foundDevice(BluetoothDevice device) {
         Toast.makeText(this, "Success", Toast.LENGTH_SHORT).show();
-        final Intent intent = new Intent(this, BLEDeviceControlActivity.class);
-        intent.putExtra(BLEDeviceControlActivity.EXTRAS_DEVICE_ADDRESS, deviceAddress);
-        if (bleDeviceScanner.isScanning()) {
-            bleDeviceScanner.scanBLEDevice(false);
-        }
-        startActivity(intent);
+        devices.add(device);
+        adapter.notifyItemChanged(devices.indexOf(device));
     }
 
     @Override
     public void deviceNotFound() {
         Toast.makeText(this, "No device found!", Toast.LENGTH_SHORT).show();
+    }
+
+    private class ViewAdapter extends RecyclerView.Adapter<ViewAdapter.ItemViewHolder> {
+        private List<BluetoothDevice> devices;
+        ViewAdapter(List<BluetoothDevice> devices) {
+            this.devices = devices;
+        }
+
+        @Override
+        public ViewAdapter.ItemViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            TextView v = (TextView) LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.list_item, parent, false);
+            return new ItemViewHolder(v);
+        }
+
+        @Override
+        public void onBindViewHolder(ItemViewHolder holder, int position) {
+            final BluetoothDevice device = devices.get(position);
+            holder.deviceName.setText(device.getName());
+            holder.connectButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    final Intent intent = new Intent(getApplicationContext(),
+                            BLEDeviceControlActivity.class);
+                    intent.putExtra(BLEDeviceControlActivity.EXTRAS_DEVICE_ADDRESS,
+                            device.getAddress());
+                    if (bleDeviceScanner.isScanning()) {
+                        bleDeviceScanner.scanBLEDevice(false);
+                    }
+                    startActivity(intent);
+                }
+            });
+        }
+
+        @Override
+        public int getItemCount() {
+            return devices.size();
+        }
+
+        class ItemViewHolder extends RecyclerView.ViewHolder {
+            TextView deviceName;
+            Button connectButton;
+
+            ItemViewHolder(View itemView) {
+                super(itemView);
+                deviceName = (TextView) itemView.findViewById(R.id.item_text);
+                connectButton = (Button) itemView.findViewById(R.id.connect_button);
+            }
+        }
     }
 }

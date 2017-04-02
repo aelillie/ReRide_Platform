@@ -100,8 +100,7 @@ public class BLEDeviceScanner {
             deviceFound = true;
             BluetoothDevice bleDevice = result.getDevice();
             Log.d(TAG, "Found device: " + bleDevice.getName());
-            //devices.add(bleDevice);
-            resultCallback.foundDevice(bleDevice.getName(), bleDevice.getAddress());
+            resultCallback.foundDevice(bleDevice);
         }
 
         @Override
@@ -120,7 +119,7 @@ public class BLEDeviceScanner {
     }
 
     public interface ScanResultCallback {
-        void foundDevice(String deviceName, String deviceAddress);
+        void foundDevice(BluetoothDevice device);
         void deviceNotFound();
     }
 

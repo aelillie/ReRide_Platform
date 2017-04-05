@@ -15,7 +15,6 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
@@ -26,7 +25,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.anders.flexsensor.FlexSensorManager;
+import com.example.anders.flexsensor.aws.AWSIoTManager;
 import com.example.anders.flexsensor.R;
 import com.example.anders.flexsensor.aws.PubSubFragment;
 
@@ -107,7 +106,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         }
     };
     private BluetoothGattCharacteristic mGattCharacteristic;
-    private FlexSensorManager mAWSManager;
+    private AWSIoTManager mAWSManager;
 
     private void updateUI() {
         getDataButton.setEnabled(true);
@@ -140,7 +139,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         setContentView(R.layout.activity_ble);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_ble);
 
-        mAWSManager = new FlexSensorManager(this);
+        mAWSManager = new AWSIoTManager(this);
         final Intent intent = getIntent();
         String deviceAddress = intent.getStringExtra(EXTRAS_DEVICE_ADDRESS);
 

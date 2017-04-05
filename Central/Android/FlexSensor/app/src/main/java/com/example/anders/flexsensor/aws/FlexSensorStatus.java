@@ -1,17 +1,17 @@
-package com.example.anders.flexsensor;
+package com.example.anders.flexsensor.aws;
 
 /**
  * Representation of the flex sensor
  */
 
-public class FlexSensorStatus {
-    public State state;
+class FlexSensorStatus {
+    State state;
 
     FlexSensorStatus() {
         state = new State();
     }
 
-    public class State {
+    class State {
         Desired desired;
         Delta delta;
 
@@ -20,15 +20,15 @@ public class FlexSensorStatus {
             delta = new Delta();
         }
 
-        public class Desired {
+        class Desired {
             Desired() {
             }
 
-            public Integer angle;
-            public String curState;
+            Integer angle;
+            String curState;
         }
 
-        public class Delta {
+        class Delta {
             Delta() {
             }
 

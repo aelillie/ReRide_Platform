@@ -1,4 +1,4 @@
-package com.example.anders.flexsensor;
+package com.example.anders.flexsensor.aws;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -16,24 +16,25 @@ import com.google.gson.Gson;
 import java.nio.ByteBuffer;
 
 /**
- * Flex sensor action manager
+ * Responsible for communication with AWS IoT through WebSocket
  */
 
-public class FlexSensorManager {
+public class AWSIoTManager {
     interface CallBack {
         void updatedState(int newState);
     }
 
-    private static final String LOG_TAG = FlexSensorManager.class.getSimpleName();
+    private static final String LOG_TAG = AWSIoTManager.class.getSimpleName();
 
     // --- Constants to modify per your configuration ---
 
     // IoT endpoint
-    // AWS Iot CLI describe-endpoint call returns: XXXXXXXXXX.iot.<region>.amazonaws.com
-    private static final String CUSTOMER_SPECIFIC_ENDPOINT = "a3mcftlm8wc1g9.iot.eu-central-1.amazonaws.com";
+    private static final String CUSTOMER_SPECIFIC_ENDPOINT =
+            "a3mcftlm8wc1g9.iot.eu-central-1.amazonaws.com";
     // Cognito pool ID. For this app, pool needs to be unauthenticated pool with
     // AWS IoT permissions.
-    private static final String COGNITO_POOL_ID = "eu-central-1:b6eda114-0f5c-456d-8128-c1cd2c0aa73d";
+    private static final String COGNITO_POOL_ID =
+            "eu-central-1:b6eda114-0f5c-456d-8128-c1cd2c0aa73d";
 
     // Region of AWS IoT
     private static final Regions MY_REGION = Regions.EU_CENTRAL_1;
@@ -42,7 +43,9 @@ public class FlexSensorManager {
 
     private AWSIotDataClient iotDataClient;
 
-    public FlexSensorManager(Context context) {
+    private static final String THING_NAME = "FlexSensor";
+
+    public AWSIoTManager(Context context) {
         // Initialize the Amazon Cognito credentials provider
         credentialsProvider = new CognitoCachingCredentialsProvider(
                 context,
@@ -57,18 +60,18 @@ public class FlexSensorManager {
     public void update(String newAngle) {
         Log.i(LOG_TAG, "New angle:" + newAngle);
         UpdateShadowTask updateShadowTask = new UpdateShadowTask();
-        updateShadowTask.setThingName("FlexSensor");
-        String newState = String.format("{\"state\":{\"desired\":{\"angle\":%s}}}", newAngle);
+        updateShadowTask.setThingName(THING_NAME);
+        String newState = String.format("{\"state\":{\"reported\":{\"angle\":%s}}}", newAngle);
         Log.i(LOG_TAG, newState);
         updateShadowTask.setState(newState);
         updateShadowTask.execute();
     }
 
     public void getShadow() {
-        new GetShadowTask("FlexSensor").execute();
+        new GetShadowTask(THING_NAME).execute();
     }
 
-    public void flexSensorStatusUpdated(String flexSensorStatusState) {
+    private void flexSensorStatusUpdated(String flexSensorStatusState) {
         Gson gson = new Gson();
         FlexSensorStatus ts = gson.fromJson(flexSensorStatusState, FlexSensorStatus.class);
 
@@ -80,7 +83,7 @@ public class FlexSensorManager {
 
         private final String thingName;
 
-        public GetShadowTask(String name) {
+        GetShadowTask(String name) {
             thingName = name;
         }
 
@@ -116,11 +119,11 @@ public class FlexSensorManager {
         private String thingName;
         private String updateState;
 
-        public void setThingName(String name) {
+        void setThingName(String name) {
             thingName = name;
         }
 
-        public void setState(String state) {
+        void setState(String state) {
             updateState = state;
         }
 

@@ -1,24 +1,24 @@
-package com.example.anders.flexsensor;
+package com.example.anders.flexsensor.aws;
 
 
-public class AsyncTaskResult<T> {
+class AsyncTaskResult<T> {
     private T result;
     private Exception error;
 
-    public T getResult() {
+    T getResult() {
         return result;
     }
 
-    public Exception getError() {
+    Exception getError() {
         return error;
     }
 
-    public AsyncTaskResult(T result) {
+    AsyncTaskResult(T result) {
         super();
         this.result = result;
     }
 
-    public AsyncTaskResult(Exception error) {
+    AsyncTaskResult(Exception error) {
         super();
         this.error = error;
     }

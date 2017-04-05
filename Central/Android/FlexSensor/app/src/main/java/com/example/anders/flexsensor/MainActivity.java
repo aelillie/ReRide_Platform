@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class MainActivity extends AppCompatActivity implements FlexSensorManager.CallBack{
+public class MainActivity extends AppCompatActivity{
 
     private static final String TAG = MainActivity.class.getCanonicalName();
     private static final int REQUEST_ENABLE_BT = 1; //Request code for BLE Intent
@@ -180,12 +180,6 @@ public class MainActivity extends AppCompatActivity implements FlexSensorManager
             Toast.makeText(this, R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
             finish();
         }
-    }
-
-
-    @Override
-    public void updatedState(int newState) {
-//        angleText.setText(newState);
     }
 
 

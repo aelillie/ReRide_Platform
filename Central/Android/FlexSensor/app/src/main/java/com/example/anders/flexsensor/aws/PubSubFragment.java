@@ -2,8 +2,12 @@ package com.example.anders.flexsensor.aws;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
+import android.support.v4.app.Fragment;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.iot.AWSIotKeystoreHelper;
@@ -19,18 +23,18 @@ import com.amazonaws.services.iot.model.AttachPrincipalPolicyRequest;
 import com.amazonaws.services.iot.model.CreateKeysAndCertificateRequest;
 import com.amazonaws.services.iot.model.CreateKeysAndCertificateResult;
 import com.example.anders.flexsensor.R;
-import com.amazonaws.services.iot.*;
 
 import java.io.UnsupportedEncodingException;
 import java.security.KeyStore;
 import java.util.UUID;
 
+
 /**
  * Responsible for communication with AWS IoT through MQTT
  */
 
-public class PubSubActivity extends AppCompatActivity {
-    static final String LOG_TAG = PubSubActivity.class.getCanonicalName();
+public class PubSubFragment extends Fragment {
+    static final String LOG_TAG = PubSubFragment.class.getCanonicalName();
 
     // --- Constants to modify per your configuration ---
 
@@ -57,16 +61,15 @@ public class PubSubActivity extends AppCompatActivity {
     AWSIotMqttManager mqttManager;
     String clientId;
     String keystorePath;
-    String keystoreName;
-    String keystorePassword;
     KeyStore clientKeyStore = null;
-    String certificateId;
     CognitoCachingCredentialsProvider credentialsProvider;
 
+    //UI
+    private TextView mStatus;
+
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_aws);
 
         // MQTT client IDs are required to be unique per AWS IoT account.
         // This UUID is "practically unique" but does not _guarantee_
@@ -74,7 +77,7 @@ public class PubSubActivity extends AppCompatActivity {
         clientId = UUID.randomUUID().toString();
         // Initialize the AWS Cognito credentials provider
         credentialsProvider = new CognitoCachingCredentialsProvider(
-                getApplicationContext(),
+                getActivity().getApplicationContext(),
                 COGNITO_POOL_ID,
                 MY_REGION
         );
@@ -92,16 +95,26 @@ public class PubSubActivity extends AppCompatActivity {
         mIotAndroidClient = new AWSIotClient(credentialsProvider);
         mIotAndroidClient.setRegion(Region.getRegion(MY_REGION));
 
-        keystorePath = getFilesDir().getPath();
-        keystoreName = KEYSTORE_NAME;
-        keystorePassword = KEYSTORE_PASSWORD;
-        certificateId = CERTIFICATE_ID;
+        keystorePath = getActivity().getFilesDir().getPath();
 
         if (!loadFromKeyStore()) {
             Log.i(LOG_TAG,
                     "Cert/key was not found in keystore - creating new key and certificate.");
             createNewKeyStore();
         }
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
+                             @Nullable Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.fragment_aws, container, false);
+        enableUIComponents();
+        return v;
+    }
+
+    private void enableUIComponents() {
+        mStatus = (TextView) getActivity().findViewById(R.id.aws_status_text);
     }
 
     private void createNewKeyStore() {
@@ -125,14 +138,14 @@ public class PubSubActivity extends AppCompatActivity {
                     // store in keystore for use in MQTT client
                     // saved as alias "default" so a new certificate isn't
                     // generated each run of this application
-                    AWSIotKeystoreHelper.saveCertificateAndPrivateKey(certificateId,
+                    AWSIotKeystoreHelper.saveCertificateAndPrivateKey(CERTIFICATE_ID,
                             createKeysAndCertificateResult.getCertificatePem(),
                             createKeysAndCertificateResult.getKeyPair().getPrivateKey(),
-                            keystorePath, keystoreName, keystorePassword);
+                            keystorePath, KEYSTORE_NAME, KEYSTORE_PASSWORD);
 
                     // load keystore from file into memory to pass on connection
-                    clientKeyStore = AWSIotKeystoreHelper.getIotKeystore(certificateId,
-                            keystorePath, keystoreName, keystorePassword);
+                    clientKeyStore = AWSIotKeystoreHelper.getIotKeystore(CERTIFICATE_ID,
+                            keystorePath, KEYSTORE_NAME, KEYSTORE_PASSWORD);
 
                     // Attach a policy to the newly created certificate.
                     // This flow assumes the policy was already created in
@@ -143,13 +156,6 @@ public class PubSubActivity extends AppCompatActivity {
                     policyAttachRequest.setPrincipal(createKeysAndCertificateResult
                             .getCertificateArn());
                     mIotAndroidClient.attachPrincipalPolicy(policyAttachRequest);
-
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            //btnConnect.setEnabled(true);
-                        }
-                    });
                 } catch (Exception e) {
                     Log.e(LOG_TAG,
                             "Exception occurred when generating new private key and certificate.",
@@ -162,26 +168,37 @@ public class PubSubActivity extends AppCompatActivity {
     private boolean loadFromKeyStore() {
         // To load cert/key from keystore on filesystem
         try {
-            if (AWSIotKeystoreHelper.isKeystorePresent(keystorePath, keystoreName)) {
-                if (AWSIotKeystoreHelper.keystoreContainsAlias(certificateId, keystorePath,
-                        keystoreName, keystorePassword)) {
-                    Log.i(LOG_TAG, "Certificate " + certificateId
+            if (AWSIotKeystoreHelper.isKeystorePresent(keystorePath, KEYSTORE_NAME)) {
+                if (AWSIotKeystoreHelper.keystoreContainsAlias(CERTIFICATE_ID, keystorePath,
+                        KEYSTORE_NAME, KEYSTORE_PASSWORD)) {
+                    Log.i(LOG_TAG, "Certificate " + CERTIFICATE_ID
                             + " found in keystore - using for MQTT.");
                     // load keystore from file into memory to pass on connection
-                    clientKeyStore = AWSIotKeystoreHelper.getIotKeystore(certificateId,
-                            keystorePath, keystoreName, keystorePassword);
+                    clientKeyStore = AWSIotKeystoreHelper.getIotKeystore(CERTIFICATE_ID,
+                            keystorePath, KEYSTORE_NAME, KEYSTORE_PASSWORD);
                     return true;
-                    //btnConnect.setEnabled(true);
                 } else {
-                    Log.i(LOG_TAG, "Key/cert " + certificateId + " not found in keystore.");
+                    Log.i(LOG_TAG, "Key/cert " + CERTIFICATE_ID + " not found in keystore.");
                 }
             } else {
-                Log.i(LOG_TAG, "Keystore " + keystorePath + "/" + keystoreName + " not found.");
+                Log.i(LOG_TAG, "Keystore " + keystorePath + "/" + KEYSTORE_NAME + " not found.");
             }
         } catch (Exception e) {
             Log.e(LOG_TAG, "An error occurred retrieving cert/key from keystore.", e);
         }
         return false;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        connect();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        disconnect();
     }
 
     private void connect() {
@@ -193,28 +210,25 @@ public class PubSubActivity extends AppCompatActivity {
                                             final Throwable throwable) {
                     Log.d(LOG_TAG, "Status = " + String.valueOf(status));
 
-                    runOnUiThread(new Runnable() {
+                    getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            if (status == AWSIotMqttClientStatus.Connecting) {
-                                //tvStatus.setText("Connecting...");
-
-                            } else if (status == AWSIotMqttClientStatus.Connected) {
-                                //tvStatus.setText("Connected");
-
-                            } else if (status == AWSIotMqttClientStatus.Reconnecting) {
-                                if (throwable != null) {
-                                    Log.e(LOG_TAG, "Connection error.", throwable);
-                                }
-                                //tvStatus.setText("Reconnecting");
-                            } else if (status == AWSIotMqttClientStatus.ConnectionLost) {
-                                if (throwable != null) {
-                                    Log.e(LOG_TAG, "Connection error.", throwable);
-                                }
-                                //tvStatus.setText("Disconnected");
-                            } else {
-                                //tvStatus.setText("Disconnected");
-
+                            switch (status) {
+                                case Connecting:
+                                    mStatus.setText(R.string.connecting); break;
+                                case Connected:
+                                    mStatus.setText(R.string.connected); break;
+                                case ConnectionLost:
+                                    if (throwable != null)
+                                        Log.e(LOG_TAG, "Connection error.", throwable);
+                                    mStatus.setText(R.string.disconnected);
+                                    break;
+                                case Reconnecting:
+                                    if (throwable != null)
+                                        Log.e(LOG_TAG, "Connection error.", throwable);
+                                    mStatus.setText(R.string.reconnecting);
+                                    break;
+                                default: mStatus.setText(R.string.disconnected); break;
                             }
                         }
                     });
@@ -222,7 +236,7 @@ public class PubSubActivity extends AppCompatActivity {
             });
         } catch (final Exception e) {
             Log.e(LOG_TAG, "Connection error.", e);
-            //tvStatus.setText("Error! " + e.getMessage());
+            mStatus.setText(R.string.error);
         }
     }
 
@@ -237,7 +251,7 @@ public class PubSubActivity extends AppCompatActivity {
                     new AWSIotMqttNewMessageCallback() {
                         @Override
                         public void onMessageArrived(final String topic, final byte[] data) {
-                            runOnUiThread(new Runnable() {
+                            getActivity().runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
                                     try {

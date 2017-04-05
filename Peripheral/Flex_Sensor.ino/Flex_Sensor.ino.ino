@@ -83,6 +83,7 @@ void listenBLE() {
         previousMillis = currentMillis;
         updateFlexAngle();
       }
+      delay(500);
     }
     Serial.print("Disconnected from central: ");
     Serial.println(central.address());

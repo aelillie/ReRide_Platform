@@ -41,6 +41,8 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
 
     public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
 
+    private PubSubFragment mPubSubFragment;
+
     //UI information
     private boolean connected;
     private TextView connectionState;
@@ -160,8 +162,8 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
 
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction trans = fragmentManager.beginTransaction();
-        PubSubFragment fragment = new PubSubFragment();
-        trans.add(R.id.aws_fragment, fragment);
+        mPubSubFragment = new PubSubFragment();
+        trans.add(R.id.aws_fragment, mPubSubFragment);
         trans.commit();
 
         toolbar.setTitle(bluetoothDevice.getName());
@@ -183,7 +185,8 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
 
     private void handleData(String data) {
         dataField.setText(data);
-        mAWSManager.update(data);
+        //mAWSManager.update(data);
+        mPubSubFragment.publish(data);
     }
 
     private void searchGattServices(List<BluetoothGattService> supportedGattServices) {

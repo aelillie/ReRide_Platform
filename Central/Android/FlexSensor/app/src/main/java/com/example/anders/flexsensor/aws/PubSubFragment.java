@@ -64,6 +64,10 @@ public class PubSubFragment extends Fragment {
     KeyStore clientKeyStore = null;
     CognitoCachingCredentialsProvider credentialsProvider;
 
+    //MQTT
+    private static final String MQTT_UPDATE = "/update";
+    private static final String MQTT_GET = "/get";
+
     //UI
     private TextView mStatus;
 
@@ -240,14 +244,9 @@ public class PubSubFragment extends Fragment {
         }
     }
 
-    private void subscribe() {
-        final String topic = "topic";
-                //txtSubcribe.getText().toString();
-
-        Log.d(LOG_TAG, "topic = " + topic);
-
+    public void subscribe() {
         try {
-            mqttManager.subscribeToTopic(topic, AWSIotMqttQos.QOS0,
+            mqttManager.subscribeToTopic(MQTT_GET, AWSIotMqttQos.QOS0,
                     new AWSIotMqttNewMessageCallback() {
                         @Override
                         public void onMessageArrived(final String topic, final byte[] data) {
@@ -274,14 +273,10 @@ public class PubSubFragment extends Fragment {
         }
     }
 
-    private void publish() {
-        final String topic = "topic";
-                //txtTopic.getText().toString();
-        final String msg = "msg";
-                //txtMessage.getText().toString();
+    public void publish(String msg) {
 
         try {
-            mqttManager.publishString(msg, topic, AWSIotMqttQos.QOS0);
+            mqttManager.publishString(msg, MQTT_UPDATE, AWSIotMqttQos.QOS0);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Publish error.", e);
         }

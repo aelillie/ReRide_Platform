@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:layout_margin="10dp">
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolbar_ble"
@@ -81,11 +81,17 @@
                 android:enabled="false"/>
         </LinearLayout>
 
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"/>
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp">
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:layout_weight="1">
         <fragment
             android:name="com.example.anders.flexsensor.aws.PubSubFragment"
             android:id="@+id/aws_fragment"

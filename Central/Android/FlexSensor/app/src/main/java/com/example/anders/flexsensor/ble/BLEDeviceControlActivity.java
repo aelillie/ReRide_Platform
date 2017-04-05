@@ -15,6 +15,9 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -25,6 +28,7 @@ import android.widget.Toast;
 
 import com.example.anders.flexsensor.FlexSensorManager;
 import com.example.anders.flexsensor.R;
+import com.example.anders.flexsensor.aws.PubSubFragment;
 
 import java.util.List;
 
@@ -153,6 +157,12 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                 streamData();
             }
         });
+
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction trans = fragmentManager.beginTransaction();
+        PubSubFragment fragment = new PubSubFragment();
+        trans.add(R.id.aws_fragment, fragment);
+        trans.commit();
 
         toolbar.setTitle(bluetoothDevice.getName());
         setSupportActionBar(toolbar);

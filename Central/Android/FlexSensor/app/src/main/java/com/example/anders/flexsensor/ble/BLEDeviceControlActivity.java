@@ -159,11 +159,11 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
             }
         });
 
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        FragmentTransaction trans = fragmentManager.beginTransaction();
-        mPubSubFragment = new PubSubFragment();
-        trans.add(R.id.aws_fragment, mPubSubFragment);
-        trans.commit();
+//        FragmentManager fragmentManager = getSupportFragmentManager();
+//        FragmentTransaction trans = fragmentManager.beginTransaction();
+//        mPubSubFragment = new PubSubFragment();
+//        trans.add(R.id.aws_fragment, mPubSubFragment);
+//        trans.commit();
 
         toolbar.setTitle(bluetoothDevice.getName());
         setSupportActionBar(toolbar);
@@ -184,8 +184,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
 
     private void handleData(String data) {
         dataField.setText(data);
-        //mAWSManager.update(data);
-        mPubSubFragment.publish(data);
+        mAWSManager.update(data);
     }
 
     private void searchGattServices(List<BluetoothGattService> supportedGattServices) {

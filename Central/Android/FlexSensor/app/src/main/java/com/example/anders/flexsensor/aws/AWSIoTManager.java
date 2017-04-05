@@ -20,9 +20,6 @@ import java.nio.ByteBuffer;
  */
 
 public class AWSIoTManager {
-    interface CallBack {
-        void updatedState(int newState);
-    }
 
     private static final String LOG_TAG = AWSIoTManager.class.getSimpleName();
 
@@ -39,15 +36,13 @@ public class AWSIoTManager {
     // Region of AWS IoT
     private static final Regions MY_REGION = Regions.EU_CENTRAL_1;
 
-    private CognitoCachingCredentialsProvider credentialsProvider;
-
     private AWSIotDataClient iotDataClient;
 
     private static final String THING_NAME = "FlexSensor";
 
     public AWSIoTManager(Context context) {
         // Initialize the Amazon Cognito credentials provider
-        credentialsProvider = new CognitoCachingCredentialsProvider(
+        CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
                 context,
                 COGNITO_POOL_ID, // Identity Pool ID
                 MY_REGION // Region

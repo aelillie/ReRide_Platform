@@ -8,19 +8,21 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.widget.TextView;
 
-import com.example.anders.flexsensor.R;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
+
+import java.text.DateFormat;
+import java.util.Date;
 
 import static com.google.android.gms.location.LocationServices.FusedLocationApi;
 
@@ -32,25 +34,40 @@ import static com.google.android.gms.location.LocationServices.FusedLocationApi;
 public class LocationActivity extends AppCompatActivity
         implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
-        ResultCallback<LocationSettingsResult>{
+        ResultCallback<LocationSettingsResult>,
+        LocationListener{
     private static final String TAG = LocationActivity.class.getCanonicalName();
 
-    private GoogleApiClient mGoogleApiClient;
-    private Location mLastLocation;
-    private TextView mLatitudeText;
-    private TextView mLongitudeText;
-    private boolean mLocationSettingsSuccess;
+    //Settings
+    private static final int PREFERRED_INTERVAL = 10000; //10 seconds
+    private static final int FASTEST_INTERVAL = 5000; //5 seconds
 
-    private final int PREFERRED_INTERVAL = 10000; //10 seconds
-    private final int FASTEST_INTERVAL = 5000; //5 seconds
-    private final int REQUEST_CHECK_SETTINGS = 1;
+    //Request keys
+    private static final int REQUEST_CHECK_SETTINGS = 1;
+    private static final int REQUEST_CHECK_CONNECTION = 2;
+    private static final String REQUESTING_LOCATION_UPDATES_KEY =
+            "com.example.anders.flexsensor.gms.LocationActivity.REQUESTING_LOCATION_UPDATES_KEY";
+    private static final String LOCATION_KEY =
+            "com.example.anders.flexsensor.gms.LocationActivity.LOCATION_KEY";
+    private static final String LAST_UPDATED_TIME_STRING_KEY =
+            "com.example.anders.flexsensor.gms.LocationActivity.LAST_UPDATED_TIME_STRING_KEY";
+
+    //Location API
+    private GoogleApiClient mGoogleApiClient;
+    private Location mCurrentLocation;
     private PendingResult<LocationSettingsResult> mLocationSettingsResult;
     private LocationSettingsRequest mSettingsRequest;
     private LocationRequest mLocationRequest;
 
+    //Properties
+    private String mLastUpdateTime;
+    private boolean mLocationSettingsSuccess;
+    private boolean mRequestingLocationUpdates;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        updateValuesFromBundle(savedInstanceState);
 
         // Create an instance of GoogleAPIClient.
         if (mGoogleApiClient == null) {
@@ -63,6 +80,38 @@ public class LocationActivity extends AppCompatActivity
 
         createLocationRequest();
         mLocationSettingsResult.setResultCallback(this);
+    }
+
+    private void updateValuesFromBundle(Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            // Update the value of mRequestingLocationUpdates from the Bundle
+            if (savedInstanceState.keySet().contains(REQUESTING_LOCATION_UPDATES_KEY)) {
+                mRequestingLocationUpdates = savedInstanceState.getBoolean(
+                        REQUESTING_LOCATION_UPDATES_KEY);
+            }
+
+            // Update the value of mCurrentLocation from the Bundle
+            if (savedInstanceState.keySet().contains(LOCATION_KEY)) {
+                // Since LOCATION_KEY was found in the Bundle, we can be sure that
+                // mCurrentLocation is not null.
+                mCurrentLocation = savedInstanceState.getParcelable(LOCATION_KEY);
+            }
+
+            // Update the value of mLastUpdateTime from the Bundle
+            if (savedInstanceState.keySet().contains(LAST_UPDATED_TIME_STRING_KEY)) {
+                mLastUpdateTime = savedInstanceState.getString(
+                        LAST_UPDATED_TIME_STRING_KEY);
+            }
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putBoolean(REQUESTING_LOCATION_UPDATES_KEY,
+                mRequestingLocationUpdates);
+        outState.putParcelable(LOCATION_KEY, mCurrentLocation);
+        outState.putString(LAST_UPDATED_TIME_STRING_KEY, mLastUpdateTime);
+        super.onSaveInstanceState(outState);
     }
 
     private void createLocationRequest() {
@@ -107,30 +156,61 @@ public class LocationActivity extends AppCompatActivity
         Log.d(TAG, "Disconnected");
     }
 
+    public void requestUpdates() {
+        mRequestingLocationUpdates = true;
+    }
+
+    public void stopUpdates() {
+        mRequestingLocationUpdates = false;
+        LocationServices.FusedLocationApi.removeLocationUpdates(
+                mGoogleApiClient, this);
+    }
+
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         try {
-            mLastLocation = FusedLocationApi.getLastLocation(
+            mCurrentLocation = FusedLocationApi.getLastLocation(
                     mGoogleApiClient);
-            if (mLastLocation != null) {
-                mLatitudeText.setText(String.valueOf(mLastLocation.getLatitude()));
-                mLongitudeText.setText(String.valueOf(mLastLocation.getLongitude()));
-            }
             Log.d(TAG, "Retrieved location info");
+            if (mRequestingLocationUpdates) {
+                LocationServices.FusedLocationApi.requestLocationUpdates(
+                        mGoogleApiClient, mLocationRequest, this);
+            }
         } catch (SecurityException e) {
-            mLatitudeText.setText(R.string.error);
-            mLongitudeText.setText(R.string.error);
+            Log.d(TAG, e.getMessage());
+            finish();
         }
     }
 
     @Override
-    public void onConnectionSuspended(int i) {
+    public void onConnectionSuspended(int cause) {
+        switch (cause) {
+            case CAUSE_NETWORK_LOST:
+                //TODO: Try to reconnect network
+                break;
+            case CAUSE_SERVICE_DISCONNECTED:
+                //TODO: Try to reconnect service
+                break;
+            default:
+                Log.d(TAG, "Unknown cause on connection suspended");
+                break;
+        }
 
     }
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
+        Log.d(TAG, connectionResult.getErrorMessage());
+        if (connectionResult.getErrorCode() == ConnectionResult.RESOLUTION_REQUIRED) {
+            try {
+                connectionResult.startResolutionForResult(this, REQUEST_CHECK_CONNECTION);
+            } catch (IntentSender.SendIntentException e) {
+                Log.d(TAG, e.getMessage());
+                finish();
+            }
+        } else {
+            finish();
+        }
     }
 
     @Override
@@ -166,11 +246,19 @@ public class LocationActivity extends AppCompatActivity
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUEST_CHECK_SETTINGS
-                && resultCode == RESULT_OK) {
+        if (resultCode == RESULT_OK &&
+                (requestCode == REQUEST_CHECK_CONNECTION
+                || requestCode == REQUEST_CHECK_SETTINGS)) {
             //the application should try to connect again.
             connect();
         }
         super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        Log.d(TAG, "Retrieved location update");
+        mCurrentLocation = location;
+        mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
     }
 }

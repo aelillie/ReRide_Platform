@@ -7,6 +7,7 @@ import android.location.Location;
 import android.os.Binder;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -14,6 +15,7 @@ import android.util.Log;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.Result;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationListener;
@@ -45,36 +47,36 @@ public class LocationService extends Service
     private static final int FASTEST_INTERVAL = 3000; //3 seconds
 
     //Request keys
-    private static final int REQUEST_CHECK_SETTINGS = 1;
-    private static final int REQUEST_CHECK_CONNECTION = 2;
-    private static final String REQUESTING_LOCATION_UPDATES_KEY =
-            "com.example.anders.flexsensor.gms.LocationService.REQUESTING_LOCATION_UPDATES_KEY";
-    private static final String LOCATION_KEY =
-            "com.example.anders.flexsensor.gms.LocationService.LOCATION_KEY";
-    private static final String LAST_UPDATED_TIME_STRING_KEY =
-            "com.example.anders.flexsensor.gms.LocationService.LAST_UPDATED_TIME_STRING_KEY";
+    public static final int REQUEST_CHECK_SETTINGS = 1;
+    public static final int REQUEST_CHECK_CONNECTION = 2;
 
+    //Actions
     public static final String ACTION_CONNECTED =
             "com.example.anders.flexsensor.gms.LocationService.ACTION_CONNECTED";
     public static final String ACTION_UPDATE_AVAILABLE =
             "com.example.anders.flexsensor.gms.LocationService.ACTION_UPDATE_AVAILABLE";
+    public static final String ACTION_CONNECTION_FAILED =
+            "com.example.anders.flexsensor.gms.LocationService.ACTION_CONNECTION_FAILED";
+    public static final String ACTION_SETTINGS_FAILED =
+            "com.example.anders.flexsensor.gms.LocationService.ACTION_SETTINGS_FAILED";
+
+    //Intent keys
     public static final String LAST_LOCATION_STRING_KEY =
             "com.example.anders.flexsensor.gms.LocationService.LAST_LOCATION_STRING_KEY";
     public static final String LAST_TIME_STRING_KEY =
             "com.example.anders.flexsensor.gms.LocationService.LAST_TIME_STRING_KEY";
+    public static final String ERROR_STRING_KEY =
+            "com.example.anders.flexsensor.gms.LocationService.ERROR_STRING_KEY";
+
+    //Properties
     public static final int LONGITUDE_ID = 0;
     public static final int LATITUDE_ID = 1;
 
     //Location API
     private GoogleApiClient mGoogleApiClient;
-    private Location mCurrentLocation;
     private PendingResult<LocationSettingsResult> mLocationSettingsResult;
     private LocationSettingsRequest mSettingsRequest;
     private LocationRequest mLocationRequest;
-
-    //Properties
-    private boolean mConnected;
-    private boolean mLocationSettingsSuccess;
 
     private final IBinder binder = new LocalBinder();
 
@@ -96,6 +98,12 @@ public class LocationService extends Service
 
     private void broadcastUpdate(final String action) {
         final Intent intent = new Intent(action);
+        sendBroadcast(intent);
+    }
+
+    private void broadcastUpdate(String action, Parcelable result) {
+        final Intent intent = new Intent(action);
+        intent.putExtra(ERROR_STRING_KEY, result);
         sendBroadcast(intent);
     }
 
@@ -185,7 +193,6 @@ public class LocationService extends Service
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         broadcastUpdate(ACTION_CONNECTED);
-        mConnected = true;
     }
 
     @Override
@@ -207,14 +214,12 @@ public class LocationService extends Service
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         Log.d(TAG, connectionResult.getErrorMessage());
-        /*if (connectionResult.getErrorCode() == ConnectionResult.RESOLUTION_REQUIRED) {
-            try {
-                connectionResult.startResolutionForResult(get, REQUEST_CHECK_CONNECTION);
-            } catch (IntentSender.SendIntentException e) {
-                Log.d(TAG, e.getMessage());
-            }
-        }*/
+        if (connectionResult.getErrorCode() == ConnectionResult.RESOLUTION_REQUIRED) {
+            broadcastUpdate(ACTION_CONNECTION_FAILED, connectionResult);
+        }
     }
+
+
 
     @Override
     public void onResult(@NonNull LocationSettingsResult result) {
@@ -224,39 +229,22 @@ public class LocationService extends Service
             case LocationSettingsStatusCodes.SUCCESS:
                 // All location settings are satisfied. The client can
                 // initialize location requests here.
-                 mLocationSettingsSuccess = true;
                 break;
             case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
                 Log.d(TAG, "Resolution required");
                 // Location settings are not satisfied, but this can be fixed
                 // by showing the user a dialog.
-                /*try {
-                    // Show the dialog by calling startResolutionForResult(),
-                    // and check the result in onActivityResult().
-                    status.startResolutionForResult(this, REQUEST_CHECK_SETTINGS);
-                } catch (IntentSender.SendIntentException e) {
-                    mLocationSettingsSuccess = false;
-                }*/
+                broadcastUpdate(ACTION_SETTINGS_FAILED, result);
                 break;
             case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
                 Log.d(TAG, "Settings change unavailable");
                 // Location settings are not satisfied. However, we have no way
                 // to fix the settings so we won't show the dialog.
-                mLocationSettingsSuccess = false;
                 break;
         }
     }
 
-    /*@Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK &&
-                (requestCode == REQUEST_CHECK_CONNECTION
-                || requestCode == REQUEST_CHECK_SETTINGS)) {
-            //the application should try to connect again.
-            connect();
-        }
-        super.onActivityResult(requestCode, resultCode, data);
-    }*/
+
 
     @Override
     public void onLocationChanged(Location location) {

@@ -11,6 +11,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.IntentSender;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -27,6 +28,8 @@ import com.example.anders.flexsensor.aws.AWSIoTManager;
 import com.example.anders.flexsensor.R;
 import com.example.anders.flexsensor.aws.PubSubFragment;
 import com.example.anders.flexsensor.gms.LocationService;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.location.LocationSettingsResult;
 
 import java.util.List;
 
@@ -97,6 +100,26 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                 case LocationService.ACTION_CONNECTED:
                     announce("Location services connected");
                     break;
+                case LocationService.ACTION_CONNECTION_FAILED:
+                    ConnectionResult cr = intent.getParcelableExtra(
+                            LocationService.ERROR_STRING_KEY);
+                    try {
+                        cr.startResolutionForResult(getParent(),
+                                LocationService.REQUEST_CHECK_CONNECTION);
+                    } catch (IntentSender.SendIntentException e) {
+                        Log.d(TAG, e.getMessage());
+                    } break;
+                case LocationService.ACTION_SETTINGS_FAILED:
+                    LocationSettingsResult lsr = intent.getParcelableExtra(
+                            LocationService.ERROR_STRING_KEY);
+                    try {
+                        // Show the dialog by calling startResolutionForResult(),
+                        // and check the result in onActivityResult().
+                        lsr.getStatus().startResolutionForResult(getParent(),
+                                LocationService.REQUEST_CHECK_SETTINGS);
+                    } catch (IntentSender.SendIntentException e) {
+                        Log.d(TAG, e.getMessage());
+                    } break;
                 default: Log.d(TAG, "Action not implemented"); break;
             }
 
@@ -300,6 +323,17 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         mLocationService = null;
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (resultCode == RESULT_OK &&
+                (requestCode == LocationService.REQUEST_CHECK_CONNECTION
+                        || requestCode == LocationService.REQUEST_CHECK_SETTINGS)) {
+            //the application should try to connect again.
+            mLocationService.connect();
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
     private void readCharacteristic(BluetoothGattCharacteristic characteristic) {
         final int charaProp = characteristic.getProperties();
 //        if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
@@ -334,6 +368,8 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(LocationService.ACTION_CONNECTED);
         intentFilter.addAction(LocationService.ACTION_UPDATE_AVAILABLE);
+        intentFilter.addAction(LocationService.ACTION_CONNECTION_FAILED);
+        intentFilter.addAction(LocationService.ACTION_SETTINGS_FAILED);
         return intentFilter;
     }
 }

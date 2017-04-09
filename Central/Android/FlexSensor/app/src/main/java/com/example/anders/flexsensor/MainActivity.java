@@ -15,8 +15,8 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -40,7 +40,10 @@ public class MainActivity extends AppCompatActivity{
 
     private static final String TAG = MainActivity.class.getCanonicalName();
     private static final int REQUEST_ENABLE_BT = 1; //Request code for BLE Intent
-    private static final int PERMISSION_REQUEST_FINE_LOCATION = 1;
+    private static final int PERMISSION_REQUEST_LOCATION = 2;
+    private static final String[] LOCATION_PERMISSIONS =
+            new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.ACCESS_FINE_LOCATION};
     private static final long SCAN_PERIOD = 10000; // Stops scanning after 10 seconds.
     private static final String DEVICE_NAME = "ReRide";
 
@@ -164,15 +167,27 @@ public class MainActivity extends AppCompatActivity{
 
     private void askForLocationPermission() {
         // Prompt for permissions
-        if (Build.VERSION.SDK_INT >= 23) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                    != PackageManager.PERMISSION_GRANTED) {
-                Log.w("BleActivity", "Location access not granted!");
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        PERMISSION_REQUEST_FINE_LOCATION);
-            }
+        if (ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Log.w(TAG, "Location access not granted!");
+            ActivityCompat.requestPermissions(this,
+                    LOCATION_PERMISSIONS,
+                    PERMISSION_REQUEST_LOCATION);
         }
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        if (requestCode == PERMISSION_REQUEST_LOCATION
+                && grantResults[0] == PackageManager.PERMISSION_DENIED) {
+            finish();
+            return;
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }
 
     private void checkForBLESupport() {

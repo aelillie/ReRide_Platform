@@ -26,6 +26,9 @@
             android:parentActivityName=".MainActivity">
         </activity>
         <service android:name=".ble.BLEService"/>
+        <service android:name=".gms.LocationService"
+                 android:exported="false"/>
+
     </application>
 
 </manifest>

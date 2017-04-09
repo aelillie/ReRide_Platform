@@ -28,4 +28,7 @@
     <string name="error">Error!</string>
     <string name="status">Status:</string>
     <string name="aws_title">AWS IoT</string>
+    <string name="label_location_long">Longitude:</string>
+    <string name="label_location_lat">Latitude:</string>
+    <string name="label_time">Time:</string>
 </resources>

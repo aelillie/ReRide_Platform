@@ -2,6 +2,7 @@ package com.example.anders.flexsensor.aws;
 
 import android.content.Context;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.util.Log;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
@@ -11,6 +12,7 @@ import com.amazonaws.services.iotdata.model.GetThingShadowRequest;
 import com.amazonaws.services.iotdata.model.GetThingShadowResult;
 import com.amazonaws.services.iotdata.model.UpdateThingShadowRequest;
 import com.amazonaws.services.iotdata.model.UpdateThingShadowResult;
+import com.example.anders.flexsensor.ble.BLEDeviceControlActivity;
 import com.google.gson.Gson;
 
 import java.nio.ByteBuffer;
@@ -52,7 +54,11 @@ public class AWSIoTManager {
         iotDataClient.setEndpoint(CUSTOMER_SPECIFIC_ENDPOINT);
     }
 
-    public void update(String newAngle) {
+    public void update(Bundle data) {
+        String newAngle = data.getString(BLEDeviceControlActivity.EXTRAS_ANGLE_DATA);
+        double[] newLocation = data.getDoubleArray(BLEDeviceControlActivity.EXTRAS_LOCATION_DATA);
+        String newTime = data.getString(BLEDeviceControlActivity.EXTRAS_TIME_DATA);
+        //TODO: Use location
         Log.i(LOG_TAG, "New angle:" + newAngle);
         UpdateShadowTask updateShadowTask = new UpdateShadowTask();
         updateShadowTask.setThingName(THING_NAME);

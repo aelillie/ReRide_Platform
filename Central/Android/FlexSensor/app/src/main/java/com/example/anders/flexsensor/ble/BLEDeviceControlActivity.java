@@ -15,8 +15,6 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -28,6 +26,7 @@ import android.widget.Toast;
 import com.example.anders.flexsensor.aws.AWSIoTManager;
 import com.example.anders.flexsensor.R;
 import com.example.anders.flexsensor.aws.PubSubFragment;
+import com.example.anders.flexsensor.gms.LocationService;
 
 import java.util.List;
 
@@ -39,6 +38,9 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private final static String TAG = BLEDeviceControlActivity.class.getSimpleName();
 
     public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
+    public static final String EXTRAS_ANGLE_DATA = "ANGLE_DATA";
+    public static final String EXTRAS_LOCATION_DATA = "LOCATION_DATA";
+    public static final String EXTRAS_TIME_DATA = "TIME_DATA";
 
     private PubSubFragment mPubSubFragment;
 
@@ -46,13 +48,17 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private boolean connected;
     private TextView connectionState;
     private TextView dataField;
+    private TextView locationLongField;
+    private TextView locationLatField;
+    private TextView timeField;
     private Button getDataButton;
 
     private BluetoothGattCharacteristic notifyCharacteristic;
     private BLEService bleService;
+    private LocationService mLocationService;
     private BluetoothDevice bluetoothDevice;
 
-    private final ServiceConnection serviceConnection = new ServiceConnection() {
+    private final ServiceConnection mBleServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
             bleService = ((BLEService.LocalBinder) service).getService();
@@ -64,6 +70,42 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
             bleService = null;
         }
     };
+
+    private final ServiceConnection mGmsServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder service) {
+            mLocationService = ((LocationService.LocalBinder) service).getService();
+            mLocationService.connect();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            mLocationService = null;
+        }
+    };
+
+    private final BroadcastReceiver mLocationUpdateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            switch (action) {
+                case LocationService.ACTION_UPDATE_AVAILABLE:
+                    double[] location = intent.getDoubleArrayExtra(LocationService.LAST_LOCATION_STRING_KEY);
+                    if (location != null) mLocation = location;
+                     mTime = intent.getStringExtra(LocationService.LAST_TIME_STRING_KEY);
+                    break;
+                case LocationService.ACTION_CONNECTED:
+                    announce("Location services connected");
+                    break;
+                default: Log.d(TAG, "Action not implemented"); break;
+            }
+
+        }
+    };
+
+    private double[] mLocation;
+    private String mTime;
+    private String mAngleData;
 
     private final BroadcastReceiver gattUpdateReceiver = new BroadcastReceiver() {
         @Override
@@ -94,7 +136,8 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                     break;
                 }
                 case BLEService.ACTION_DATA_AVAILABLE: {
-                    handleData(intent.getStringExtra(BLEService.EXTRA_DATA));
+                    mAngleData = intent.getStringExtra(BLEService.EXTRA_DATA);
+                    handleData();
                     break;
                 }
                 case BLEService.ACTION_WRITE: {
@@ -150,6 +193,9 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         ((TextView) findViewById(R.id.device_address)).setText(deviceAddress);
         connectionState = (TextView) findViewById(R.id.connection_state);
         dataField = (TextView) findViewById(R.id.data_value);
+        locationLongField = (TextView) findViewById(R.id.location_long_value);
+        locationLatField = (TextView) findViewById(R.id.location_lat_value);
+        timeField = (TextView) findViewById(R.id.time_value);
         getDataButton = (Button) findViewById(R.id.get_data_button);
         getDataButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -169,7 +215,9 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         Intent gattServiceIntent = new Intent(this, BLEService.class);
-        bindService(gattServiceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+        bindService(gattServiceIntent, mBleServiceConnection, Context.BIND_AUTO_CREATE);
+        Intent gmsServiceIntent = new Intent(this, LocationService.class);
+        bindService(gmsServiceIntent, mGmsServiceConnection, Context.BIND_AUTO_CREATE);
     }
 
     private void streamData() {
@@ -179,12 +227,20 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         } else {
             announce("No characteristic available");
         }
+        mLocationService.requestUpdates();
     }
 
 
-    private void handleData(String data) {
-        dataField.setText(data);
-        mAWSManager.update(data);
+    private void handleData() {
+        dataField.setText(mAngleData);
+        locationLongField.setText(String.valueOf(mLocation[LocationService.LONGITUDE_ID]));
+        locationLatField.setText(String.valueOf(mLocation[LocationService.LATITUDE_ID]));
+        timeField.setText(mTime);
+        Bundle bundle = new Bundle();
+        bundle.putString(EXTRAS_ANGLE_DATA, mAngleData);
+        bundle.putDoubleArray(EXTRAS_LOCATION_DATA, mLocation);
+        bundle.putString(EXTRAS_TIME_DATA, mTime);
+        mAWSManager.update(bundle);
     }
 
     private void searchGattServices(List<BluetoothGattService> supportedGattServices) {
@@ -224,26 +280,24 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         registerReceiver(gattUpdateReceiver, makeGattUpdateIntentFilter());
+        registerReceiver(mLocationUpdateReceiver, makeLocationUpdateFilter());
         if (bleService != null) {
             final boolean result = bleService.connect(bluetoothDevice);
             Log.d(TAG, "Connect request result=" + result);
             if (result) getDataButton.setEnabled(true);
         }
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        bleService.disconnect();
-        unregisterReceiver(gattUpdateReceiver);
-        getDataButton.setEnabled(false);
+        if (mLocationService != null) {
+            mLocationService.connect();
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unbindService(serviceConnection);
+        unbindService(mBleServiceConnection);
+        unbindService(mGmsServiceConnection);
         bleService = null;
+        mLocationService = null;
     }
 
     private void readCharacteristic(BluetoothGattCharacteristic characteristic) {
@@ -273,6 +327,13 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         intentFilter.addAction(BLEService.ACTION_GATT_DISCONNECTED);
         intentFilter.addAction(BLEService.ACTION_GATT_SERVICES_DISCOVERED);
         intentFilter.addAction(BLEService.ACTION_DATA_AVAILABLE);
+        return intentFilter;
+    }
+
+    static IntentFilter makeLocationUpdateFilter() {
+        final IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(LocationService.ACTION_CONNECTED);
+        intentFilter.addAction(LocationService.ACTION_UPDATE_AVAILABLE);
         return intentFilter;
     }
 }

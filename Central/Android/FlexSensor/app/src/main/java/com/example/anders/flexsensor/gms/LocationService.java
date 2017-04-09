@@ -1,12 +1,14 @@
 package com.example.anders.flexsensor.gms;
 
+import android.app.Service;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.location.Location;
+import android.os.Binder;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -31,26 +33,37 @@ import static com.google.android.gms.location.LocationServices.FusedLocationApi;
  * source: https://developer.android.com/training/location/retrieve-current.html
  */
 
-public class LocationActivity extends AppCompatActivity
+public class LocationService extends Service
         implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
         ResultCallback<LocationSettingsResult>,
         LocationListener{
-    private static final String TAG = LocationActivity.class.getCanonicalName();
+    private static final String TAG = LocationService.class.getCanonicalName();
 
     //Settings
-    private static final int PREFERRED_INTERVAL = 10000; //10 seconds
-    private static final int FASTEST_INTERVAL = 5000; //5 seconds
+    private static final int PREFERRED_INTERVAL = 5000; //5 seconds
+    private static final int FASTEST_INTERVAL = 3000; //3 seconds
 
     //Request keys
     private static final int REQUEST_CHECK_SETTINGS = 1;
     private static final int REQUEST_CHECK_CONNECTION = 2;
     private static final String REQUESTING_LOCATION_UPDATES_KEY =
-            "com.example.anders.flexsensor.gms.LocationActivity.REQUESTING_LOCATION_UPDATES_KEY";
+            "com.example.anders.flexsensor.gms.LocationService.REQUESTING_LOCATION_UPDATES_KEY";
     private static final String LOCATION_KEY =
-            "com.example.anders.flexsensor.gms.LocationActivity.LOCATION_KEY";
+            "com.example.anders.flexsensor.gms.LocationService.LOCATION_KEY";
     private static final String LAST_UPDATED_TIME_STRING_KEY =
-            "com.example.anders.flexsensor.gms.LocationActivity.LAST_UPDATED_TIME_STRING_KEY";
+            "com.example.anders.flexsensor.gms.LocationService.LAST_UPDATED_TIME_STRING_KEY";
+
+    public static final String ACTION_CONNECTED =
+            "com.example.anders.flexsensor.gms.LocationService.ACTION_CONNECTED";
+    public static final String ACTION_UPDATE_AVAILABLE =
+            "com.example.anders.flexsensor.gms.LocationService.ACTION_UPDATE_AVAILABLE";
+    public static final String LAST_LOCATION_STRING_KEY =
+            "com.example.anders.flexsensor.gms.LocationService.LAST_LOCATION_STRING_KEY";
+    public static final String LAST_TIME_STRING_KEY =
+            "com.example.anders.flexsensor.gms.LocationService.LAST_TIME_STRING_KEY";
+    public static final int LONGITUDE_ID = 0;
+    public static final int LATITUDE_ID = 1;
 
     //Location API
     private GoogleApiClient mGoogleApiClient;
@@ -60,14 +73,14 @@ public class LocationActivity extends AppCompatActivity
     private LocationRequest mLocationRequest;
 
     //Properties
-    private String mLastUpdateTime;
+    private boolean mConnected;
     private boolean mLocationSettingsSuccess;
-    private boolean mRequestingLocationUpdates;
+
+    private final IBinder binder = new LocalBinder();
 
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        updateValuesFromBundle(savedInstanceState);
+    public void onCreate() {
+        super.onCreate();
 
         // Create an instance of GoogleAPIClient.
         if (mGoogleApiClient == null) {
@@ -78,40 +91,45 @@ public class LocationActivity extends AppCompatActivity
                     .build();
         }
 
-        createLocationRequest();
         mLocationSettingsResult.setResultCallback(this);
     }
 
-    private void updateValuesFromBundle(Bundle savedInstanceState) {
-        if (savedInstanceState != null) {
-            // Update the value of mRequestingLocationUpdates from the Bundle
-            if (savedInstanceState.keySet().contains(REQUESTING_LOCATION_UPDATES_KEY)) {
-                mRequestingLocationUpdates = savedInstanceState.getBoolean(
-                        REQUESTING_LOCATION_UPDATES_KEY);
-            }
+    private void broadcastUpdate(final String action) {
+        final Intent intent = new Intent(action);
+        sendBroadcast(intent);
+    }
 
-            // Update the value of mCurrentLocation from the Bundle
-            if (savedInstanceState.keySet().contains(LOCATION_KEY)) {
-                // Since LOCATION_KEY was found in the Bundle, we can be sure that
-                // mCurrentLocation is not null.
-                mCurrentLocation = savedInstanceState.getParcelable(LOCATION_KEY);
-            }
+    private void broadcastUpdate(final String action,
+                                 Location location, String time) {
+        final Intent intent = new Intent(action);
+        double lon = location.getLongitude();
+        double lat = location.getLatitude();
+        double[] newLocation = new double[2];
+        newLocation[LONGITUDE_ID] = lon;
+        newLocation[LATITUDE_ID] = lat;
+        intent.putExtra(LAST_LOCATION_STRING_KEY, newLocation);
+        intent.putExtra(LAST_TIME_STRING_KEY, time);
+        sendBroadcast(intent);
+    }
 
-            // Update the value of mLastUpdateTime from the Bundle
-            if (savedInstanceState.keySet().contains(LAST_UPDATED_TIME_STRING_KEY)) {
-                mLastUpdateTime = savedInstanceState.getString(
-                        LAST_UPDATED_TIME_STRING_KEY);
-            }
+    public class LocalBinder extends Binder {
+        public LocationService getService() {
+            return LocationService.this;
         }
     }
 
+    @Nullable
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        outState.putBoolean(REQUESTING_LOCATION_UPDATES_KEY,
-                mRequestingLocationUpdates);
-        outState.putParcelable(LOCATION_KEY, mCurrentLocation);
-        outState.putString(LAST_UPDATED_TIME_STRING_KEY, mLastUpdateTime);
-        super.onSaveInstanceState(outState);
+    public IBinder onBind(Intent intent) {
+        return binder;
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        stopUpdates();
+        disconnect();
+        Log.d(TAG, "Disconnected");
+        return super.onUnbind(intent);
     }
 
     private void createLocationRequest() {
@@ -136,50 +154,38 @@ public class LocationActivity extends AppCompatActivity
         Log.d(TAG, "Awaiting location request result");
     }
 
-    private void connect() {
+    public void connect() {
         mGoogleApiClient.connect();
         Log.d(TAG, "Connected");
     }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        connect();
-        addLocationRequest();
-        checkLocationSettings();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
+    public void disconnect() {
         mGoogleApiClient.disconnect();
         Log.d(TAG, "Disconnected");
     }
 
+
     public void requestUpdates() {
-        mRequestingLocationUpdates = true;
+        createLocationRequest();
+        addLocationRequest();
+        checkLocationSettings();
+        try {
+            LocationServices.FusedLocationApi.requestLocationUpdates(
+                    mGoogleApiClient, mLocationRequest, this);
+        } catch (SecurityException e) {
+            Log.d(TAG, e.getMessage());
+        }
     }
 
     public void stopUpdates() {
-        mRequestingLocationUpdates = false;
         LocationServices.FusedLocationApi.removeLocationUpdates(
                 mGoogleApiClient, this);
     }
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        try {
-            mCurrentLocation = FusedLocationApi.getLastLocation(
-                    mGoogleApiClient);
-            Log.d(TAG, "Retrieved location info");
-            if (mRequestingLocationUpdates) {
-                LocationServices.FusedLocationApi.requestLocationUpdates(
-                        mGoogleApiClient, mLocationRequest, this);
-            }
-        } catch (SecurityException e) {
-            Log.d(TAG, e.getMessage());
-            finish();
-        }
+        broadcastUpdate(ACTION_CONNECTED);
+        mConnected = true;
     }
 
     @Override
@@ -201,16 +207,13 @@ public class LocationActivity extends AppCompatActivity
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
         Log.d(TAG, connectionResult.getErrorMessage());
-        if (connectionResult.getErrorCode() == ConnectionResult.RESOLUTION_REQUIRED) {
+        /*if (connectionResult.getErrorCode() == ConnectionResult.RESOLUTION_REQUIRED) {
             try {
-                connectionResult.startResolutionForResult(this, REQUEST_CHECK_CONNECTION);
+                connectionResult.startResolutionForResult(get, REQUEST_CHECK_CONNECTION);
             } catch (IntentSender.SendIntentException e) {
                 Log.d(TAG, e.getMessage());
-                finish();
             }
-        } else {
-            finish();
-        }
+        }*/
     }
 
     @Override
@@ -227,13 +230,13 @@ public class LocationActivity extends AppCompatActivity
                 Log.d(TAG, "Resolution required");
                 // Location settings are not satisfied, but this can be fixed
                 // by showing the user a dialog.
-                try {
+                /*try {
                     // Show the dialog by calling startResolutionForResult(),
                     // and check the result in onActivityResult().
                     status.startResolutionForResult(this, REQUEST_CHECK_SETTINGS);
                 } catch (IntentSender.SendIntentException e) {
                     mLocationSettingsSuccess = false;
-                }
+                }*/
                 break;
             case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
                 Log.d(TAG, "Settings change unavailable");
@@ -244,7 +247,7 @@ public class LocationActivity extends AppCompatActivity
         }
     }
 
-    @Override
+    /*@Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK &&
                 (requestCode == REQUEST_CHECK_CONNECTION
@@ -253,12 +256,18 @@ public class LocationActivity extends AppCompatActivity
             connect();
         }
         super.onActivityResult(requestCode, resultCode, data);
-    }
+    }*/
 
     @Override
     public void onLocationChanged(Location location) {
         Log.d(TAG, "Retrieved location update");
-        mCurrentLocation = location;
-        mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
+        String lastUpdateTime = DateFormat.getTimeInstance().format(new Date());
+        broadcastUpdate(ACTION_UPDATE_AVAILABLE, location, lastUpdateTime);
+    }
+
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
     }
 }

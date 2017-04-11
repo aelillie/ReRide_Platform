@@ -46,7 +46,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     public static final String EXTRAS_TIME_DATA = "TIME_DATA";
 
     //Debug settings
-    public static boolean TEST_GMS = true;
+    public static boolean TEST_GMS = false;
 
     //UI information
     private boolean connected;
@@ -267,7 +267,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         locationLongField.setText(String.valueOf(mLocation[LocationService.LONGITUDE_ID]));
         locationLatField.setText(String.valueOf(mLocation[LocationService.LATITUDE_ID]));
         timeField.setText(mTime);
-        if (TEST_GMS) return;
+        //if (TEST_GMS) return;
         dataField.setText(mAngleData);
         Bundle bundle = new Bundle();
         bundle.putString(EXTRAS_ANGLE_DATA, mAngleData);

@@ -13,7 +13,12 @@ import com.amazonaws.services.iotdata.model.GetThingShadowResult;
 import com.amazonaws.services.iotdata.model.UpdateThingShadowRequest;
 import com.amazonaws.services.iotdata.model.UpdateThingShadowResult;
 import com.example.anders.flexsensor.ble.BLEDeviceControlActivity;
+import com.example.anders.flexsensor.gms.LocationService;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.nio.ByteBuffer;
 
@@ -37,6 +42,9 @@ public class AWSIoTManager {
 
     // Region of AWS IoT
     private static final Regions MY_REGION = Regions.EU_CENTRAL_1;
+    private final JSONObject mJState;
+    private final JSONObject mJElement;
+    private final JSONObject mJData;
 
     private AWSIotDataClient iotDataClient;
 
@@ -52,20 +60,45 @@ public class AWSIoTManager {
 
         iotDataClient = new AWSIotDataClient(credentialsProvider);
         iotDataClient.setEndpoint(CUSTOMER_SPECIFIC_ENDPOINT);
+
+        mJState = new JSONObject();
+        mJElement = new JSONObject();
+        mJData = new JSONObject();
+        try {
+            mJElement.put("reported", mJData);
+            mJState.put("state", mJElement);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     public void update(Bundle data) {
         String newAngle = data.getString(BLEDeviceControlActivity.EXTRAS_ANGLE_DATA);
         double[] newLocation = data.getDoubleArray(BLEDeviceControlActivity.EXTRAS_LOCATION_DATA);
+        if (newLocation == null) throw new IllegalArgumentException();
         String newTime = data.getString(BLEDeviceControlActivity.EXTRAS_TIME_DATA);
         //TODO: Use location
         Log.i(LOG_TAG, "New angle:" + newAngle);
         UpdateShadowTask updateShadowTask = new UpdateShadowTask();
         updateShadowTask.setThingName(THING_NAME);
-        String newState = String.format("{\"state\":{\"reported\":{\"angle\":%s}}}", newAngle);
-        Log.i(LOG_TAG, newState);
-        updateShadowTask.setState(newState);
+        createJSON(newAngle,
+                newLocation[LocationService.LONGITUDE_ID],
+                newLocation[LocationService.LATITUDE_ID],
+                newTime);
+        Log.i(LOG_TAG, mJState.toString());
+        updateShadowTask.setState(mJState.toString());
         updateShadowTask.execute();
+    }
+
+    private void createJSON(String newAngle, double lon, double lat, String newTime){
+        try {
+            mJData.put("angle", newAngle);
+            mJData.put("longitude", lon);
+            mJData.put("latitude", lat);
+            mJData.put("timestamp", newTime);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
 
     public void getShadow() {

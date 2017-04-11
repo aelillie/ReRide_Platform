@@ -45,7 +45,8 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     public static final String EXTRAS_LOCATION_DATA = "LOCATION_DATA";
     public static final String EXTRAS_TIME_DATA = "TIME_DATA";
 
-    private PubSubFragment mPubSubFragment;
+    //Debug settings
+    public static boolean TEST_GMS = true;
 
     //UI information
     private boolean connected;
@@ -208,12 +209,14 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         mAWSManager = new AWSIoTManager(this);
         final Intent intent = getIntent();
         String deviceAddress = intent.getStringExtra(EXTRAS_DEVICE_ADDRESS);
+        if (deviceAddress != null && !deviceAddress.isEmpty()) {
+            BluetoothAdapter bluetoothAdapter = ((BluetoothManager)
+                    getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
+            bluetoothDevice = bluetoothAdapter.getRemoteDevice(deviceAddress);
+            ((TextView) findViewById(R.id.device_address)).setText(deviceAddress);
+            toolbar.setTitle(bluetoothDevice.getName());
+        }
 
-        BluetoothAdapter bluetoothAdapter = ((BluetoothManager)
-                getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
-        bluetoothDevice = bluetoothAdapter.getRemoteDevice(deviceAddress);
-
-        ((TextView) findViewById(R.id.device_address)).setText(deviceAddress);
         connectionState = (TextView) findViewById(R.id.connection_state);
         dataField = (TextView) findViewById(R.id.data_value);
         locationLongField = (TextView) findViewById(R.id.location_long_value);
@@ -228,17 +231,22 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
             }
         });
 
+        if (TEST_GMS) {
+            getDataButton.setEnabled(true);
+        }
+
 //        FragmentManager fragmentManager = getSupportFragmentManager();
 //        FragmentTransaction trans = fragmentManager.beginTransaction();
 //        mPubSubFragment = new PubSubFragment();
 //        trans.add(R.id.aws_fragment, mPubSubFragment);
 //        trans.commit();
 
-        toolbar.setTitle(bluetoothDevice.getName());
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        Intent gattServiceIntent = new Intent(this, BLEService.class);
-        bindService(gattServiceIntent, mBleServiceConnection, Context.BIND_AUTO_CREATE);
+        if (bluetoothDevice != null) {
+            Intent gattServiceIntent = new Intent(this, BLEService.class);
+            bindService(gattServiceIntent, mBleServiceConnection, Context.BIND_AUTO_CREATE);
+        }
         Intent gmsServiceIntent = new Intent(this, LocationService.class);
         bindService(gmsServiceIntent, mGmsServiceConnection, Context.BIND_AUTO_CREATE);
     }

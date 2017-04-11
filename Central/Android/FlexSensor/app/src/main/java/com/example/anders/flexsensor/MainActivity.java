@@ -73,6 +73,10 @@ public class MainActivity extends AppCompatActivity{
         mHandler = new Handler();
 
         askForLocationPermission();
+        if (BLEDeviceControlActivity.TEST_GMS) {
+            startActivity(new Intent(this, BLEDeviceControlActivity.class));
+            finish();
+        }
         checkForBLESupport();
         setupScanSettings();
 

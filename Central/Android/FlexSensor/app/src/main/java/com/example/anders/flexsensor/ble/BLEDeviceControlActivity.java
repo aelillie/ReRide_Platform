@@ -97,6 +97,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                     double[] location = intent.getDoubleArrayExtra(LocationService.LAST_LOCATION_STRING_KEY);
                     if (location != null) mLocation = location;
                      mTime = intent.getStringExtra(LocationService.LAST_TIME_STRING_KEY);
+                    handleData();
                     break;
                 case LocationService.ACTION_CONNECTED:
                     announce("Location services connected");
@@ -263,10 +264,11 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
 
 
     private void handleData() {
-        dataField.setText(mAngleData);
         locationLongField.setText(String.valueOf(mLocation[LocationService.LONGITUDE_ID]));
         locationLatField.setText(String.valueOf(mLocation[LocationService.LATITUDE_ID]));
         timeField.setText(mTime);
+        if (TEST_GMS) return;
+        dataField.setText(mAngleData);
         Bundle bundle = new Bundle();
         bundle.putString(EXTRAS_ANGLE_DATA, mAngleData);
         bundle.putDoubleArray(EXTRAS_LOCATION_DATA, mLocation);

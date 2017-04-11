@@ -93,7 +93,6 @@ public class LocationService extends Service
                     .build();
         }
 
-        mLocationSettingsResult.setResultCallback(this);
     }
 
     private void broadcastUpdate(final String action) {
@@ -159,6 +158,7 @@ public class LocationService extends Service
     private void checkLocationSettings() {
         mLocationSettingsResult = LocationServices.SettingsApi.checkLocationSettings(
                 mGoogleApiClient, mSettingsRequest);
+        mLocationSettingsResult.setResultCallback(this);
         Log.d(TAG, "Awaiting location request result");
     }
 

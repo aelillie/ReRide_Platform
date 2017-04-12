@@ -24,9 +24,10 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.anders.flexsensor.aws.AWSIoTManager;
+import com.example.anders.flexsensor.aws.AWSIoTDataManagement;
 import com.example.anders.flexsensor.R;
-import com.example.anders.flexsensor.aws.PubSubFragment;
+import com.example.anders.flexsensor.aws.AWSIoTManager;
+import com.example.anders.flexsensor.aws.PROTOCOL;
 import com.example.anders.flexsensor.gms.LocationService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.location.LocationSettingsResult;
@@ -46,7 +47,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     public static final String EXTRAS_TIME_DATA = "TIME_DATA";
 
     //Debug settings
-    public static boolean TEST_GMS = false;
+    public static boolean TEST_GMS = true;
 
     //UI information
     private boolean connected;
@@ -174,7 +175,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         }
     };
     private BluetoothGattCharacteristic mGattCharacteristic;
-    private AWSIoTManager mAWSManager;
+    private AWSIoTDataManagement mAWSIoTManager;
 
     private void updateUI() {
         getDataButton.setEnabled(true);
@@ -207,7 +208,6 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         setContentView(R.layout.activity_ble);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_ble);
 
-        mAWSManager = new AWSIoTManager(this);
         final Intent intent = getIntent();
         String deviceAddress = intent.getStringExtra(EXTRAS_DEVICE_ADDRESS);
         if (deviceAddress != null && !deviceAddress.isEmpty()) {
@@ -236,11 +236,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
             getDataButton.setEnabled(true);
         }
 
-//        FragmentManager fragmentManager = getSupportFragmentManager();
-//        FragmentTransaction trans = fragmentManager.beginTransaction();
-//        mPubSubFragment = new PubSubFragment();
-//        trans.add(R.id.aws_fragment, mPubSubFragment);
-//        trans.commit();
+        mAWSIoTManager = new AWSIoTManager(this, PROTOCOL.MQTT);
 
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -267,13 +263,15 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         locationLongField.setText(String.valueOf(mLocation[LocationService.LONGITUDE_ID]));
         locationLatField.setText(String.valueOf(mLocation[LocationService.LATITUDE_ID]));
         timeField.setText(mTime);
-        //if (TEST_GMS) return;
+        if (TEST_GMS) {
+            mAngleData = "5";
+        }
         dataField.setText(mAngleData);
         Bundle bundle = new Bundle();
         bundle.putString(EXTRAS_ANGLE_DATA, mAngleData);
         bundle.putDoubleArray(EXTRAS_LOCATION_DATA, mLocation);
         bundle.putString(EXTRAS_TIME_DATA, mTime);
-        mAWSManager.update(bundle);
+        mAWSIoTManager.publish(bundle);
     }
 
     private void searchGattServices(List<BluetoothGattService> supportedGattServices) {
@@ -348,7 +346,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         final int charaProp = characteristic.getProperties();
 //        if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
 //            // If there is an active notification on a characteristic, clear
-//            // it first so it doesn't update the data field on the user interface.
+//            // it first so it doesn't publish the data field on the user interface.
 //            if (notifyCharacteristic != null) {
 //                bleService.setCharacteristicNotification(
 //                        notifyCharacteristic, false);

@@ -15,7 +15,6 @@ import com.amazonaws.services.iotdata.model.UpdateThingShadowResult;
 import com.example.anders.flexsensor.ble.BLEDeviceControlActivity;
 import com.example.anders.flexsensor.gms.LocationService;
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -23,82 +22,28 @@ import org.json.JSONObject;
 import java.nio.ByteBuffer;
 
 /**
- * Responsible for communication with AWS IoT through WebSocket
+ * Responsible for communication with AWS IoT through HTTP
  */
 
-public class AWSIoTManager {
+class AWSIoTHTTPBroker extends AWSIoTDataBroker{
+    private static final String LOG_TAG = AWSIoTHTTPBroker.class.getSimpleName();
 
-    private static final String LOG_TAG = AWSIoTManager.class.getSimpleName();
-
-    // --- Constants to modify per your configuration ---
-
-    // IoT endpoint
-    private static final String CUSTOMER_SPECIFIC_ENDPOINT =
-            "a3mcftlm8wc1g9.iot.eu-central-1.amazonaws.com";
-    // Cognito pool ID. For this app, pool needs to be unauthenticated pool with
-    // AWS IoT permissions.
-    private static final String COGNITO_POOL_ID =
-            "eu-central-1:b6eda114-0f5c-456d-8128-c1cd2c0aa73d";
-
-    // Region of AWS IoT
-    private static final Regions MY_REGION = Regions.EU_CENTRAL_1;
-    private final JSONObject mJState;
-    private final JSONObject mJElement;
-    private final JSONObject mJData;
 
     private AWSIotDataClient iotDataClient;
 
-    private static final String THING_NAME = "FlexSensor";
-
-    public AWSIoTManager(Context context) {
-        // Initialize the Amazon Cognito credentials provider
-        CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
-                context,
-                COGNITO_POOL_ID, // Identity Pool ID
-                MY_REGION // Region
-        );
-
-        iotDataClient = new AWSIotDataClient(credentialsProvider);
-        iotDataClient.setEndpoint(CUSTOMER_SPECIFIC_ENDPOINT);
-
-        mJState = new JSONObject();
-        mJElement = new JSONObject();
-        mJData = new JSONObject();
-        try {
-            mJElement.put("reported", mJData);
-            mJState.put("state", mJElement);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+    public AWSIoTHTTPBroker(Context context) {
+        super(context);
     }
 
-    public void update(Bundle data) {
-        String newAngle = data.getString(BLEDeviceControlActivity.EXTRAS_ANGLE_DATA);
-        double[] newLocation = data.getDoubleArray(BLEDeviceControlActivity.EXTRAS_LOCATION_DATA);
-        if (newLocation == null) throw new IllegalArgumentException();
-        String newTime = data.getString(BLEDeviceControlActivity.EXTRAS_TIME_DATA);
-        //TODO: Use location
-        Log.i(LOG_TAG, "New angle:" + newAngle);
+    @Override
+    public void publish(Bundle data) {
+        super.publish(data);
+
         UpdateShadowTask updateShadowTask = new UpdateShadowTask();
         updateShadowTask.setThingName(THING_NAME);
-        createJSON(newAngle,
-                newLocation[LocationService.LONGITUDE_ID],
-                newLocation[LocationService.LATITUDE_ID],
-                newTime);
         Log.i(LOG_TAG, mJState.toString());
         updateShadowTask.setState(mJState.toString());
         updateShadowTask.execute();
-    }
-
-    private void createJSON(String newAngle, double lon, double lat, String newTime){
-        try {
-            mJData.put("angle", newAngle);
-            mJData.put("longitude", lon);
-            mJData.put("latitude", lat);
-            mJData.put("timestamp", newTime);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
     }
 
     public void getShadow() {
@@ -111,6 +56,31 @@ public class AWSIoTManager {
 
         Log.i(LOG_TAG, String.format("angle:  %d", ts.state.desired.angle));
         Log.i(LOG_TAG, String.format("curState: %s", ts.state.desired.curState));
+    }
+
+    @Override
+    public void subscribe() {
+
+    }
+
+    @Override
+    public Bundle getData() {
+        //getShadow();
+        return null;
+    }
+
+    @Override
+    public boolean connect() {
+        iotDataClient = new AWSIotDataClient(credentialsProvider);
+        iotDataClient.setEndpoint(CUSTOMER_SPECIFIC_ENDPOINT);
+        return true; //TODO: Try-catch
+    }
+
+    @Override
+    public boolean disconnect() {
+        iotDataClient.shutdown(); //TODO: What is this?
+        iotDataClient = null;
+        return true; //TODO: Try-catch
     }
 
     private class GetShadowTask extends AsyncTask<Void, Void, AsyncTaskResult<String>> {

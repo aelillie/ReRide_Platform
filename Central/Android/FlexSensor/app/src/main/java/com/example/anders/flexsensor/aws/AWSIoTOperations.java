@@ -1,8 +1,15 @@
 package com.example.anders.flexsensor.aws;
 
+import android.os.Bundle;
+
 /**
- * Created by Anders on 12-Apr-17.
+ * Provides basic data transmission operations
  */
 
 interface AWSIoTOperations {
+    void publish(Bundle data);
+    void subscribe();
+    Bundle getData();
+    boolean connect();
+    boolean disconnect();
 }

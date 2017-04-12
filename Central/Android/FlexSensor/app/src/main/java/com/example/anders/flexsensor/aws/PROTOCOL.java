@@ -1,8 +1,9 @@
 package com.example.anders.flexsensor.aws;
 
 /**
- * Created by Anders on 12-Apr-17.
+ * Data transmission protocols supported by AWS
  */
 
 public enum PROTOCOL {
+    HTTP, MQTT
 }

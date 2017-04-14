@@ -24,9 +24,8 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.anders.flexsensor.aws.AWSIoTDataManagement;
-import com.example.anders.flexsensor.R;
 import com.example.anders.flexsensor.aws.AWSIoTManager;
+import com.example.anders.flexsensor.R;
 import com.example.anders.flexsensor.aws.PROTOCOL;
 import com.example.anders.flexsensor.gms.LocationService;
 import com.google.android.gms.common.ConnectionResult;
@@ -175,7 +174,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         }
     };
     private BluetoothGattCharacteristic mGattCharacteristic;
-    private AWSIoTDataManagement mAWSIoTManager;
+    private AWSIoTManager mAWSIoTManager;
 
     private void updateUI() {
         getDataButton.setEnabled(true);

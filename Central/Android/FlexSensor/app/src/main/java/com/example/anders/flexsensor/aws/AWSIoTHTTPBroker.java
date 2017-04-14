@@ -37,17 +37,17 @@ class AWSIoTHTTPBroker extends AWSIoTDataBroker{
 
     @Override
     public void publish(Bundle data) {
-        super.publish(data);
+        throw new UnsupportedOperationException();
+    }
 
+    @Override
+    public void updateShadow(Bundle state) {
+        super.updateShadow(state);
         UpdateShadowTask updateShadowTask = new UpdateShadowTask();
         updateShadowTask.setThingName(THING_NAME);
         Log.i(LOG_TAG, mJState.toString());
         updateShadowTask.setState(mJState.toString());
         updateShadowTask.execute();
-    }
-
-    public void getShadow() {
-        new GetShadowTask(THING_NAME).execute();
     }
 
     private void flexSensorStatusUpdated(String flexSensorStatusState) {
@@ -60,13 +60,13 @@ class AWSIoTHTTPBroker extends AWSIoTDataBroker{
 
     @Override
     public void subscribe() {
-
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public Bundle getData() {
-        //getShadow();
-        return null;
+    public Bundle getShadow() {
+        //new GetShadowTask(THING_NAME).execute();
+        throw new UnsupportedOperationException();
     }
 
     @Override

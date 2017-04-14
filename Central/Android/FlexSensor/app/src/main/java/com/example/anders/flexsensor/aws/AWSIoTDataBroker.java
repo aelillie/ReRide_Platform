@@ -30,7 +30,7 @@ abstract class AWSIoTDataBroker implements AWSIoTOperations {
 
     protected final Context mContext;
 
-    protected static final String THING_NAME = "FlexSensor";
+    protected static final String THING_NAME = "FlexSensor"; //TODO: Not anymore
 
     protected CognitoCachingCredentialsProvider credentialsProvider;
 
@@ -57,6 +57,18 @@ abstract class AWSIoTDataBroker implements AWSIoTOperations {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public void updateShadow(Bundle state) {
+        String newAngle = state.getString(BLEDeviceControlActivity.EXTRAS_ANGLE_DATA);
+        double[] newLocation = state.getDoubleArray(BLEDeviceControlActivity.EXTRAS_LOCATION_DATA);
+        if (newLocation == null) throw new IllegalArgumentException();
+        String newTime = state.getString(BLEDeviceControlActivity.EXTRAS_TIME_DATA);
+        createJSON(newAngle,
+                newLocation[LocationService.LONGITUDE_ID],
+                newLocation[LocationService.LATITUDE_ID],
+                newTime);
     }
 
     @Override

@@ -4,13 +4,21 @@ import android.content.Context;
 import android.os.Bundle;
 
 /**
- * Relay manager for data management
+ * Interface for handling data management
  */
 
-public class AWSIoTManager extends AWSIoTDataManagement{
+public class AWSIoTManager implements AWSIoTOperations{
+    protected AWSIoTDataBroker mDataBroker;
 
     public AWSIoTManager(Context context, PROTOCOL protocol) {
-        super(context, protocol);
+        switch (protocol) {
+            case HTTP:
+                mDataBroker = new AWSIoTHTTPBroker(context);
+                break;
+            case MQTT:
+                mDataBroker = new AWSIoTMQTTBroker(context);
+                break;
+        }
     }
 
     @Override
@@ -24,8 +32,13 @@ public class AWSIoTManager extends AWSIoTDataManagement{
     }
 
     @Override
-    public Bundle getData() {
-        return null;
+    public Bundle getShadow() {
+        return mDataBroker.getShadow();
+    }
+
+    @Override
+    public void updateShadow(Bundle state) {
+        mDataBroker.updateShadow(state);
     }
 
     @Override

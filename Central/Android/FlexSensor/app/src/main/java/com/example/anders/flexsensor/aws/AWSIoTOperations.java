@@ -9,7 +9,8 @@ import android.os.Bundle;
 interface AWSIoTOperations {
     void publish(Bundle data);
     void subscribe();
-    Bundle getData();
+    Bundle getShadow();
+    void updateShadow(Bundle state);
     boolean connect();
     boolean disconnect();
 }

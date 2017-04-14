@@ -6,12 +6,10 @@ import android.util.Log;
 import android.widget.TextView;
 
 import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttNewMessageCallback;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttQos;
-import com.amazonaws.regions.Regions;
 
 import java.util.UUID;
 
@@ -29,8 +27,8 @@ class AWSIoTMQTTBroker extends AWSIoTDataBroker{
     private String clientId;
 
     //MQTT
-    private static final String MQTT_UPDATE = "$aws/things/FlexSensor/shadow/publish";
-    private static final String MQTT_GET = "$aws/things/FlexSensor/shadow/get";
+    private static final String MQTT_PUBLISH = "ReRide/"; //TODO: Possible post-fix?
+    private static final String MQTT_SUBSCRIBE = "ReRide/"; //TODO: Possible post-fix?
 
     //UI
     private TextView mStatus;
@@ -98,12 +96,13 @@ class AWSIoTMQTTBroker extends AWSIoTDataBroker{
 
     @Override
     public void subscribe() {
-        try {
-            mqttManager.subscribeToTopic(MQTT_GET, AWSIotMqttQos.QOS0,
+        throw new UnsupportedOperationException();
+        /*try {
+            mqttManager.subscribeToTopic(MQTT_SUBSCRIBE, AWSIotMqttQos.QOS0,
                     new AWSIotMqttNewMessageCallback() {
                         @Override
                         public void onMessageArrived(final String topic, final byte[] data) {
-                            /*getActivity().runOnUiThread(new Runnable() {
+                            *//*getActivity().runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
                                     try {
@@ -118,24 +117,29 @@ class AWSIoTMQTTBroker extends AWSIoTDataBroker{
                                         Log.e(LOG_TAG, "Message encoding error.", e);
                                     }
                                 }
-                            });*/
+                            });*//*
                         }
                     });
         } catch (Exception e) {
             Log.e(LOG_TAG, "Subscription error.", e);
-        }
+        }*/
     }
 
     @Override
-    public Bundle getData() {
-        return null;
+    public Bundle getShadow() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void updateShadow(Bundle state) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public void publish(Bundle data) {
         super.publish(data);
         try {
-            mqttManager.publishString(mJState.toString(), MQTT_UPDATE, AWSIotMqttQos.QOS0);
+            mqttManager.publishString(mJState.toString(), MQTT_SUBSCRIBE, AWSIotMqttQos.QOS0);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Publish error.", e);
         }

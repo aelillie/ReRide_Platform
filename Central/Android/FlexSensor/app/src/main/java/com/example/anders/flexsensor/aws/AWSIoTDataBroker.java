@@ -42,7 +42,7 @@ abstract class AWSIoTDataBroker implements AWSIoTOperations {
     public AWSIoTDataBroker(Context context) {
         mContext = context;
         // Initialize the Amazon Cognito credentials provider
-        CognitoCachingCredentialsProvider credentialsProvider = new CognitoCachingCredentialsProvider(
+        credentialsProvider = new CognitoCachingCredentialsProvider(
                 context,
                 COGNITO_POOL_ID, // Identity Pool ID
                 MY_REGION // Region

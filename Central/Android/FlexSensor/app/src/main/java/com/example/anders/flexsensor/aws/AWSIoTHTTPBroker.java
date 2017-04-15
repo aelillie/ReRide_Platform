@@ -5,19 +5,12 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.amazonaws.auth.CognitoCachingCredentialsProvider;
-import com.amazonaws.regions.Regions;
 import com.amazonaws.services.iotdata.AWSIotDataClient;
 import com.amazonaws.services.iotdata.model.GetThingShadowRequest;
 import com.amazonaws.services.iotdata.model.GetThingShadowResult;
 import com.amazonaws.services.iotdata.model.UpdateThingShadowRequest;
 import com.amazonaws.services.iotdata.model.UpdateThingShadowResult;
-import com.example.anders.flexsensor.ble.BLEDeviceControlActivity;
-import com.example.anders.flexsensor.gms.LocationService;
 import com.google.gson.Gson;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.nio.ByteBuffer;
 
@@ -31,8 +24,8 @@ class AWSIoTHTTPBroker extends AWSIoTDataBroker{
 
     private AWSIotDataClient iotDataClient;
 
-    public AWSIoTHTTPBroker(Context context) {
-        super(context);
+    public AWSIoTHTTPBroker(Context context, String userID) {
+        super(context, userID);
     }
 
     @Override
@@ -44,7 +37,7 @@ class AWSIoTHTTPBroker extends AWSIoTDataBroker{
     public void updateShadow(Bundle state) {
         super.updateShadow(state);
         UpdateShadowTask updateShadowTask = new UpdateShadowTask();
-        updateShadowTask.setThingName(THING_NAME);
+        updateShadowTask.setThingName(mId);
         Log.i(LOG_TAG, mJState.toString());
         updateShadowTask.setState(mJState.toString());
         updateShadowTask.execute();
@@ -65,7 +58,7 @@ class AWSIoTHTTPBroker extends AWSIoTDataBroker{
 
     @Override
     public Bundle getShadow() {
-        //new GetShadowTask(THING_NAME).execute();
+        //new GetShadowTask(mId).execute();
         throw new UnsupportedOperationException();
     }
 

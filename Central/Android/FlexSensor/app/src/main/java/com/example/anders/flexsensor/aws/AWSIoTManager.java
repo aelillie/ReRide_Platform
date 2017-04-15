@@ -10,13 +10,13 @@ import android.os.Bundle;
 public class AWSIoTManager implements AWSIoTOperations{
     protected AWSIoTDataBroker mDataBroker;
 
-    public AWSIoTManager(Context context, PROTOCOL protocol) {
+    public AWSIoTManager(Context context, PROTOCOL protocol, String userID) {
         switch (protocol) {
             case HTTP:
-                mDataBroker = new AWSIoTHTTPBroker(context);
+                mDataBroker = new AWSIoTHTTPBroker(context, userID);
                 break;
             case MQTT:
-                mDataBroker = new AWSIoTMQTTBroker(context);
+                mDataBroker = new AWSIoTMQTTBroker(context, userID);
                 break;
         }
     }

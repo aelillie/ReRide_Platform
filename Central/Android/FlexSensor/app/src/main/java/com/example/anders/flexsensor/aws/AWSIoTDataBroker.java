@@ -8,6 +8,7 @@ import com.amazonaws.regions.Regions;
 import com.example.anders.flexsensor.ble.BLEDeviceControlActivity;
 import com.example.anders.flexsensor.gms.LocationService;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -24,22 +25,23 @@ abstract class AWSIoTDataBroker implements AWSIoTOperations {
     // Cognito pool ID. For this app, pool needs to be unauthenticated pool with
     // AWS IoT permissions.
     protected static final String COGNITO_POOL_ID =
-            "eu-central-1:b6eda114-0f5c-456d-8128-c1cd2c0aa73d";
+            "eu-central-1:3f7b1bf2-d066-4976-97ea-f89c6ffbab60";
     // Region of AWS IoT
     protected static final Regions MY_REGION = Regions.EU_CENTRAL_1;
 
     protected final Context mContext;
 
-    protected static final String THING_NAME = "FlexSensor"; //TODO: Not anymore
+    protected String mId;
 
     protected CognitoCachingCredentialsProvider credentialsProvider;
 
     protected final JSONObject mJState;
-    private final JSONObject mJElement;
-    private final JSONObject mJData;
+    protected final JSONObject mJElement;
+    protected final JSONObject mJData;
 
 
-    public AWSIoTDataBroker(Context context) {
+    public AWSIoTDataBroker(Context context, String userID) {
+        mId = userID;
         mContext = context;
         // Initialize the Amazon Cognito credentials provider
         credentialsProvider = new CognitoCachingCredentialsProvider(
@@ -54,6 +56,7 @@ abstract class AWSIoTDataBroker implements AWSIoTOperations {
         try {
             mJElement.put("reported", mJData);
             mJState.put("state", mJElement);
+            mJData.put("id", mId);
         } catch (JSONException e) {
             e.printStackTrace();
         }

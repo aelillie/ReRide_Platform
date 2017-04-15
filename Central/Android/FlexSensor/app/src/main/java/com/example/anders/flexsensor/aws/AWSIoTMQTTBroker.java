@@ -8,6 +8,7 @@ import android.widget.TextView;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager;
+import com.amazonaws.mobileconnectors.iot.AWSIotMqttMessageDeliveryCallback;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttNewMessageCallback;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttQos;
 
@@ -27,14 +28,14 @@ class AWSIoTMQTTBroker extends AWSIoTDataBroker{
     private String clientId;
 
     //MQTT
-    private static final String MQTT_PUBLISH = "ReRide/"; //TODO: Possible post-fix?
+    private static final String MQTT_PUBLISH = "reride/store"; //TODO: Possible post-fix?
     private static final String MQTT_SUBSCRIBE = "ReRide/"; //TODO: Possible post-fix?
 
     //UI
     private TextView mStatus;
 
-    public AWSIoTMQTTBroker(Context context) {
-        super(context);
+    public AWSIoTMQTTBroker(Context context, String userID) {
+        super(context, userID);
         // MQTT client IDs are required to be unique per AWS IoT account.
         // This UUID is "practically unique" but does not _guarantee_
         // uniqueness.
@@ -63,28 +64,21 @@ class AWSIoTMQTTBroker extends AWSIoTDataBroker{
                                             final Throwable throwable) {
                     Log.d(LOG_TAG, "Status = " + String.valueOf(status));
 
-                    /*getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            switch (status) {
-                                case Connecting:
-                                    mStatus.setText(R.string.connecting); break;
-                                case Connected:
-                                    mStatus.setText(R.string.connected); break;
-                                case ConnectionLost:
-                                    if (throwable != null)
-                                        Log.e(LOG_TAG, "Connection error.", throwable);
-                                    mStatus.setText(R.string.disconnected);
-                                    break;
-                                case Reconnecting:
-                                    if (throwable != null)
-                                        Log.e(LOG_TAG, "Connection error.", throwable);
-                                    mStatus.setText(R.string.reconnecting);
-                                    break;
-                                default: mStatus.setText(R.string.disconnected); break;
-                            }
-                        }
-                    });*/
+                    switch (status) {
+                        case Connecting:
+                            Log.d(LOG_TAG, "Connecting"); break;
+                        case Connected:
+                            Log.d(LOG_TAG, "Connected"); break;
+                        case ConnectionLost:
+                            if (throwable != null)
+                                Log.e(LOG_TAG, "Connection error.", throwable);
+                            break;
+                        case Reconnecting:
+                            if (throwable != null)
+                                Log.e(LOG_TAG, "Connection error.", throwable);
+                            break;
+                        default: Log.d(LOG_TAG, "Disconnected"); break;
+                    }
                 }
             });
             return true;
@@ -101,23 +95,8 @@ class AWSIoTMQTTBroker extends AWSIoTDataBroker{
             mqttManager.subscribeToTopic(MQTT_SUBSCRIBE, AWSIotMqttQos.QOS0,
                     new AWSIotMqttNewMessageCallback() {
                         @Override
-                        public void onMessageArrived(final String topic, final byte[] data) {
-                            *//*getActivity().runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    try {
-                                        String message = new String(data, "UTF-8");
-                                        Log.d(LOG_TAG, "Message arrived:");
-                                        Log.d(LOG_TAG, "   Topic: " + topic);
-                                        Log.d(LOG_TAG, " Message: " + message);
+                        public void onMessageArrived(String topic, byte[] data) {
 
-                                        //tvLastMessage.setText(message);
-
-                                    } catch (UnsupportedEncodingException e) {
-                                        Log.e(LOG_TAG, "Message encoding error.", e);
-                                    }
-                                }
-                            });*//*
                         }
                     });
         } catch (Exception e) {
@@ -139,7 +118,16 @@ class AWSIoTMQTTBroker extends AWSIoTDataBroker{
     public void publish(Bundle data) {
         super.publish(data);
         try {
-            mqttManager.publishString(mJState.toString(), MQTT_SUBSCRIBE, AWSIotMqttQos.QOS0);
+            mqttManager.publishString(mJData.toString(), MQTT_PUBLISH, AWSIotMqttQos.QOS0,
+                    new AWSIotMqttMessageDeliveryCallback() {
+                        @Override
+                        public void statusChanged(MessageDeliveryStatus status, Object userData) {
+                            switch (status) {
+                                case Success: Log.d(LOG_TAG, "Publish success!"); break;
+                                case Fail: Log.d(LOG_TAG, "Publish fail!"); break;
+                            }
+                        }
+                    }, null);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Publish error.", e);
         }

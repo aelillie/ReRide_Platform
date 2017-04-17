@@ -1,0 +1,6 @@
+C:\Users\Anders\ReRide_Project\AWS\ReRide_AWSLambda\DataManagement\bin\Release\netcoreapp1.0\DataManagement.deps.json
+C:\Users\Anders\ReRide_Project\AWS\ReRide_AWSLambda\DataManagement\bin\Release\netcoreapp1.0\DataManagement.dll
+C:\Users\Anders\ReRide_Project\AWS\ReRide_AWSLambda\DataManagement\bin\Release\netcoreapp1.0\DataManagement.pdb
+C:\Users\Anders\ReRide_Project\AWS\ReRide_AWSLambda\DataManagement\obj\Release\netcoreapp1.0\DataManagement.AssemblyInfo.cs
+C:\Users\Anders\ReRide_Project\AWS\ReRide_AWSLambda\DataManagement\obj\Release\netcoreapp1.0\DataManagement.dll
+C:\Users\Anders\ReRide_Project\AWS\ReRide_AWSLambda\DataManagement\obj\Release\netcoreapp1.0\DataManagement.pdb

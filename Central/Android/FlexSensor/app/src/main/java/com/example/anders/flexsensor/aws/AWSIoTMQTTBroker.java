@@ -28,8 +28,8 @@ class AWSIoTMQTTBroker extends AWSIoTDataBroker{
     private String clientId;
 
     //MQTT
-    private static final String MQTT_PUBLISH = "reride/store"; //TODO: Possible post-fix?
-    private static final String MQTT_SUBSCRIBE = "ReRide/"; //TODO: Possible post-fix?
+    private static final String MQTT_PUBLISH = "ReRide/" + mId + "/save";
+    //private static final String MQTT_SUBSCRIBE = "ReRide/";
 
     //UI
     private TextView mStatus;

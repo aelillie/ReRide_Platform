@@ -31,7 +31,7 @@ abstract class AWSIoTDataBroker implements AWSIoTOperations {
 
     protected final Context mContext;
 
-    protected String mId;
+    protected static String mId;
 
     protected CognitoCachingCredentialsProvider credentialsProvider;
 

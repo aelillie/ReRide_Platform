@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>ReRide rider information</title>
+    </head>
+    <body>
+        <h1>Latest ReRide data:</h1>
+        <div id="ride-data">
+
+        </div>
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+        <script type="text/javascript">
+            var API_URL = 'https://rzx2umf8a9.execute-api.eu-central-1.amazonaws.com/prod/ride-data?id=10&since=0';
+            $(document).ready(function () {
+                $.ajax({
+                    type: 'GET',
+                    url: API_URL,
+                    success: function(data) {
+                        $('#ride-data').html('');
+                        data.Items.forEach(function (rerideItem) {
+                            $('#ride-data').append('<p>' + rerideItem.angle + '</p>');
+                        })
+                    }
+                });
+            });
+        </script>
+    </body>
+</html>

@@ -235,7 +235,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
             getDataButton.setEnabled(true);
         }
 
-        mAWSIoTManager = new AWSIoTManager(this, PROTOCOL.MQTT, "123");
+        mAWSIoTManager = new AWSIoTManager(this, PROTOCOL.MQTT, "223344");
         if (mAWSIoTManager.connect()) {
             Log.d(TAG, "Connected to AWS");
         } else {

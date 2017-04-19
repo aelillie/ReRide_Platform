@@ -11,15 +11,21 @@ exports.handler = function(event, context, callback) {
 
     var startTime = new Date(
         Date.now() - (since*60000) //min to ms
-        ).toTimeString();
+        );
+    var startTimeString =
+          startTime.getHours()   + ":"
+        + startTime.getMinutes() + ":"
+        + startTime.getSeconds();
 
     var params = {
         TableName: 'ReRide_DDB',
         KeyConditionExpression: "ThingID = :i AND #T > :t",
         ExpressionAttributeValues: {
             ":i": id,
-            "#T": 'Time',
-            ":t": startTime
+            ":t": startTimeString
+        },
+        ExpressionAttributeNames: {
+            "#T": 'Time'
         },
         ConsistentRead: true
     }

@@ -26,7 +26,10 @@ import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 
 import java.text.DateFormat;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
 
 import static com.google.android.gms.location.LocationServices.FusedLocationApi;
 
@@ -249,7 +252,10 @@ public class LocationService extends Service
     @Override
     public void onLocationChanged(Location location) {
         Log.d(TAG, "Retrieved location update");
-        String lastUpdateTime = DateFormat.getTimeInstance().format(new Date());
+        Calendar now = Calendar.getInstance(TimeZone.getTimeZone("GMT+2"));
+        String lastUpdateTime = now.get(Calendar.HOUR_OF_DAY) + ":"
+                + now.get(Calendar.MINUTE) + ":"
+                + now.get(Calendar.SECOND);
         broadcastUpdate(ACTION_UPDATE_AVAILABLE, location, lastUpdateTime);
     }
 

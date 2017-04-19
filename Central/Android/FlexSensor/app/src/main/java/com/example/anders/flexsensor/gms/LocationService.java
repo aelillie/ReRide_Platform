@@ -253,8 +253,8 @@ public class LocationService extends Service
     public void onLocationChanged(Location location) {
         Log.d(TAG, "Retrieved location update");
         Calendar now = Calendar.getInstance(TimeZone.getTimeZone("GMT+2"));
-        String lastUpdateTime = now.get(Calendar.HOUR_OF_DAY) + ":"
-                + now.get(Calendar.MINUTE) + ":"
+        String lastUpdateTime = now.get(Calendar.HOUR_OF_DAY) + ""
+                + now.get(Calendar.MINUTE) + ""
                 + now.get(Calendar.SECOND);
         broadcastUpdate(ACTION_UPDATE_AVAILABLE, location, lastUpdateTime);
     }

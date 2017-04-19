@@ -46,7 +46,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     public static final String EXTRAS_TIME_DATA = "TIME_DATA";
 
     //Debug settings
-    public static boolean TEST_GMS = true;
+    public static boolean TEST_GMS = false;
 
     //UI information
     private boolean connected;

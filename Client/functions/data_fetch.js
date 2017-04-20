@@ -18,26 +18,36 @@ exports.handler = function(event, context, callback) {
         + startTime.getSeconds();
     console.log('Start time:', startTimeString);
 
-    var params = since == 0 ?
-        { //Fetch latest record
-            TableName: tableName,
-            KeyConditionExpression: "ThingID = :i",
-            ExpressionAttributeValues: { ":i": id },
-            ScanIndexForward: false,
-            Limit: 1
-        } :
-        { //Fetch latest records within a time limit
-            TableName: tableName,
-            KeyConditionExpression: "ThingID = :i AND #T > :t",
-            ExpressionAttributeValues: {
-                ":i": id,
-                ":t": startTimeString
-            },
-            ExpressionAttributeNames: {
-                "#T": 'Time'
-            },
-            ConsistentRead: true
-        }
+    var params;
+    switch (since) {
+        case -1: //Fetch all records
+            params = {
+                TableName: tableName,
+                KeyConditionExpression: "ThingID = :i",
+                ExpressionAttributeValues: { ":i": id }
+            }; break;
+        case 0:
+            params = { //Fetch latest record
+                TableName: tableName,
+                KeyConditionExpression: "ThingID = :i",
+                ExpressionAttributeValues: { ":i": id },
+                ScanIndexForward: false,
+                Limit: 1
+            }; break;
+        default:
+            params = { //Fetch latest records within a time limit
+                TableName: tableName,
+                KeyConditionExpression: "ThingID = :i AND #T > :t",
+                ExpressionAttributeValues: {
+                    ":i": id,
+                    ":t": startTimeString
+                },
+                ExpressionAttributeNames: {
+                    "#T": 'Time'
+                },
+                ConsistentRead: true
+            }; break;
+    }
 
     DynamoDB.query(params, function(err, data) {
         if (err) {

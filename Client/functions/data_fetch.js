@@ -8,29 +8,36 @@ exports.handler = function(event, context, callback) {
 
     let id = event.id;
     let since = parseInt(event.since);
+    var tableName = 'ReRide_DDB';
     var now = Date.now();
 
-    var startTime = new Date((now+7200000) - (since*60000));
+    var startTime = new Date((now+7200000) - (since*60000)); //TODO: Automatically account for timezone
     var startTimeString =
         startTime.getHours() + ""
         + startTime.getMinutes() + ""
         + startTime.getSeconds();
-    //console.log('Now:', new Date(now).toString());
     console.log('Start time:', startTimeString);
-    //console.log('Difference:', (parseInt("12:35:00") > parseInt(startTimeString)));
 
-    var params = {
-        TableName: 'ReRide_DDB',
-        KeyConditionExpression: "ThingID = :i AND #T > :t",
-        ExpressionAttributeValues: {
-            ":i": id,
-            ":t": startTimeString
-        },
-        ExpressionAttributeNames: {
-            "#T": 'Time'
-        },
-        ConsistentRead: true
-    }
+    var params = since == 0 ?
+        { //Fetch latest record
+            TableName: tableName,
+            KeyConditionExpression: "ThingID = :i",
+            ExpressionAttributeValues: { ":i": id },
+            ScanIndexForward: false,
+            Limit: 1
+        } :
+        { //Fetch latest records within a time limit
+            TableName: tableName,
+            KeyConditionExpression: "ThingID = :i AND #T > :t",
+            ExpressionAttributeValues: {
+                ":i": id,
+                ":t": startTimeString
+            },
+            ExpressionAttributeNames: {
+                "#T": 'Time'
+            },
+            ConsistentRead: true
+        }
 
     DynamoDB.query(params, function(err, data) {
         if (err) {

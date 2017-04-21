@@ -6,8 +6,8 @@ var DynamoDB = new AWS.DynamoDB.DocumentClient();
 exports.handler = function(event, context, callback) {
     console.log('Received event:', JSON.stringify(event, null, 2));
 
-    let id = event.id;
-    let since = parseInt(event.since);
+    var id = event.id;
+    var since = parseInt(event.since);
     var tableName = 'ReRide_DDB';
     var now = Date.now();
 

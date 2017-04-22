@@ -19,7 +19,7 @@ import java.util.UUID;
  * Responsible for communication with AWS IoT through MQTT
  */
 
-class AWSIoTMQTTBroker extends AWSIoTDataBroker{
+public class AWSIoTMQTTBroker extends AWSIoTDataBroker{
     static final String LOG_TAG = AWSIoTMQTTBroker.class.getCanonicalName();
 
     //AWS management
@@ -54,7 +54,6 @@ class AWSIoTMQTTBroker extends AWSIoTDataBroker{
 
     }
 
-    @Override
     public boolean connect() {
         Log.d(LOG_TAG, "clientId = " + clientId);
         try {
@@ -88,7 +87,6 @@ class AWSIoTMQTTBroker extends AWSIoTDataBroker{
         }
     }
 
-    @Override
     public void subscribe() {
         throw new UnsupportedOperationException();
         /*try {
@@ -104,20 +102,8 @@ class AWSIoTMQTTBroker extends AWSIoTDataBroker{
         }*/
     }
 
-    @Override
-    public Bundle getShadow() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void updateShadow(Bundle state) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public void publish(Bundle data) {
-        super.publish(data);
-        try {
+        /*try {
             mqttManager.publishString(mJData.toString(), MQTT_PUBLISH, AWSIotMqttQos.QOS0,
                     new AWSIotMqttMessageDeliveryCallback() {
                         @Override
@@ -130,10 +116,9 @@ class AWSIoTMQTTBroker extends AWSIoTDataBroker{
                     }, null);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Publish error.", e);
-        }
+        }*/
     }
 
-    @Override
     public boolean disconnect() {
         try {
             mqttManager.disconnect();

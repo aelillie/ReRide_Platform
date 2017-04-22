@@ -10,6 +10,8 @@ import com.amazonaws.services.iotdata.model.GetThingShadowRequest;
 import com.amazonaws.services.iotdata.model.GetThingShadowResult;
 import com.amazonaws.services.iotdata.model.UpdateThingShadowRequest;
 import com.amazonaws.services.iotdata.model.UpdateThingShadowResult;
+import com.anders.reride.ble.BLEDeviceControlActivity;
+import com.anders.reride.gms.LocationService;
 import com.google.gson.Gson;
 
 import java.nio.ByteBuffer;
@@ -18,7 +20,7 @@ import java.nio.ByteBuffer;
  * Responsible for communication with AWS IoT through HTTP
  */
 
-class AWSIoTHTTPBroker extends AWSIoTDataBroker{
+public class AWSIoTHTTPBroker extends AWSIoTDataBroker{
     private static final String LOG_TAG = AWSIoTHTTPBroker.class.getSimpleName();
 
 
@@ -28,18 +30,21 @@ class AWSIoTHTTPBroker extends AWSIoTDataBroker{
         super(context, userID);
     }
 
-    @Override
-    public void publish(Bundle data) {
-        throw new UnsupportedOperationException();
-    }
 
-    @Override
+
     public void updateShadow(Bundle state) {
-        super.updateShadow(state);
         UpdateShadowTask updateShadowTask = new UpdateShadowTask();
         updateShadowTask.setThingName(mId);
-        Log.i(LOG_TAG, mJState.toString());
-        updateShadowTask.setState(mJState.toString());
+        //TODO: Pass sensor name and unit as well
+        String value = state.getString(BLEDeviceControlActivity.EXTRAS_ANGLE_DATA);
+        double[] location = state.getDoubleArray(BLEDeviceControlActivity.EXTRAS_LOCATION_DATA);
+        String time = state.getString(BLEDeviceControlActivity.EXTRAS_TIME_DATA);
+        mReRideJSON.putSensorProperties("flex sensor", value, "degrees");
+        assert location != null;
+        mReRideJSON.putRiderProperties(mId, time,
+                location[LocationService.LONGITUDE_ID] + "",
+                location[LocationService.LATITUDE_ID] + ""); //TODO: Ugly
+        updateShadowTask.setState(mReRideJSON.getState().toString());
         updateShadowTask.execute();
     }
 
@@ -51,25 +56,17 @@ class AWSIoTHTTPBroker extends AWSIoTDataBroker{
         Log.i(LOG_TAG, String.format("curState: %s", ts.state.desired.curState));
     }
 
-    @Override
-    public void subscribe() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public Bundle getShadow() {
         //new GetShadowTask(mId).execute();
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public boolean connect() {
         iotDataClient = new AWSIotDataClient(credentialsProvider);
         iotDataClient.setEndpoint(CUSTOMER_SPECIFIC_ENDPOINT);
         return true; //TODO: Try-catch
     }
 
-    @Override
     public boolean disconnect() {
         iotDataClient.shutdown(); //TODO: What is this?
         iotDataClient = null;

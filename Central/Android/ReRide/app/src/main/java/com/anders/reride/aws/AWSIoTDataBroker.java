@@ -15,7 +15,7 @@ import org.json.JSONObject;
  * Handles data transmission with an AWS endpoint
  */
 
-abstract class AWSIoTDataBroker implements AWSIoTOperations {
+abstract class AWSIoTDataBroker {
     // --- Constants to modify per your configuration ---
 
     // IoT endpoint
@@ -33,10 +33,7 @@ abstract class AWSIoTDataBroker implements AWSIoTOperations {
     protected static String mId;
 
     protected CognitoCachingCredentialsProvider credentialsProvider;
-
-    protected final JSONObject mJState;
-    protected final JSONObject mJElement;
-    protected final JSONObject mJData;
+    protected ReRideJSON mReRideJSON;
 
 
     public AWSIoTDataBroker(Context context, String userID) {
@@ -48,51 +45,14 @@ abstract class AWSIoTDataBroker implements AWSIoTOperations {
                 COGNITO_POOL_ID, // Identity Pool ID
                 MY_REGION // Region
         );
-
-        mJState = new JSONObject();
-        mJElement = new JSONObject();
-        mJData = new JSONObject();
-        try {
-            mJElement.put("reported", mJData);
-            mJState.put("state", mJElement);
-            mJData.put("id", mId);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+        mReRideJSON = ReRideJSON.getInstance();
     }
 
-    @Override
+
     public void updateShadow(Bundle state) {
         String newAngle = state.getString(BLEDeviceControlActivity.EXTRAS_ANGLE_DATA);
         double[] newLocation = state.getDoubleArray(BLEDeviceControlActivity.EXTRAS_LOCATION_DATA);
         if (newLocation == null) throw new IllegalArgumentException();
         String newTime = state.getString(BLEDeviceControlActivity.EXTRAS_TIME_DATA);
-        createJSON(newAngle,
-                newLocation[LocationService.LONGITUDE_ID],
-                newLocation[LocationService.LATITUDE_ID],
-                newTime);
-    }
-
-    @Override
-    public void publish(Bundle data) {
-        String newAngle = data.getString(BLEDeviceControlActivity.EXTRAS_ANGLE_DATA);
-        double[] newLocation = data.getDoubleArray(BLEDeviceControlActivity.EXTRAS_LOCATION_DATA);
-        if (newLocation == null) throw new IllegalArgumentException();
-        String newTime = data.getString(BLEDeviceControlActivity.EXTRAS_TIME_DATA);
-        createJSON(newAngle,
-                newLocation[LocationService.LONGITUDE_ID],
-                newLocation[LocationService.LATITUDE_ID],
-                newTime);
-    }
-
-    private void createJSON(String newAngle, double lon, double lat, String newTime){
-        try {
-            mJData.put("angle", newAngle);
-            mJData.put("longitude", lon);
-            mJData.put("latitude", lat);
-            mJData.put("time", newTime);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
     }
 }

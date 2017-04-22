@@ -25,8 +25,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.anders.reride.R;
-import com.anders.reride.aws.AWSIoTManager;
-import com.anders.reride.aws.PROTOCOL;
+import com.anders.reride.aws.AWSIoTHTTPBroker;
+import com.anders.reride.aws.AWSIoTMQTTBroker;
 import com.anders.reride.gms.LocationService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.location.LocationSettingsResult;
@@ -174,7 +174,8 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         }
     };
     private BluetoothGattCharacteristic mGattCharacteristic;
-    private AWSIoTManager mAWSIoTManager;
+    private AWSIoTHTTPBroker mAWSIoTHTTPBroker;
+    private AWSIoTMQTTBroker mAWSIoTMQTTBroker;
 
     private void updateUI() {
         getDataButton.setEnabled(true);
@@ -235,12 +236,8 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
             getDataButton.setEnabled(true);
         }
 
-        mAWSIoTManager = new AWSIoTManager(this, PROTOCOL.MQTT, "223344");
-        if (mAWSIoTManager.connect()) {
-            Log.d(TAG, "Connected to AWS");
-        } else {
-            Log.d(TAG, "Not connected to AWS");
-        }
+        mAWSIoTHTTPBroker = new AWSIoTHTTPBroker(this, "223344");
+        mAWSIoTMQTTBroker = new AWSIoTMQTTBroker(this, "223344");
 
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -275,7 +272,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         bundle.putString(EXTRAS_ANGLE_DATA, mAngleData);
         bundle.putDoubleArray(EXTRAS_LOCATION_DATA, mLocation);
         bundle.putString(EXTRAS_TIME_DATA, mTime);
-        mAWSIoTManager.publish(bundle);
+        mAWSIoTMQTTBroker.publish(bundle);
     }
 
     private void searchGattServices(List<BluetoothGattService> supportedGattServices) {

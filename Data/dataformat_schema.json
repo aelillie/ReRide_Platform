@@ -1,0 +1,30 @@
+{ 
+    "title": "State",
+    "type": "object",
+    "properties": {
+        "recorded": {
+            "type": "object",
+            "properties": {
+                "id": { "type" : "string" }, 
+                "time": { "type" : "string" },
+                "longitude": { "type" : "string" },
+                "latitude": { "type" : "string" },
+                "sensors":  {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "name": { "type" : "string" },
+                            "value": { "type" : "string" },
+                            "unit": { "type" : "string" }
+                        },
+                        "required": ["name", "value", "unit"]
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true
+                }
+            },
+            "required": ["id", "time", "sensors"]
+        }
+    }
+}

@@ -14,12 +14,12 @@ import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -56,19 +56,21 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private TextView locationLongField;
     private TextView locationLatField;
     private TextView timeField;
-    private Button getDataButton;
 
+    private Button getDataButton;
     private BluetoothGattCharacteristic notifyCharacteristic;
     private BLEService bleService;
     private LocationSubscriberService mLocationSubscriberService;
-    private BluetoothDevice bluetoothDevice;
+    private List<BluetoothDevice> mBluetoothDevices;
+    private int mConnectedDevices;
+
     private ReRideJSON mReRideJSON;
 
     private final ServiceConnection mBleServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
             bleService = ((BLEService.LocalBinder) service).getService();
-            bleService.connect(bluetoothDevice);
+            connectAndStream();
         }
 
         @Override
@@ -129,11 +131,10 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
 
         }
     };
-
     private double[] mLocation;
     private String mTime;
-    private String mAngleData;
 
+    private String mAngleData;
     private final BroadcastReceiver gattUpdateReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -143,7 +144,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                     connected = true;
                     //UI info on connection
                     announce("Connected");
-                    updateConnectionState(R.string.connected);
+                    updateConnectionState(++mConnectedDevices);
                     invalidateOptionsMenu();
                     updateUI();
                     break;
@@ -152,7 +153,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                     connected = false;
                     //UI info on disconnection
                     announce("Disconnected");
-                    updateConnectionState(R.string.disconnected);
+                    updateConnectionState(--mConnectedDevices);
                     invalidateOptionsMenu();
                     clearUI();
                     break;
@@ -188,11 +189,11 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
-    private void updateConnectionState(final int resourceId) {
+    private void updateConnectionState(final int connectedDevices) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                connectionState.setText(resourceId);
+                connectionState.setText(connectedDevices);
             }
         });
     }
@@ -211,28 +212,31 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_ble);
 
         final Intent intent = getIntent();
-        String deviceAddress = intent.getStringExtra(EXTRAS_DEVICE_ADDRESS);
-        if (deviceAddress != null && !deviceAddress.isEmpty()) {
+        String[] deviceAddresses = intent.getStringArrayExtra(EXTRAS_DEVICE_ADDRESS);
+        if (deviceAddresses != null && deviceAddresses.length > 0) {
             BluetoothAdapter bluetoothAdapter = ((BluetoothManager)
                     getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
-            bluetoothDevice = bluetoothAdapter.getRemoteDevice(deviceAddress);
-            ((TextView) findViewById(R.id.device_address)).setText(deviceAddress);
-            toolbar.setTitle(bluetoothDevice.getName());
+            for (int i = 0; i < deviceAddresses.length ; i++) {
+                mBluetoothDevices.add(bluetoothAdapter.getRemoteDevice(deviceAddresses[i]));
+            }
+            //((TextView) findViewById(R.id.device_address)).setText(deviceAddresses);
+            toolbar.setTitle("Device control"); //mBluetoothDevices.getName()
         }
 
+        ((TextView) findViewById(R.id.devices_number)).setText(mBluetoothDevices.size());
         connectionState = (TextView) findViewById(R.id.connection_state);
-        dataField = (TextView) findViewById(R.id.data_value);
+        //dataField = (TextView) findViewById(R.id.data_value);
         locationLongField = (TextView) findViewById(R.id.location_long_value);
         locationLatField = (TextView) findViewById(R.id.location_lat_value);
         timeField = (TextView) findViewById(R.id.time_value);
-        getDataButton = (Button) findViewById(R.id.get_data_button);
+        /*getDataButton = (Button) findViewById(R.id.get_data_button);
         getDataButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 getDataButton.setEnabled(false);
                 streamData();
             }
-        });
+        });*/
 
         if (TEST_GMS) {
             getDataButton.setEnabled(true);
@@ -244,7 +248,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
 
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        if (bluetoothDevice != null) {
+        if (mBluetoothDevices != null) {
             Intent gattServiceIntent = new Intent(this, BLEService.class);
             bindService(gattServiceIntent, mBleServiceConnection, Context.BIND_AUTO_CREATE);
         }
@@ -313,14 +317,27 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         super.onResume();
         registerReceiver(gattUpdateReceiver, makeGattUpdateIntentFilter());
         registerReceiver(mLocationUpdateReceiver, makeLocationUpdateFilter());
-        if (bleService != null) {
-            final boolean result = bleService.connect(bluetoothDevice);
-            Log.d(TAG, "Connect request result=" + result);
-            if (result) getDataButton.setEnabled(true);
-        }
         if (mLocationSubscriberService != null) {
             mLocationSubscriberService.connect();
         }
+        connectAndStream();
+    }
+
+    private void connectAndStream() {
+        if (bleService != null) {
+            Handler handler = new Handler();
+            for (final BluetoothDevice device : mBluetoothDevices) {
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        final boolean result = bleService.connect(device);
+                        Log.d(TAG, "Connect request result=" + result);
+                        if (result) getDataButton.setEnabled(true);
+                    }
+                }, 500); //ms
+            }
+        }
+        streamData();
     }
 
     @Override

@@ -21,7 +21,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <LinearLayout android:orientation="horizontal"
+        <!--<LinearLayout android:orientation="horizontal"
                       android:layout_width="match_parent"
                       android:layout_height="wrap_content"
                       android:layout_margin="10dp">
@@ -35,6 +35,22 @@
                       android:layout_width="match_parent"
                       android:layout_height="wrap_content"
                       android:textSize="18sp"/>
+        </LinearLayout>-->
+        <LinearLayout android:orientation="horizontal"
+                      android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:layout_margin="10dp">
+            <TextView android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:text="@string/devices_number"
+                      android:textSize="18sp"/>
+            <Space android:layout_width="5dp"
+                   android:layout_height="wrap_content"/>
+            <TextView android:id="@+id/devices_number"
+                      android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:text="@string/zero"
+                      android:textSize="18sp"/>
         </LinearLayout>
         <LinearLayout android:orientation="horizontal"
                       android:layout_width="match_parent"
@@ -42,17 +58,17 @@
                       android:layout_margin="10dp">
             <TextView android:layout_width="wrap_content"
                       android:layout_height="wrap_content"
-                      android:text="@string/label_state"
+                      android:text="@string/label_connected"
                       android:textSize="18sp"/>
             <Space android:layout_width="5dp"
                    android:layout_height="wrap_content"/>
             <TextView android:id="@+id/connection_state"
                       android:layout_width="match_parent"
                       android:layout_height="wrap_content"
-                      android:text="@string/disconnected"
+                      android:text="@string/zero"
                       android:textSize="18sp"/>
         </LinearLayout>
-        <LinearLayout android:orientation="horizontal"
+        <!--<LinearLayout android:orientation="horizontal"
                       android:layout_width="match_parent"
                       android:layout_height="wrap_content"
                       android:layout_margin="10dp">
@@ -67,7 +83,7 @@
                       android:layout_height="wrap_content"
                       android:text="@string/no_data"
                       android:textSize="18sp"/>
-        </LinearLayout>
+        </LinearLayout>-->
         <LinearLayout android:orientation="horizontal"
                       android:layout_width="match_parent"
                       android:layout_height="wrap_content"
@@ -116,7 +132,7 @@
                       android:text="@string/no_data"
                       android:textSize="18sp"/>
         </LinearLayout>
-        <LinearLayout android:orientation="horizontal"
+        <!--<LinearLayout android:orientation="horizontal"
                       android:layout_width="match_parent"
                       android:layout_height="wrap_content"
                       android:layout_margin="10dp">
@@ -126,7 +142,7 @@
                 android:layout_height="wrap_content"
                 android:text="@string/get_data_button_text"
                 android:enabled="false"/>
-        </LinearLayout>
+        </LinearLayout>-->
 
         <View
             android:layout_width="match_parent"

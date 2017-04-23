@@ -13,7 +13,7 @@
     <string name="ble_not_supported">BLE is not supported</string>
     <string name="label_device_name">Device name:</string>
     <string name="label_state">State:</string>
-    <string name="disconnected">Disconnected</string>
+    <string name="zero">0</string>
     <string name="label_data">Data:</string>
     <string name="no_data">No data</string>
     <string name="label_device_address">Address:</string>
@@ -32,4 +32,6 @@
     <string name="label_location_lat">Latitude:</string>
     <string name="label_time">Time:</string>
     <string name="connect">Connect</string>
+    <string name="devices_number">Devices:</string>
+    <string name="label_connected">Connected:</string>
 </resources>

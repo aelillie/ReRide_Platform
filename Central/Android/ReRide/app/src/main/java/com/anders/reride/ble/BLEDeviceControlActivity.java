@@ -28,7 +28,7 @@ import com.anders.reride.R;
 import com.anders.reride.aws.AWSIoTHTTPBroker;
 import com.anders.reride.aws.AWSIoTMQTTBroker;
 import com.anders.reride.data.ReRideJSON;
-import com.anders.reride.gms.LocationService;
+import com.anders.reride.gms.LocationSubscriberService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.location.LocationSettingsResult;
 
@@ -60,7 +60,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
 
     private BluetoothGattCharacteristic notifyCharacteristic;
     private BLEService bleService;
-    private LocationService mLocationService;
+    private LocationSubscriberService mLocationSubscriberService;
     private BluetoothDevice bluetoothDevice;
     private ReRideJSON mReRideJSON;
 
@@ -80,13 +80,13 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private final ServiceConnection mGmsServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
-            mLocationService = ((LocationService.LocalBinder) service).getService();
-            mLocationService.connect();
+            mLocationSubscriberService = ((LocationSubscriberService.LocalBinder) service).getService();
+            mLocationSubscriberService.connect();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
-            mLocationService = null;
+            mLocationSubscriberService = null;
         }
     };
 
@@ -95,32 +95,32 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
             switch (action) {
-                case LocationService.ACTION_UPDATE_AVAILABLE:
-                    double[] location = intent.getDoubleArrayExtra(LocationService.LAST_LOCATION_STRING_KEY);
+                case LocationSubscriberService.ACTION_UPDATE_AVAILABLE:
+                    double[] location = intent.getDoubleArrayExtra(LocationSubscriberService.LAST_LOCATION_STRING_KEY);
                     if (location != null) mLocation = location;
-                     mTime = intent.getStringExtra(LocationService.LAST_TIME_STRING_KEY);
+                     mTime = intent.getStringExtra(LocationSubscriberService.LAST_TIME_STRING_KEY);
                     handleData();
                     break;
-                case LocationService.ACTION_CONNECTED:
+                case LocationSubscriberService.ACTION_CONNECTED:
                     announce("Location services connected");
                     break;
-                case LocationService.ACTION_CONNECTION_FAILED:
+                case LocationSubscriberService.ACTION_CONNECTION_FAILED:
                     ConnectionResult cr = intent.getParcelableExtra(
-                            LocationService.ERROR_STRING_KEY);
+                            LocationSubscriberService.ERROR_STRING_KEY);
                     try {
                         cr.startResolutionForResult(getParent(),
-                                LocationService.REQUEST_CHECK_CONNECTION);
+                                LocationSubscriberService.REQUEST_CHECK_CONNECTION);
                     } catch (IntentSender.SendIntentException e) {
                         Log.d(TAG, e.getMessage());
                     } break;
-                case LocationService.ACTION_SETTINGS_FAILED:
+                case LocationSubscriberService.ACTION_SETTINGS_FAILED:
                     LocationSettingsResult lsr = intent.getParcelableExtra(
-                            LocationService.ERROR_STRING_KEY);
+                            LocationSubscriberService.ERROR_STRING_KEY);
                     try {
                         // Show the dialog by calling startResolutionForResult(),
                         // and check the result in onActivityResult().
                         lsr.getStatus().startResolutionForResult(getParent(),
-                                LocationService.REQUEST_CHECK_SETTINGS);
+                                LocationSubscriberService.REQUEST_CHECK_SETTINGS);
                     } catch (IntentSender.SendIntentException e) {
                         Log.d(TAG, e.getMessage());
                     } break;
@@ -248,7 +248,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
             Intent gattServiceIntent = new Intent(this, BLEService.class);
             bindService(gattServiceIntent, mBleServiceConnection, Context.BIND_AUTO_CREATE);
         }
-        Intent gmsServiceIntent = new Intent(this, LocationService.class);
+        Intent gmsServiceIntent = new Intent(this, LocationSubscriberService.class);
         bindService(gmsServiceIntent, mGmsServiceConnection, Context.BIND_AUTO_CREATE);
     }
 
@@ -259,13 +259,13 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         } else {
             announce("No characteristic available");
         }
-        mLocationService.requestUpdates();
+        mLocationSubscriberService.requestUpdates();
     }
 
 
     private void handleData() {
-        locationLongField.setText(String.valueOf(mLocation[LocationService.LONGITUDE_ID]));
-        locationLatField.setText(String.valueOf(mLocation[LocationService.LATITUDE_ID]));
+        locationLongField.setText(String.valueOf(mLocation[LocationSubscriberService.LONGITUDE_ID]));
+        locationLatField.setText(String.valueOf(mLocation[LocationSubscriberService.LATITUDE_ID]));
         timeField.setText(mTime);
         if (TEST_GMS) {
             mAngleData = "5";
@@ -318,8 +318,8 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
             Log.d(TAG, "Connect request result=" + result);
             if (result) getDataButton.setEnabled(true);
         }
-        if (mLocationService != null) {
-            mLocationService.connect();
+        if (mLocationSubscriberService != null) {
+            mLocationSubscriberService.connect();
         }
     }
 
@@ -329,16 +329,16 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         unbindService(mBleServiceConnection);
         unbindService(mGmsServiceConnection);
         bleService = null;
-        mLocationService = null;
+        mLocationSubscriberService = null;
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK &&
-                (requestCode == LocationService.REQUEST_CHECK_CONNECTION
-                        || requestCode == LocationService.REQUEST_CHECK_SETTINGS)) {
+                (requestCode == LocationSubscriberService.REQUEST_CHECK_CONNECTION
+                        || requestCode == LocationSubscriberService.REQUEST_CHECK_SETTINGS)) {
             //the application should try to connect again.
-            mLocationService.connect();
+            mLocationSubscriberService.connect();
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -375,10 +375,10 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
 
     static IntentFilter makeLocationUpdateFilter() {
         final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(LocationService.ACTION_CONNECTED);
-        intentFilter.addAction(LocationService.ACTION_UPDATE_AVAILABLE);
-        intentFilter.addAction(LocationService.ACTION_CONNECTION_FAILED);
-        intentFilter.addAction(LocationService.ACTION_SETTINGS_FAILED);
+        intentFilter.addAction(LocationSubscriberService.ACTION_CONNECTED);
+        intentFilter.addAction(LocationSubscriberService.ACTION_UPDATE_AVAILABLE);
+        intentFilter.addAction(LocationSubscriberService.ACTION_CONNECTION_FAILED);
+        intentFilter.addAction(LocationSubscriberService.ACTION_SETTINGS_FAILED);
         return intentFilter;
     }
 }

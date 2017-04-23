@@ -10,9 +10,7 @@ import com.amazonaws.services.iotdata.model.GetThingShadowRequest;
 import com.amazonaws.services.iotdata.model.GetThingShadowResult;
 import com.amazonaws.services.iotdata.model.UpdateThingShadowRequest;
 import com.amazonaws.services.iotdata.model.UpdateThingShadowResult;
-import com.anders.reride.ble.BLEDeviceControlActivity;
 import com.anders.reride.data.ReRideJSON;
-import com.anders.reride.gms.LocationService;
 import com.google.gson.Gson;
 
 import java.nio.ByteBuffer;

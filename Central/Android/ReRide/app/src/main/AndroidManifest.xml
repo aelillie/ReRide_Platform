@@ -27,7 +27,7 @@
                   android:parentActivityName=".MainActivity">
         </activity>
         <service android:name=".ble.BLEService"/>
-        <service android:name=".gms.LocationService"
+        <service android:name=".gms.LocationSubscriberService"
                  android:exported="false"/>
     </application>
 

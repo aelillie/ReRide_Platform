@@ -1,7 +1,6 @@
 package com.anders.reride.aws;
 
 import android.content.Context;
-import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
@@ -9,13 +8,8 @@ import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttMessageDeliveryCallback;
-import com.amazonaws.mobileconnectors.iot.AWSIotMqttNewMessageCallback;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttQos;
-import com.anders.reride.ble.BLEDeviceControlActivity;
 import com.anders.reride.data.ReRideJSON;
-import com.anders.reride.gms.LocationService;
-
-import org.json.JSONObject;
 
 import java.util.UUID;
 

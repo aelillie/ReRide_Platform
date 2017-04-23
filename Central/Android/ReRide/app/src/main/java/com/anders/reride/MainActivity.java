@@ -12,7 +12,6 @@ import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -48,7 +47,8 @@ public class MainActivity extends AppCompatActivity{
     private static final long SCAN_PERIOD = 10000; // Stops scanning after 10 seconds.
     private static final String DEVICE_NAME = "ReRide";
 
-    private List<BluetoothDevice> devices;
+    private List<BluetoothDevice> mScannedDevices;
+    private List<String> mDeviceAddresses;
 
     private ViewAdapter adapter;
     private boolean scanning;
@@ -59,6 +59,7 @@ public class MainActivity extends AppCompatActivity{
 
     private Button mScanButton;
     private ProgressBar mProgressBar;
+    private Button mConnectButton;
 
     private BluetoothAdapter bluetoothAdapter;
     private boolean mDeviceFound;
@@ -83,10 +84,10 @@ public class MainActivity extends AppCompatActivity{
 
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.devices_recycler_view);
         //recyclerView.setHasFixedSize(true);
-        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
-        recyclerView.setLayoutManager(layoutManager);
-        devices = new ArrayList<>();
-        adapter = new ViewAdapter(devices);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        mScannedDevices = new ArrayList<>();
+        mDeviceAddresses = new ArrayList<>();
+        adapter = new ViewAdapter(mScannedDevices);
         recyclerView.setAdapter(adapter);
 
         mScanButton = (Button) findViewById(R.id.scan_button);
@@ -103,6 +104,21 @@ public class MainActivity extends AppCompatActivity{
                     scanBLEDevice(true);
                     mScanButton.setText(R.string.stop);
                 }
+            }
+        });
+        mConnectButton = (Button) findViewById(R.id.connect_button);
+        mConnectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                final Intent intent = new Intent(getApplicationContext(),
+                        BLEDeviceControlActivity.class);
+                intent.putExtra(BLEDeviceControlActivity.EXTRAS_DEVICE_ADDRESS,
+                        mDeviceAddresses.toArray());
+                if (scanning) {
+                    scanner.stopScan(callback);
+                    scanning = false;
+                }
+                startActivity(intent);
             }
         });
     }
@@ -122,17 +138,17 @@ public class MainActivity extends AppCompatActivity{
         bluetoothAdapter = bluetoothManager.getAdapter();
         Log.d(TAG, "BLE adapter found");
         scanner = bluetoothAdapter.getBluetoothLeScanner();
-        ScanFilter filter = new ScanFilter.Builder()
+        callback = new BLECallback();
+        /*ScanFilter filter = new ScanFilter.Builder()
                 .setDeviceName(DEVICE_NAME)
                 .build();
         filters = new ArrayList<>();
         filters.add(filter);
-        callback = new BLECallback();
         ScanSettings.Builder settingsBuilder = new ScanSettings.Builder();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             settingsBuilder.setCallbackType(ScanSettings.CALLBACK_TYPE_FIRST_MATCH);
         }
-        settings = settingsBuilder.build();
+        settings = settingsBuilder.build();*/
     }
 
     @Override
@@ -143,8 +159,8 @@ public class MainActivity extends AppCompatActivity{
     }
 
     private void resetScanResult() {
-        if (devices.isEmpty()) return;
-        devices.clear();
+        if (mScannedDevices.isEmpty()) return;
+        mScannedDevices.clear();
         adapter.clear();
         adapter.notifyDataSetChanged();
     }
@@ -217,7 +233,7 @@ public class MainActivity extends AppCompatActivity{
         }
 
         @Override
-        public void onBindViewHolder(ItemViewHolder holder, int position) {
+        public void onBindViewHolder(final ItemViewHolder holder, int position) {
             final BluetoothDevice device = devices.get(position);
             final String deviceName = device.getName();
             if (deviceName != null && deviceName.length() > 0) {
@@ -225,18 +241,12 @@ public class MainActivity extends AppCompatActivity{
             } else {
                 holder.deviceName.setText(R.string.unknown_device);
             }
-            holder.connectButton.setOnClickListener(new View.OnClickListener() {
+            holder.selectButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    final Intent intent = new Intent(getApplicationContext(),
-                            BLEDeviceControlActivity.class);
-                    intent.putExtra(BLEDeviceControlActivity.EXTRAS_DEVICE_ADDRESS,
-                            device.getAddress());
-                    if (scanning) {
-                        scanner.stopScan(callback);
-                        scanning = false;
-                    }
-                    startActivity(intent);
+                    mDeviceAddresses.add(device.getAddress());
+                    holder.selectButton.setEnabled(false);
+                    if (!mConnectButton.isEnabled()) mConnectButton.setEnabled(true);
                 }
             });
         }
@@ -252,18 +262,18 @@ public class MainActivity extends AppCompatActivity{
 
         class ItemViewHolder extends RecyclerView.ViewHolder {
             TextView deviceName;
-            Button connectButton;
+            Button selectButton;
 
             ItemViewHolder(View itemView) {
                 super(itemView);
                 deviceName = (TextView) itemView.findViewById(R.id.item_text);
-                connectButton = (Button) itemView.findViewById(R.id.connect_button);
+                selectButton = (Button) itemView.findViewById(R.id.select_button);
             }
         }
     }
 
     /**
-     * Start or stop a scan for BLE devices
+     * Start or stop a scan for BLE mScannedDevices
      * @param enable If true, enables a scan, which will stop after
      *               SCAN_PERIOD, otherwise stops a scan
      */
@@ -298,9 +308,9 @@ public class MainActivity extends AppCompatActivity{
             mDeviceFound = true;
             BluetoothDevice bleDevice = result.getDevice();
             Log.d(TAG, "Found device");
-            if (devices.contains(bleDevice)) return;
-            devices.add(bleDevice);
-            adapter.notifyItemChanged(devices.indexOf(bleDevice));
+            if (mScannedDevices.contains(bleDevice)) return;
+            mScannedDevices.add(bleDevice);
+            adapter.notifyItemChanged(mScannedDevices.indexOf(bleDevice));
         }
 
         @Override

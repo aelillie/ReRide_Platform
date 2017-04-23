@@ -44,4 +44,15 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="10dp"/>
+
+    <Button
+        android:id="@+id/connect_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/connect"
+        android:enabled="false"/>
+
 </LinearLayout>

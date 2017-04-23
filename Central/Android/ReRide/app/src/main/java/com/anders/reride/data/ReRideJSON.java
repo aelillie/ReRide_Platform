@@ -1,8 +1,11 @@
-package com.anders.reride.aws;
+package com.anders.reride.data;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Helper class for creating ReRide data JSON representations
@@ -24,11 +27,11 @@ import org.json.JSONObject;
                      "items": {
                          "type": "object",
                          "properties": {
-                             "name": { "type" : "string" },
+                             "sensorId": { "type" : "string" },
                              "value": { "type" : "string" },
                              "unit": { "type" : "string" }
                          },
-                        "required": ["name", "value", "unit"]
+                        "required": ["sensorId", "value", "unit"]
                     },
                     "minItems": 1,
                     "uniqueItems": true
@@ -47,7 +50,7 @@ import org.json.JSONObject;
              "time": "12:35:00",
              "sensors": [
                  {
-                     "name": "flex sensor",
+                     "sensorId": "flex sensor",
                      "value": "45",
                      "unit": "degrees"
                  }
@@ -59,20 +62,26 @@ import org.json.JSONObject;
  }
  */
 
-class ReRideJSON {
+public class ReRideJSON {
     private JSONObject mState;
     private JSONObject mRecorded;
     private JSONObject mRiderProperties;
     private JSONArray mSensors;
+    private Map<String, Integer> mSensorIndex;
+    private int mCurrentIndex;
+
     private static ReRideJSON mReRideJSON;
 
-    private ReRideJSON() {
+    private ReRideJSON(String id) {
+        mCurrentIndex = 0;
         mState = new JSONObject();
         mRecorded = new JSONObject();
         mRiderProperties = new JSONObject();
         mSensors = new JSONArray();
+        mSensorIndex = new HashMap<>();
         try {
             mRiderProperties.put("sensors", mSensors);
+            mRiderProperties.put("id", id);
             mRecorded.put("reported", mRiderProperties);
             mState.put("state", mRecorded);
         } catch (JSONException e) {
@@ -80,20 +89,34 @@ class ReRideJSON {
         }
     }
 
+    public boolean addSensor(String sensorId, String unit) {
+        try {
+            JSONObject sensor = new JSONObject();
+            sensor.put("sensorId", sensorId);
+            sensor.put("unit", unit);
+            mSensorIndex.put(sensorId, mCurrentIndex);
+            mSensors.put(mCurrentIndex, sensor);
+            mCurrentIndex++;
+            return true;
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     /**
      * Singleton getter
      * @return Singleton reference for this builder class
      */
-    public static ReRideJSON getInstance() {
+    public static ReRideJSON getInstance(String id) {
         if (mReRideJSON == null) {
-            mReRideJSON = new ReRideJSON();
+            mReRideJSON = new ReRideJSON(id);
         }
         return mReRideJSON;
     }
 
-    public boolean putRiderProperties(String id, String time, String lon, String lat) {
+    public boolean putRiderProperties(String time, String lon, String lat) {
         try {
-            mRiderProperties.put("id", id);
             mRiderProperties.put("time", time);
             mRiderProperties.put("longitude", lon);
             mRiderProperties.put("latitude", lat);
@@ -104,13 +127,9 @@ class ReRideJSON {
         }
     }
 
-    public boolean putSensorProperties(String name, String value, String unit) {
+    public boolean putSensorValue(String sensorId, String value) {
         try {
-            JSONObject sensorProperties = new JSONObject();
-            sensorProperties.put("name", name);
-            sensorProperties.put("value", value);
-            sensorProperties.put("unit", unit);
-            mSensors.put(sensorProperties);
+            mSensors.getJSONObject(mSensorIndex.get(sensorId)).put("value", value);
             return true;
         } catch (JSONException e) {
             e.printStackTrace();

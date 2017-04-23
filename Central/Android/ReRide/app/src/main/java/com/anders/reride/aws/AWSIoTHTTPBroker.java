@@ -11,6 +11,7 @@ import com.amazonaws.services.iotdata.model.GetThingShadowResult;
 import com.amazonaws.services.iotdata.model.UpdateThingShadowRequest;
 import com.amazonaws.services.iotdata.model.UpdateThingShadowResult;
 import com.anders.reride.ble.BLEDeviceControlActivity;
+import com.anders.reride.data.ReRideJSON;
 import com.anders.reride.gms.LocationService;
 import com.google.gson.Gson;
 
@@ -32,19 +33,10 @@ public class AWSIoTHTTPBroker extends AWSIoTDataBroker{
 
 
 
-    public void updateShadow(Bundle state) {
+    public void updateShadow(ReRideJSON reRideJSON) {
         UpdateShadowTask updateShadowTask = new UpdateShadowTask();
-        updateShadowTask.setThingName(mId);
-        //TODO: Pass sensor name and unit as well
-        String value = state.getString(BLEDeviceControlActivity.EXTRAS_ANGLE_DATA);
-        double[] location = state.getDoubleArray(BLEDeviceControlActivity.EXTRAS_LOCATION_DATA);
-        String time = state.getString(BLEDeviceControlActivity.EXTRAS_TIME_DATA);
-        mReRideJSON.putSensorProperties("flex sensor", value, "degrees");
-        assert location != null;
-        mReRideJSON.putRiderProperties(mId, time,
-                location[LocationService.LONGITUDE_ID] + "",
-                location[LocationService.LATITUDE_ID] + ""); //TODO: Ugly
-        updateShadowTask.setState(mReRideJSON.getState().toString());
+        updateShadowTask.setThingName(mId); //TODO: Can be fetched from JSON object
+        updateShadowTask.setState(reRideJSON.getState().toString());
         updateShadowTask.execute();
     }
 

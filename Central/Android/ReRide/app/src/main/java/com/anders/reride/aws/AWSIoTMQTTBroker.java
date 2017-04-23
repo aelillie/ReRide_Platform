@@ -11,6 +11,11 @@ import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttMessageDeliveryCallback;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttNewMessageCallback;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttQos;
+import com.anders.reride.ble.BLEDeviceControlActivity;
+import com.anders.reride.data.ReRideJSON;
+import com.anders.reride.gms.LocationService;
+
+import org.json.JSONObject;
 
 import java.util.UUID;
 
@@ -28,7 +33,7 @@ public class AWSIoTMQTTBroker extends AWSIoTDataBroker{
     private String clientId;
 
     //MQTT
-    private static final String MQTT_PUBLISH = "ReRide/" + mId + "/save";
+    private static final String MQTT_PUBLISH = "ReRide/" + mId + "/pub";
     //private static final String MQTT_SUBSCRIBE = "ReRide/";
 
     //UI
@@ -102,9 +107,10 @@ public class AWSIoTMQTTBroker extends AWSIoTDataBroker{
         }*/
     }
 
-    public void publish(Bundle data) {
-        /*try {
-            mqttManager.publishString(mJData.toString(), MQTT_PUBLISH, AWSIotMqttQos.QOS0,
+    public void publish(ReRideJSON reRideJSON) {
+        try {
+            mqttManager.publishString(reRideJSON.getRiderProperties().toString(),
+                    MQTT_PUBLISH, AWSIotMqttQos.QOS0,
                     new AWSIotMqttMessageDeliveryCallback() {
                         @Override
                         public void statusChanged(MessageDeliveryStatus status, Object userData) {
@@ -116,7 +122,7 @@ public class AWSIoTMQTTBroker extends AWSIoTDataBroker{
                     }, null);
         } catch (Exception e) {
             Log.e(LOG_TAG, "Publish error.", e);
-        }*/
+        }
     }
 
     public boolean disconnect() {

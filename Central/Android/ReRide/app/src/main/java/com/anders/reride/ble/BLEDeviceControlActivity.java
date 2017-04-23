@@ -27,6 +27,7 @@ import android.widget.Toast;
 import com.anders.reride.R;
 import com.anders.reride.aws.AWSIoTHTTPBroker;
 import com.anders.reride.aws.AWSIoTMQTTBroker;
+import com.anders.reride.data.ReRideJSON;
 import com.anders.reride.gms.LocationService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.location.LocationSettingsResult;
@@ -61,6 +62,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private BLEService bleService;
     private LocationService mLocationService;
     private BluetoothDevice bluetoothDevice;
+    private ReRideJSON mReRideJSON;
 
     private final ServiceConnection mBleServiceConnection = new ServiceConnection() {
         @Override
@@ -236,6 +238,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
             getDataButton.setEnabled(true);
         }
 
+        ReRideJSON.getInstance("223344"); //TODO: ID
         mAWSIoTHTTPBroker = new AWSIoTHTTPBroker(this, "223344");
         mAWSIoTMQTTBroker = new AWSIoTMQTTBroker(this, "223344");
 
@@ -268,11 +271,8 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
             mAngleData = "5";
         }
         dataField.setText(mAngleData);
-        Bundle bundle = new Bundle();
-        bundle.putString(EXTRAS_ANGLE_DATA, mAngleData);
-        bundle.putDoubleArray(EXTRAS_LOCATION_DATA, mLocation);
-        bundle.putString(EXTRAS_TIME_DATA, mTime);
-        mAWSIoTMQTTBroker.publish(bundle);
+        //TODO: Create JSON object
+        mAWSIoTMQTTBroker.publish(mReRideJSON);
     }
 
     private void searchGattServices(List<BluetoothGattService> supportedGattServices) {

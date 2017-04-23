@@ -6,10 +6,7 @@ import android.os.Bundle;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.anders.reride.ble.BLEDeviceControlActivity;
-import com.anders.reride.gms.LocationService;
-
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.anders.reride.data.ReRideJSON;
 
 /**
  * Handles data transmission with an AWS endpoint
@@ -33,7 +30,6 @@ abstract class AWSIoTDataBroker {
     protected static String mId;
 
     protected CognitoCachingCredentialsProvider credentialsProvider;
-    protected ReRideJSON mReRideJSON;
 
 
     public AWSIoTDataBroker(Context context, String userID) {
@@ -45,7 +41,6 @@ abstract class AWSIoTDataBroker {
                 COGNITO_POOL_ID, // Identity Pool ID
                 MY_REGION // Region
         );
-        mReRideJSON = ReRideJSON.getInstance();
     }
 
 

@@ -302,7 +302,7 @@ public class MainActivity extends AppCompatActivity{
         public void onScanResult(int callbackType, ScanResult result) {
             super.onScanResult(callbackType, result);
             BluetoothDevice bleDevice = result.getDevice();
-            Log.d(TAG, "Found device");
+            Log.d(TAG, "Scanned: " + bleDevice.getName() + ": " + bleDevice.getAddress());
             if (mScannedDevices.contains(bleDevice)) return;
             mScannedDevices.add(bleDevice);
             adapter.notifyItemChanged(mScannedDevices.indexOf(bleDevice));

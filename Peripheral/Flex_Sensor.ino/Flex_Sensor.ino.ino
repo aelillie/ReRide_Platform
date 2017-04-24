@@ -1,11 +1,13 @@
 /******************************************************************************
 Source: https://learn.sparkfun.com/tutorials/flex-sensor-hookup-guide
+Source: https://www.arduino.cc/en/Reference/CurieBLE
 
 Create a voltage divider circuit combining a flex sensor with a 47k resistor.
 - The resistor should connect from A0 to GND.
 - The flex sensor should connect from A0 to 3.3V
 As the resistance of the flex sensor increases (meaning it's being bent), the
 voltage at A0 should decrease.
+Transmit to BLE centrals
 ******************************************************************************/
 // Include BLE files.
 #include <CurieBLE.h>
@@ -43,7 +45,7 @@ void setup()
      This name will appear in advertising packets
      and can be used by remote devices to identify this BLE device
      The name can be changed but maybe be truncated based on space left in advertisement packet */
-  blePeripheral.setLocalName("ReRide");
+  blePeripheral.setLocalName("FlexSensor1");
   blePeripheral.setAdvertisedServiceUuid(sensingService.uuid());  // add the service UUID
   blePeripheral.addAttribute(sensingService);   // Add the BLE Battery service
   blePeripheral.addAttribute(windDirChar); // add the battery level characteristic
@@ -60,11 +62,6 @@ void setup()
 // This function is called continuously, after setup() completes.
 void loop() 
 {
-  listenBLE();
-  delay(500);
-}
-
-void listenBLE() {
   // listen for BLE centrals to connect:
   BLECentral central = blePeripheral.central();
  
@@ -77,13 +74,14 @@ void listenBLE() {
     digitalWrite(LED_PIN, HIGH);
     // check the flex angle every 200ms as long as the central is still connected:
     while (central.connected()) {
-      long currentMillis = millis();
+      updateFlexAngle();
+      delay(500);
+      /*long currentMillis = millis();
       // if 200ms have passed, check the flex angle:
       if (currentMillis - previousMillis >= 200) {
         previousMillis = currentMillis;
         updateFlexAngle();
-      }
-      delay(500);
+      }*/
     }
     Serial.print("Disconnected from central: ");
     Serial.println(central.address());

@@ -3,7 +3,6 @@ package com.anders.reride.ble;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
@@ -57,7 +56,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private TextView locationLatField;
     private TextView timeField;
 
-    private BluetoothGattCharacteristic notifyCharacteristic;
+    private BluetoothGattCharacteristic mNotifyCharacteristic;
     private BLEService mBleService;
     private LocationSubscriberService mLocationSubscriberService;
     private List<BluetoothDevice> mBluetoothDevices;
@@ -102,7 +101,6 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                     double[] location = intent.getDoubleArrayExtra(LocationSubscriberService.LAST_LOCATION_STRING_KEY);
                     if (location != null) mLocation = location;
                      mTime = intent.getStringExtra(LocationSubscriberService.LAST_TIME_STRING_KEY);
-                    handleData();
                     break;
                 case LocationSubscriberService.ACTION_CONNECTED:
                     announce("Location services connected");
@@ -138,6 +136,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private final GattBroadcastReceiver gattUpdateReceiver = new GattBroadcastReceiver();
     private AWSIoTHTTPBroker mAWSIoTHTTPBroker;
     private AWSIoTMQTTBroker mAWSIoTMQTTBroker;
+    private BluetoothAdapter mBluetoothAdapter;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -150,7 +149,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         //Get bluetooth
-        BluetoothAdapter bluetoothAdapter = ((BluetoothManager)
+        mBluetoothAdapter = ((BluetoothManager)
                 getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
         mHandler = new Handler();
 
@@ -159,7 +158,9 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         mBluetoothDevices = new ArrayList<>(deviceAddresses.length);
         mGattCharacteristicMap = new HashMap<>(deviceAddresses.length);
         for (String deviceAddress : deviceAddresses) {
-            mBluetoothDevices.add(bluetoothAdapter.getRemoteDevice(deviceAddress));
+            BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(deviceAddress);
+            mBluetoothDevices.add(device);
+            mReRideJSON.addSensor(device.getName(), "degrees"); //TODO: Custom unit
         }
 
         initializeUIComponents();
@@ -212,7 +213,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     }
 
 
-    private void handleData() {
+    private void handleData(BluetoothDevice device, String data) {
         mLocationSubscriberService.requestUpdates(); //TODO: Get instead of request
         locationLongField.setText(String.valueOf(mLocation[LocationSubscriberService.LONGITUDE_ID]));
         locationLatField.setText(String.valueOf(mLocation[LocationSubscriberService.LATITUDE_ID]));
@@ -220,7 +221,8 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         if (TEST_GMS) {
             //mAngleData = "5";
         }
-        //TODO: Create JSON object
+        mReRideJSON.putSensorValue(device.getName(), data);
+        mReRideJSON.putRiderProperties(mTime, mLocation);
         mAWSIoTMQTTBroker.publish(mReRideJSON);
     }
 
@@ -313,15 +315,15 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
             // If there is an active notification on a characteristic, clear
             // it first so it doesn't publish the data field on the user interface.
-            /*if (notifyCharacteristic != null) {
-                mBleService.setCharacteristicNotification(
-                        notifyCharacteristic, false);
-                notifyCharacteristic = null;
-            }*/
+            if (mNotifyCharacteristic != null) {
+                mBleService.setCharacteristicNotification(device,
+                        mNotifyCharacteristic, false);
+                mNotifyCharacteristic = null;
+            }
             mBleService.readCharacteristic(device, characteristic);
         }
         /*if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
-            notifyCharacteristic = characteristic;
+            mNotifyCharacteristic = characteristic;
             if (!mBleService.setCharacteristicNotification(device, characteristic, true)) {
                 Toast.makeText(this, "Enable notifications failed",
                         Toast.LENGTH_SHORT).show();
@@ -382,8 +384,9 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                     break;
                 }
                 case BLEService.ACTION_DATA_AVAILABLE: {
-                    //mAngleData = intent.getStringExtra(BLEService.EXTRA_DATA);
-                    handleData();
+                    String data = intent.getStringExtra(BLEService.EXTRA_DATA);
+                    String deviceAddress = intent.getStringExtra(BLEService.EXTRA_DEVICE_ADDRESS);
+                    handleData(mBluetoothAdapter.getRemoteDevice(deviceAddress), data);
                     break;
                 }
                 case BLEService.ACTION_WRITE: {

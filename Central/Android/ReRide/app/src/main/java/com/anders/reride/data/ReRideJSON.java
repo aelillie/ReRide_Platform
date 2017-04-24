@@ -1,5 +1,8 @@
 package com.anders.reride.data;
 
+import com.anders.reride.gms.LocationService;
+import com.anders.reride.gms.LocationSubscriberService;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -115,11 +118,11 @@ public class ReRideJSON {
         return mReRideJSON;
     }
 
-    public boolean putRiderProperties(String time, String lon, String lat) {
-        try {
+    public boolean putRiderProperties(String time, double[] location) {
+            try {
             mRiderProperties.put("time", time);
-            mRiderProperties.put("longitude", lon);
-            mRiderProperties.put("latitude", lat);
+            mRiderProperties.put("longitude", location[LocationSubscriberService.LONGITUDE_ID]);
+            mRiderProperties.put("latitude", location[LocationSubscriberService.LATITUDE_ID]);
             return true;
         } catch (JSONException e) {
             e.printStackTrace();

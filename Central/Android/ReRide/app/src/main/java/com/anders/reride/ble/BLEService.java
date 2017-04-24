@@ -31,34 +31,36 @@ public class BLEService extends Service{
     private static final int STATE_CONNECTED = 2;
     private static final UUID UUID_APPARENT_WIND_DIRECTION =
             UUID.fromString(GattAttributes.APPARENT_WIND_DIRECTION);
-
     private final IBinder binder = new LocalBinder();
 
     private List<BluetoothGatt> mBluetoothGattAPIs;
+
     private List<String> mBluetoothDeviceAddresses;
     private Map<String, BluetoothGatt> mBluetoothGattAPIMap;
     private int connectionState = STATE_DISCONNECTED;
-
     //GATT actions
     public static final String ACTION_GATT_CONNECTED =
-            "com.example.anders.flexsensor.ACTION_GATT_CONNECTED";
+            "com.anders.reride.ACTION_GATT_CONNECTED";
+
     public static final String ACTION_GATT_DISCONNECTED =
-            "com.example.anders.flexsensor.ACTION_GATT_DISCONNECTED";
+            "com.anders.reride.ACTION_GATT_DISCONNECTED";
     public static final String ACTION_GATT_SERVICES_DISCOVERED =
-            "com.example.anders.flexsensor.ACTION_GATT_SERVICES_DISCOVERED";
+            "com.anders.reride.ACTION_GATT_SERVICES_DISCOVERED";
     public static final String ACTION_DATA_AVAILABLE =
-            "com.example.anders.flexsensor.ACTION_DATA_AVAILABLE";
+            "com.anders.reride.ACTION_DATA_AVAILABLE";
     public static final String EXTRA_DATA =
-            "com.example.anders.flexsensor.EXTRA_DATA";
+            "com.anders.reride.EXTRA_DATA";
+    public static final String EXTRA_DEVICE_ADDRESS =
+            "com.anders.reride.EXTRA_DEVICE_ADDRESS";
     public static final String ACTION_WRITE =
-            "com.example.anders.flexsensor.ACTION_WRITE";
+            "com.anders.reride.ACTION_WRITE";
 
     private void broadcastUpdate(final String action) {
         final Intent intent = new Intent(action);
         sendBroadcast(intent);
     }
 
-    private void broadcastUpdate(final String action,
+    private void broadcastUpdate(final String action, final BluetoothDevice device,
                                  final BluetoothGattCharacteristic characteristic) {
         final Intent intent = new Intent(action);
 
@@ -68,6 +70,7 @@ public class BLEService extends Service{
                 final int windDir = characteristic.getIntValue(format, 0);
                 Log.d(TAG, String.format("Apparent wind direction: %d", windDir));
                 intent.putExtra(EXTRA_DATA, String.valueOf(windDir));
+                intent.putExtra(EXTRA_DEVICE_ADDRESS, device.getAddress());
             } catch (NullPointerException e) {
                 intent.putExtra(EXTRA_DATA, readUnknownData(characteristic));
             }
@@ -214,7 +217,7 @@ public class BLEService extends Service{
         public void onCharacteristicRead(BluetoothGatt gatt,
                                          BluetoothGattCharacteristic characteristic, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
+                broadcastUpdate(ACTION_DATA_AVAILABLE, gatt.getDevice(), characteristic);
             }
         }
 
@@ -223,7 +226,7 @@ public class BLEService extends Service{
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
-            broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
+            broadcastUpdate(ACTION_DATA_AVAILABLE, gatt.getDevice(), characteristic);
         }
 
         @Override

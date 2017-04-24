@@ -32,6 +32,7 @@ import com.anders.reride.gms.LocationSubscriberService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.location.LocationSettingsResult;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -63,6 +64,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private LocationSubscriberService mLocationSubscriberService;
     private List<BluetoothDevice> mBluetoothDevices;
     private int mConnectedDevices;
+    private boolean mReadyToConnect;
 
     private ReRideJSON mReRideJSON;
 
@@ -70,7 +72,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
             bleService = ((BLEService.LocalBinder) service).getService();
-            connectAndStream();
+            connect();
         }
 
         @Override
@@ -135,47 +137,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private String mTime;
 
     private String mAngleData;
-    private final BroadcastReceiver gattUpdateReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            switch (action) {
-                case BLEService.ACTION_GATT_CONNECTED: {
-                    connected = true;
-                    //UI info on connection
-                    announce("Connected");
-                    updateConnectionState(++mConnectedDevices);
-                    invalidateOptionsMenu();
-                    updateUI();
-                    break;
-                }
-                case BLEService.ACTION_GATT_DISCONNECTED: {
-                    connected = false;
-                    //UI info on disconnection
-                    announce("Disconnected");
-                    updateConnectionState(--mConnectedDevices);
-                    invalidateOptionsMenu();
-                    clearUI();
-                    break;
-                }
-                case BLEService.ACTION_GATT_SERVICES_DISCOVERED: {
-                    announce("Services discovered");
-                    searchGattServices(bleService.getSupportedGattServices());
-                    break;
-                }
-                case BLEService.ACTION_DATA_AVAILABLE: {
-                    mAngleData = intent.getStringExtra(BLEService.EXTRA_DATA);
-                    handleData();
-                    break;
-                }
-                case BLEService.ACTION_WRITE: {
-                    announce("Descriptor written");
-                    break;
-                }
-                default: Log.d(TAG, "Action not implemented"); break;
-            }
-        }
-    };
+    private final GattBroadcastReceiver gattUpdateReceiver = new GattBroadcastReceiver();
     private BluetoothGattCharacteristic mGattCharacteristic;
     private AWSIoTHTTPBroker mAWSIoTHTTPBroker;
     private AWSIoTMQTTBroker mAWSIoTMQTTBroker;
@@ -210,17 +172,20 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ble);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_ble);
+        toolbar.setTitle("Device control");
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         final Intent intent = getIntent();
         String[] deviceAddresses = intent.getStringArrayExtra(EXTRAS_DEVICE_ADDRESS);
-        if (deviceAddresses != null && deviceAddresses.length > 0) {
+        if (deviceAddresses.length > 0) {
+            mBluetoothDevices = new ArrayList<>(deviceAddresses.length);
             BluetoothAdapter bluetoothAdapter = ((BluetoothManager)
                     getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
-            for (int i = 0; i < deviceAddresses.length ; i++) {
-                mBluetoothDevices.add(bluetoothAdapter.getRemoteDevice(deviceAddresses[i]));
+            for (String deviceAddress : deviceAddresses) {
+                mBluetoothDevices.add(bluetoothAdapter.getRemoteDevice(deviceAddress));
             }
-            //((TextView) findViewById(R.id.device_address)).setText(deviceAddresses);
-            toolbar.setTitle("Device control"); //mBluetoothDevices.getName()
+            mReadyToConnect = true;
         }
 
         ((TextView) findViewById(R.id.devices_number)).setText(mBluetoothDevices.size());
@@ -236,18 +201,16 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                 getDataButton.setEnabled(false);
                 streamData();
             }
-        });*/
+        });
 
         if (TEST_GMS) {
             getDataButton.setEnabled(true);
-        }
+        }*/
 
-        ReRideJSON.getInstance("223344"); //TODO: ID
+        mReRideJSON = ReRideJSON.getInstance("223344"); //TODO: ID
         mAWSIoTHTTPBroker = new AWSIoTHTTPBroker(this, "223344");
         mAWSIoTMQTTBroker = new AWSIoTMQTTBroker(this, "223344");
 
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         if (mBluetoothDevices != null) {
             Intent gattServiceIntent = new Intent(this, BLEService.class);
             bindService(gattServiceIntent, mBleServiceConnection, Context.BIND_AUTO_CREATE);
@@ -320,11 +283,11 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         if (mLocationSubscriberService != null) {
             mLocationSubscriberService.connect();
         }
-        connectAndStream();
+        connect();
     }
 
-    private void connectAndStream() {
-        if (bleService != null) {
+    private void connect() {
+        if (bleService != null && mReadyToConnect) {
             Handler handler = new Handler();
             for (final BluetoothDevice device : mBluetoothDevices) {
                 handler.postDelayed(new Runnable() {
@@ -337,7 +300,6 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                 }, 500); //ms
             }
         }
-        streamData();
     }
 
     @Override
@@ -397,5 +359,47 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         intentFilter.addAction(LocationSubscriberService.ACTION_CONNECTION_FAILED);
         intentFilter.addAction(LocationSubscriberService.ACTION_SETTINGS_FAILED);
         return intentFilter;
+    }
+
+    private class GattBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            switch (action) {
+                case BLEService.ACTION_GATT_CONNECTED: {
+                    connected = true;
+                    //UI info on connection
+                    announce("Connected");
+                    updateConnectionState(++mConnectedDevices);
+                    invalidateOptionsMenu();
+                    updateUI();
+                    break;
+                }
+                case BLEService.ACTION_GATT_DISCONNECTED: {
+                    connected = false;
+                    //UI info on disconnection
+                    announce("Disconnected");
+                    updateConnectionState(--mConnectedDevices);
+                    invalidateOptionsMenu();
+                    clearUI();
+                    break;
+                }
+                case BLEService.ACTION_GATT_SERVICES_DISCOVERED: {
+                    announce("Services discovered");
+                    searchGattServices(bleService.getSupportedGattServices());
+                    break;
+                }
+                case BLEService.ACTION_DATA_AVAILABLE: {
+                    mAngleData = intent.getStringExtra(BLEService.EXTRA_DATA);
+                    handleData();
+                    break;
+                }
+                case BLEService.ACTION_WRITE: {
+                    announce("Descriptor written");
+                    break;
+                }
+                default: Log.d(TAG, "Action not implemented"); break;
+            }
+        }
     }
 }

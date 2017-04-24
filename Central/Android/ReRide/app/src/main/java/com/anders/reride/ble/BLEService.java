@@ -14,7 +14,10 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -31,8 +34,9 @@ public class BLEService extends Service{
 
     private final IBinder binder = new LocalBinder();
 
-    private BluetoothGatt bluetoothGatt;
-    private String bluetoothDeviceAddress;
+    private List<BluetoothGatt> mBluetoothGattAPIs;
+    private List<String> mBluetoothDeviceAddresses;
+    private Map<String, BluetoothGatt> mBluetoothGattAPIMap;
     private int connectionState = STATE_DISCONNECTED;
 
     //GATT actions
@@ -49,7 +53,125 @@ public class BLEService extends Service{
     public static final String ACTION_WRITE =
             "com.example.anders.flexsensor.ACTION_WRITE";
 
-    private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
+    private void broadcastUpdate(final String action) {
+        final Intent intent = new Intent(action);
+        sendBroadcast(intent);
+    }
+
+    private void broadcastUpdate(final String action,
+                                 final BluetoothGattCharacteristic characteristic) {
+        final Intent intent = new Intent(action);
+
+        if (UUID_APPARENT_WIND_DIRECTION.equals(characteristic.getUuid())) {
+            try {
+                int format = BluetoothGattCharacteristic.FORMAT_UINT16;
+                final int windDir = characteristic.getIntValue(format, 0);
+                Log.d(TAG, String.format("Apparent wind direction: %d", windDir));
+                intent.putExtra(EXTRA_DATA, String.valueOf(windDir));
+            } catch (NullPointerException e) {
+                intent.putExtra(EXTRA_DATA, readUnknownData(characteristic));
+            }
+        } else {
+            intent.putExtra(EXTRA_DATA, readUnknownData(characteristic));
+        }
+        sendBroadcast(intent);
+    }
+
+    private String readUnknownData(BluetoothGattCharacteristic characteristic) {
+        final byte[] data = characteristic.getValue();
+        String dataString = "";
+        if (data != null && data.length > 0) {
+            final StringBuilder stringBuilder = new StringBuilder(data.length);
+            for(byte byteChar : data)
+                stringBuilder.append(String.format("%02X ", byteChar));
+            dataString = new String(data) + "\n" + stringBuilder.toString();
+        }
+        return dataString;
+    }
+
+    public class LocalBinder extends Binder {
+        BLEService getService() {
+            return BLEService.this;
+        }
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        mBluetoothDeviceAddresses = new ArrayList<>();
+        mBluetoothGattAPIs = new ArrayList<>();
+        mBluetoothGattAPIMap = new HashMap<>();
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        return binder;
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        close();
+        return super.onUnbind(intent);
+    }
+
+    public boolean connect(BluetoothDevice bluetoothDevice) {
+        String bleDeviceAddress = bluetoothDevice.getAddress();
+        if (mBluetoothGattAPIMap != null && mBluetoothGattAPIMap.get(bleDeviceAddress) != null
+            && mBluetoothGattAPIMap.containsKey(bleDeviceAddress)) {
+            Log.d(TAG, "Trying to use an existing bluetooth gatt for connection.");
+            if (mBluetoothGattAPIMap.get(bleDeviceAddress).connect()) {
+                connectionState = STATE_CONNECTING;
+                return true;
+            } else return false;
+        }
+        //No existing GATT connection established. Find new
+        mBluetoothGattAPIMap.put(bleDeviceAddress,
+                bluetoothDevice.connectGatt(this, false, new BLEGattCallback()));
+        Log.d(TAG, "Trying to create a new connection.");
+        connectionState = STATE_CONNECTING;
+        return true;
+
+    }
+
+    public void disconnect(BluetoothDevice bluetoothDevice) {
+        mBluetoothGattAPIMap.get(bluetoothDevice.getAddress()).disconnect();
+    }
+
+    public void close() {
+        if (mBluetoothGattAPIMap == null) {
+            return;
+        }
+        for (String bleDeviceAddress : mBluetoothGattAPIMap.keySet()) {
+            mBluetoothGattAPIMap.get(bleDeviceAddress).close();
+        }
+    }
+
+    public boolean writeDescriptor(BluetoothDevice bluetoothDevice,
+                                   BluetoothGattDescriptor descriptor) {
+        return mBluetoothGattAPIMap.get(bluetoothDevice.getAddress())
+                .writeDescriptor(descriptor);
+    }
+
+    public void readCharacteristic(BluetoothDevice bluetoothDevice,
+                                   BluetoothGattCharacteristic characteristic) {
+        mBluetoothGattAPIMap.get(bluetoothDevice.getAddress())
+                .readCharacteristic(characteristic);
+    }
+
+    public boolean setCharacteristicNotification(BluetoothDevice bluetoothDevice,
+                                                 BluetoothGattCharacteristic characteristic,
+                                              boolean enabled) {
+        return mBluetoothGattAPIMap.get(bluetoothDevice.getAddress())
+                .setCharacteristicNotification(characteristic, enabled);
+    }
+
+    public List<BluetoothGattService> getSupportedGattServices(BluetoothDevice bluetoothDevice) {
+        if (mBluetoothGattAPIMap == null) return null;
+        return mBluetoothGattAPIMap.get(bluetoothDevice.getAddress()).getServices();
+    }
+
+    public class BLEGattCallback extends BluetoothGattCallback {
         /*
         Callback indicating when GATT client has
         connected/disconnected to/from a remote GATT server.
@@ -63,7 +185,7 @@ public class BLEService extends Service{
                 broadcastUpdate(intentAction);
                 Log.i(TAG, "Connected to GATT server.");
                 Log.i(TAG, "Attempting to start service discovery" +
-                        bluetoothGatt.discoverServices());
+                        gatt.discoverServices());
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 intentAction = ACTION_GATT_DISCONNECTED;
                 connectionState = STATE_DISCONNECTED;
@@ -111,107 +233,5 @@ public class BLEService extends Service{
                 Log.w(TAG, "onDescriptorWrite received: " + status);
             }
         }
-    };
-
-    private void broadcastUpdate(final String action) {
-        final Intent intent = new Intent(action);
-        sendBroadcast(intent);
-    }
-
-    private void broadcastUpdate(final String action,
-                                 final BluetoothGattCharacteristic characteristic) {
-        final Intent intent = new Intent(action);
-
-        if (UUID_APPARENT_WIND_DIRECTION.equals(characteristic.getUuid())) {
-            try {
-                int format = BluetoothGattCharacteristic.FORMAT_UINT16;
-                final int windDir = characteristic.getIntValue(format, 0);
-                Log.d(TAG, String.format("Apparent wind direction: %d", windDir));
-                intent.putExtra(EXTRA_DATA, String.valueOf(windDir));
-            } catch (NullPointerException e) {
-                intent.putExtra(EXTRA_DATA, readUnknownData(characteristic));
-            }
-        } else {
-            intent.putExtra(EXTRA_DATA, readUnknownData(characteristic));
-        }
-        sendBroadcast(intent);
-    }
-
-    private String readUnknownData(BluetoothGattCharacteristic characteristic) {
-        final byte[] data = characteristic.getValue();
-        String dataString = "";
-        if (data != null && data.length > 0) {
-            final StringBuilder stringBuilder = new StringBuilder(data.length);
-            for(byte byteChar : data)
-                stringBuilder.append(String.format("%02X ", byteChar));
-            dataString = new String(data) + "\n" + stringBuilder.toString();
-        }
-        return dataString;
-    }
-
-    public class LocalBinder extends Binder {
-        BLEService getService() {
-            return BLEService.this;
-        }
-    }
-
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        return binder;
-    }
-
-    @Override
-    public boolean onUnbind(Intent intent) {
-        close();
-        return super.onUnbind(intent);
-    }
-
-    public boolean connect(BluetoothDevice bluetoothDevice) {
-        if (bluetoothDeviceAddress != null && bluetoothGatt != null
-            && bluetoothDevice.getAddress().equals(bluetoothDeviceAddress)) {
-            Log.d(TAG, "Trying to use an existing bluetooth gatt for connection.");
-            if (bluetoothGatt.connect()) {
-                connectionState = STATE_CONNECTING;
-                return true;
-            } else return false;
-        }
-        //No existing GATT connection established. Find new
-        bluetoothGatt = bluetoothDevice.connectGatt(this, false, gattCallback);
-        Log.d(TAG, "Trying to create a new connection.");
-        bluetoothDeviceAddress = bluetoothDevice.getAddress();
-        connectionState = STATE_CONNECTING;
-        return true;
-
-    }
-
-    public void disconnect() {
-        bluetoothGatt.disconnect();
-    }
-
-    public void close() {
-        if (bluetoothGatt == null) {
-            return;
-        }
-        bluetoothGatt.close();
-        bluetoothGatt = null;
-    }
-
-    public boolean writeDescriptor(BluetoothGattDescriptor descriptor) {
-        return bluetoothGatt.writeDescriptor(descriptor);
-    }
-
-    public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
-        bluetoothGatt.readCharacteristic(characteristic);
-    }
-
-    public boolean setCharacteristicNotification(BluetoothGattCharacteristic characteristic,
-                                              boolean enabled) {
-        return bluetoothGatt.setCharacteristicNotification(characteristic, enabled);
-    }
-
-    public List<BluetoothGattService> getSupportedGattServices() {
-        if (bluetoothGatt == null) return null;
-        return bluetoothGatt.getServices();
     }
 }

@@ -62,6 +62,7 @@ public class MainActivity extends AppCompatActivity{
 
     private BluetoothAdapter bluetoothAdapter;
     private Handler mHandler;
+    private String mUserId = "1234";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,6 +114,8 @@ public class MainActivity extends AppCompatActivity{
                         BLEDeviceControlActivity.class);
                 intent.putExtra(BLEDeviceControlActivity.EXTRAS_DEVICE_ADDRESSES,
                         mDeviceAddresses.toArray());
+                intent.putExtra(BLEDeviceControlActivity.EXTRAS_USER_ID,
+                        mUserId); //TODO: Get from dialog box at startup
                 if (scanning) {
                     scanner.stopScan(callback);
                     scanning = false;

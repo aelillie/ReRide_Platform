@@ -48,21 +48,21 @@ public class LocationSubscriberService extends Service
 
     //Actions
     public static final String ACTION_CONNECTED =
-            "com.example.anders.flexsensor.gms.LocationSubscriberService.ACTION_CONNECTED";
+            "com.anders.reride.gms.LocationSubscriberService.ACTION_CONNECTED";
     public static final String ACTION_UPDATE_AVAILABLE =
-            "com.example.anders.flexsensor.gms.LocationSubscriberService.ACTION_UPDATE_AVAILABLE";
+            "com.anders.reride.gms.LocationSubscriberService.ACTION_UPDATE_AVAILABLE";
     public static final String ACTION_CONNECTION_FAILED =
-            "com.example.anders.flexsensor.gms.LocationSubscriberService.ACTION_CONNECTION_FAILED";
+            "com.anders.reride.gms.LocationSubscriberService.ACTION_CONNECTION_FAILED";
     public static final String ACTION_SETTINGS_FAILED =
-            "com.example.anders.flexsensor.gms.LocationSubscriberService.ACTION_SETTINGS_FAILED";
+            "com.anders.reride.gms.LocationSubscriberService.ACTION_SETTINGS_FAILED";
 
     //Intent keys
     public static final String LAST_LOCATION_STRING_KEY =
-            "com.example.anders.flexsensor.gms.LocationSubscriberService.LAST_LOCATION_STRING_KEY";
+            "com.anders.reride.gms.LocationSubscriberService.LAST_LOCATION_STRING_KEY";
     public static final String LAST_TIME_STRING_KEY =
-            "com.example.anders.flexsensor.gms.LocationSubscriberService.LAST_TIME_STRING_KEY";
+            "com.anders.reride.gms.LocationSubscriberService.LAST_TIME_STRING_KEY";
     public static final String ERROR_STRING_KEY =
-            "com.example.anders.flexsensor.gms.LocationSubscriberService.ERROR_STRING_KEY";
+            "com.anders.reride.gms.LocationSubscriberService.ERROR_STRING_KEY";
 
     //Properties
     public static final int LONGITUDE_ID = 0;

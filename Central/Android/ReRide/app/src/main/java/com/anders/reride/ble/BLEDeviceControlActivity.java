@@ -43,9 +43,13 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private final static String TAG = BLEDeviceControlActivity.class.getSimpleName();
 
     public static final String EXTRAS_DEVICE_ADDRESSES = "DEVICE_ADDRESSES";
+    public static final String EXTRAS_USER_ID = "EXTRAS_USER_ID";
     public static final String EXTRAS_SENSOR_DATA = "SENSOR_DATA";
     public static final String EXTRAS_LOCATION_DATA = "LOCATION_DATA";
     public static final String EXTRAS_TIME_DATA = "TIME_DATA";
+
+    private static final int SLEEP_TIME = 500; //ms
+    private static final int UPDATE_FREQUENCY = 1000; //ms
 
     //Debug settings
     public static boolean TEST_GMS = false;
@@ -55,6 +59,8 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private TextView locationLongField;
     private TextView locationLatField;
     private TextView timeField;
+
+    private String mUserId;
 
     private BluetoothGattCharacteristic mNotifyCharacteristic;
     private BLEService mBleService;
@@ -141,20 +147,23 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Intent intent = getIntent();
+        mUserId = intent.getStringExtra(EXTRAS_USER_ID);
         setContentView(R.layout.activity_ble);
         //Setup toolbar
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_ble);
         toolbar.setTitle("Device control");
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-        //Get bluetooth
+        mHandler = new Handler();
+        mReRideJSON = ReRideJSON.getInstance(mUserId);
         mBluetoothAdapter = ((BluetoothManager)
                 getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
-        mHandler = new Handler();
+        mAWSIoTHTTPBroker = new AWSIoTHTTPBroker(this, mUserId);
+        mAWSIoTMQTTBroker = new AWSIoTMQTTBroker(this, mUserId);
 
         //Receive devices info
-        String[] deviceAddresses = getIntent().getStringArrayExtra(EXTRAS_DEVICE_ADDRESSES);
+        String[] deviceAddresses = intent.getStringArrayExtra(EXTRAS_DEVICE_ADDRESSES);
         mBluetoothDevices = new ArrayList<>(deviceAddresses.length);
         mGattCharacteristicMap = new HashMap<>(deviceAddresses.length);
         for (String deviceAddress : deviceAddresses) {
@@ -164,13 +173,6 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         }
 
         initializeUIComponents();
-
-        //AWS configurations
-        mReRideJSON = ReRideJSON.getInstance("223344"); //TODO: ID
-        mAWSIoTHTTPBroker = new AWSIoTHTTPBroker(this, "223344");
-        mAWSIoTMQTTBroker = new AWSIoTMQTTBroker(this, "223344");
-
-        //Bind services
         bindService(new Intent(this, BLEService.class),
                 mBleServiceConnection, Context.BIND_AUTO_CREATE);
         bindService(new Intent(this, LocationSubscriberService.class),
@@ -205,7 +207,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                     public void run() {
                         readCharacteristic(device);
                     }
-                }, 1000); //ms
+                }, UPDATE_FREQUENCY); //ms
             }
         } else {
             announce("No characteristic available");
@@ -284,7 +286,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                         Log.d(TAG, "Connect request result=" + result);
                         //if (result) getDataButton.setEnabled(true);
                     }
-                }, 500); //ms
+                }, SLEEP_TIME); //ms
             }
         }
     }
@@ -377,7 +379,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                                 public void run() {
                                     searchGattServices(device);
                                 }
-                            }, 500); //ms
+                            }, SLEEP_TIME); //ms
                         }
                         streamData();
                     }
@@ -406,7 +408,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                     public void run() {
                         mBleService.startGattServicesDiscovery(device);
                     }
-                }, 500); //ms
+                }, SLEEP_TIME); //ms
             }
         }
     }

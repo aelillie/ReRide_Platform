@@ -38,22 +38,23 @@ public class BLEService extends Service{
     private List<String> mBluetoothDeviceAddresses;
     private Map<String, BluetoothGatt> mBluetoothGattAPIMap;
     private int connectionState = STATE_DISCONNECTED;
+
     //GATT actions
     public static final String ACTION_GATT_CONNECTED =
-            "com.anders.reride.ACTION_GATT_CONNECTED";
+            "com.anders.reride.ble.ACTION_GATT_CONNECTED";
 
     public static final String ACTION_GATT_DISCONNECTED =
-            "com.anders.reride.ACTION_GATT_DISCONNECTED";
+            "com.anders.reride.ble.ACTION_GATT_DISCONNECTED";
     public static final String ACTION_GATT_SERVICES_DISCOVERED =
-            "com.anders.reride.ACTION_GATT_SERVICES_DISCOVERED";
+            "com.anders.reride.ble.ACTION_GATT_SERVICES_DISCOVERED";
     public static final String ACTION_DATA_AVAILABLE =
-            "com.anders.reride.ACTION_DATA_AVAILABLE";
+            "com.anders.reride.ble.ACTION_DATA_AVAILABLE";
     public static final String EXTRA_DATA =
-            "com.anders.reride.EXTRA_DATA";
+            "com.anders.reride.ble.EXTRA_DATA";
     public static final String EXTRA_DEVICE_ADDRESS =
-            "com.anders.reride.EXTRA_DEVICE_ADDRESS";
+            "com.anders.reride.ble.EXTRA_DEVICE_ADDRESS";
     public static final String ACTION_WRITE =
-            "com.anders.reride.ACTION_WRITE";
+            "com.anders.reride.ble.ACTION_WRITE";
 
     private void broadcastUpdate(final String action) {
         final Intent intent = new Intent(action);
@@ -96,7 +97,7 @@ public class BLEService extends Service{
         mBluetoothGattAPIMap.get(device.getAddress()).discoverServices();
     }
 
-    public class LocalBinder extends Binder {
+    class LocalBinder extends Binder {
         BLEService getService() {
             return BLEService.this;
         }

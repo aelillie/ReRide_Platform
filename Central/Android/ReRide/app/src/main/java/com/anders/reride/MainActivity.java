@@ -45,7 +45,6 @@ public class MainActivity extends AppCompatActivity{
             new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,
                     Manifest.permission.ACCESS_FINE_LOCATION};
     private static final long SCAN_PERIOD = 10000; // Stops scanning after 10 seconds.
-    private static final String DEVICE_NAME = "ReRide";
 
     private List<BluetoothDevice> mScannedDevices;
     private List<String> mDeviceAddresses;
@@ -62,7 +61,6 @@ public class MainActivity extends AppCompatActivity{
     private Button mConnectButton;
 
     private BluetoothAdapter bluetoothAdapter;
-    private boolean mDeviceFound;
     private Handler mHandler;
 
     @Override
@@ -110,9 +108,10 @@ public class MainActivity extends AppCompatActivity{
         mConnectButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if (mDeviceAddresses.size() == 0) return;
                 final Intent intent = new Intent(getApplicationContext(),
                         BLEDeviceControlActivity.class);
-                intent.putExtra(BLEDeviceControlActivity.EXTRAS_DEVICE_ADDRESS,
+                intent.putExtra(BLEDeviceControlActivity.EXTRAS_DEVICE_ADDRESSES,
                         mDeviceAddresses.toArray());
                 if (scanning) {
                     scanner.stopScan(callback);
@@ -124,10 +123,6 @@ public class MainActivity extends AppCompatActivity{
     }
 
     private void onScanStop() {
-        if (!mDeviceFound) {
-            Toast.makeText(getApplicationContext(),
-                    DEVICE_NAME + " not found", Toast.LENGTH_SHORT).show();
-        }
         mProgressBar.setVisibility(View.INVISIBLE);
         mScanButton.setText(R.string.scan);
     }
@@ -139,9 +134,7 @@ public class MainActivity extends AppCompatActivity{
         Log.d(TAG, "BLE adapter found");
         scanner = bluetoothAdapter.getBluetoothLeScanner();
         callback = new BLECallback();
-        /*ScanFilter filter = new ScanFilter.Builder()
-                .setDeviceName(DEVICE_NAME)
-                .build();
+        /*ScanFilter filter = new ScanFilter.Builder().build();
         filters = new ArrayList<>();
         filters.add(filter);
         ScanSettings.Builder settingsBuilder = new ScanSettings.Builder();
@@ -305,7 +298,6 @@ public class MainActivity extends AppCompatActivity{
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             super.onScanResult(callbackType, result);
-            mDeviceFound = true;
             BluetoothDevice bleDevice = result.getDevice();
             Log.d(TAG, "Found device");
             if (mScannedDevices.contains(bleDevice)) return;

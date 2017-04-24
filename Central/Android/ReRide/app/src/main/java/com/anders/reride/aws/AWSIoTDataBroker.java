@@ -6,7 +6,6 @@ import android.os.Bundle;
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.regions.Regions;
 import com.anders.reride.ble.BLEDeviceControlActivity;
-import com.anders.reride.data.ReRideJSON;
 
 /**
  * Handles data transmission with an AWS endpoint
@@ -45,7 +44,7 @@ abstract class AWSIoTDataBroker {
 
 
     public void updateShadow(Bundle state) {
-        String newAngle = state.getString(BLEDeviceControlActivity.EXTRAS_ANGLE_DATA);
+        String newAngle = state.getString(BLEDeviceControlActivity.EXTRAS_SENSOR_DATA);
         double[] newLocation = state.getDoubleArray(BLEDeviceControlActivity.EXTRAS_LOCATION_DATA);
         if (newLocation == null) throw new IllegalArgumentException();
         String newTime = state.getString(BLEDeviceControlActivity.EXTRAS_TIME_DATA);

@@ -20,7 +20,6 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -44,8 +43,8 @@ import java.util.Map;
 public class BLEDeviceControlActivity extends AppCompatActivity {
     private final static String TAG = BLEDeviceControlActivity.class.getSimpleName();
 
-    public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
-    public static final String EXTRAS_ANGLE_DATA = "ANGLE_DATA";
+    public static final String EXTRAS_DEVICE_ADDRESSES = "DEVICE_ADDRESSES";
+    public static final String EXTRAS_SENSOR_DATA = "SENSOR_DATA";
     public static final String EXTRAS_LOCATION_DATA = "LOCATION_DATA";
     public static final String EXTRAS_TIME_DATA = "TIME_DATA";
 
@@ -53,41 +52,38 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     public static boolean TEST_GMS = false;
 
     //UI information
-    private boolean connected;
     private TextView connectionState;
-    private TextView dataField;
     private TextView locationLongField;
     private TextView locationLatField;
     private TextView timeField;
 
-    private Button getDataButton;
     private BluetoothGattCharacteristic notifyCharacteristic;
-    private BLEService bleService;
+    private BLEService mBleService;
     private LocationSubscriberService mLocationSubscriberService;
     private List<BluetoothDevice> mBluetoothDevices;
     private Map<BluetoothDevice, BluetoothGattCharacteristic> mGattCharacteristicMap;
     private int mConnectedDevices;
-    private boolean mReadyToConnect;
+    private Handler mHandler;
 
     private ReRideJSON mReRideJSON;
 
     private final ServiceConnection mBleServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
-            bleService = ((BLEService.LocalBinder) service).getService();
-            connect();
+            mBleService = ((BLEService.LocalBinder) service).getService();
+            connectDevices();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
-            bleService = null;
+            mBleService = null;
         }
     };
-
     private final ServiceConnection mGmsServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
-            mLocationSubscriberService = ((LocationSubscriberService.LocalBinder) service).getService();
+            mLocationSubscriberService = ((LocationSubscriberService.LocalBinder) service)
+                    .getService();
             mLocationSubscriberService.connect();
         }
 
@@ -139,21 +135,50 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private double[] mLocation;
     private String mTime;
 
-    private String mAngleData;
     private final GattBroadcastReceiver gattUpdateReceiver = new GattBroadcastReceiver();
-    private BluetoothGattCharacteristic mGattCharacteristic;
     private AWSIoTHTTPBroker mAWSIoTHTTPBroker;
     private AWSIoTMQTTBroker mAWSIoTMQTTBroker;
 
-    private void updateUI() {
-        //getDataButton.setEnabled(true);
-    }
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_ble);
+        //Setup toolbar
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_ble);
+        toolbar.setTitle("Device control");
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        //Get bluetooth
+        BluetoothAdapter bluetoothAdapter = ((BluetoothManager)
+                getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
+        mHandler = new Handler();
+
+        //Receive devices info
+        String[] deviceAddresses = getIntent().getStringArrayExtra(EXTRAS_DEVICE_ADDRESSES);
+        mBluetoothDevices = new ArrayList<>(deviceAddresses.length);
+        mGattCharacteristicMap = new HashMap<>(deviceAddresses.length);
+        for (String deviceAddress : deviceAddresses) {
+            mBluetoothDevices.add(bluetoothAdapter.getRemoteDevice(deviceAddress));
+        }
+
+        initializeUIComponents();
+
+        //AWS configurations
+        mReRideJSON = ReRideJSON.getInstance("223344"); //TODO: ID
+        mAWSIoTHTTPBroker = new AWSIoTHTTPBroker(this, "223344");
+        mAWSIoTMQTTBroker = new AWSIoTMQTTBroker(this, "223344");
+
+        //Bind services
+        bindService(new Intent(this, BLEService.class),
+                mBleServiceConnection, Context.BIND_AUTO_CREATE);
+        bindService(new Intent(this, LocationSubscriberService.class),
+                mGmsServiceConnection, Context.BIND_AUTO_CREATE);
+    }
 
     private void announce(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
-
     private void updateConnectionState(final int connectedDevices) {
         runOnUiThread(new Runnable() {
             @Override
@@ -162,71 +187,18 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
             }
         });
     }
-
-
-    private void clearUI() {
-        dataField.setText(R.string.no_data);
-        getDataButton.setEnabled(false);
-    }
-
-
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_ble);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_ble);
-        toolbar.setTitle("Device control");
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-        final Intent intent = getIntent();
-        String[] deviceAddresses = intent.getStringArrayExtra(EXTRAS_DEVICE_ADDRESS);
-        if (deviceAddresses.length > 0) {
-            mBluetoothDevices = new ArrayList<>(deviceAddresses.length);
-            mGattCharacteristicMap = new HashMap<>(deviceAddresses.length);
-            BluetoothAdapter bluetoothAdapter = ((BluetoothManager)
-                    getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
-            for (String deviceAddress : deviceAddresses) {
-                mBluetoothDevices.add(bluetoothAdapter.getRemoteDevice(deviceAddress));
-            }
-            mReadyToConnect = true;
-        }
-
+    private void initializeUIComponents() {
         ((TextView) findViewById(R.id.devices_number)).setText(mBluetoothDevices.size());
         connectionState = (TextView) findViewById(R.id.connection_state);
-        //dataField = (TextView) findViewById(R.id.data_value);
         locationLongField = (TextView) findViewById(R.id.location_long_value);
         locationLatField = (TextView) findViewById(R.id.location_lat_value);
         timeField = (TextView) findViewById(R.id.time_value);
-        /*getDataButton = (Button) findViewById(R.id.get_data_button);
-        getDataButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                getDataButton.setEnabled(false);
-                streamData();
-            }
-        });
-
-        if (TEST_GMS) {
-            getDataButton.setEnabled(true);
-        }*/
-
-        mReRideJSON = ReRideJSON.getInstance("223344"); //TODO: ID
-        mAWSIoTHTTPBroker = new AWSIoTHTTPBroker(this, "223344");
-        mAWSIoTMQTTBroker = new AWSIoTMQTTBroker(this, "223344");
-
-        if (mBluetoothDevices != null) {
-            Intent gattServiceIntent = new Intent(this, BLEService.class);
-            bindService(gattServiceIntent, mBleServiceConnection, Context.BIND_AUTO_CREATE);
-        }
-        Intent gmsServiceIntent = new Intent(this, LocationSubscriberService.class);
-        bindService(gmsServiceIntent, mGmsServiceConnection, Context.BIND_AUTO_CREATE);
     }
 
     private void streamData() {
         announce("Streaming data!");
-        if (mGattCharacteristic != null) {
-            for (BluetoothDevice device : mBluetoothDevices) {
+        if (mGattCharacteristicMap.size() > 0) {
+            for (BluetoothDevice device : mGattCharacteristicMap.keySet()) {
                 readCharacteristic(device);
             }
         } else {
@@ -241,16 +213,15 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         locationLatField.setText(String.valueOf(mLocation[LocationSubscriberService.LATITUDE_ID]));
         timeField.setText(mTime);
         if (TEST_GMS) {
-            mAngleData = "5";
+            //mAngleData = "5";
         }
-        dataField.setText(mAngleData);
         //TODO: Create JSON object
         mAWSIoTMQTTBroker.publish(mReRideJSON);
     }
 
     private void searchGattServices(BluetoothDevice bluetoothDevice) {
         List<BluetoothGattService> supportedGattServices =
-                bleService.getSupportedGattServices(bluetoothDevice);
+                mBleService.getSupportedGattServices(bluetoothDevice);
         if (supportedGattServices == null) return;
         String uuid;
         for (BluetoothGattService gattService : supportedGattServices) {
@@ -260,26 +231,29 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                         gattService.getCharacteristics();
                 for(BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
                     uuid = gattCharacteristic.getUuid().toString();
-                    if (uuid.equals(GattAttributes.APPARENT_WIND_DIRECTION)) {
-                        mGattCharacteristic = gattCharacteristic;
-                        List<BluetoothGattDescriptor> descriptors =
+                    if (uuid.equals(GattAttributes.APPARENT_WIND_DIRECTION)) { //TODO: Fix
+                        mGattCharacteristicMap.put(bluetoothDevice, gattCharacteristic);
+                        /*List<BluetoothGattDescriptor> descriptors =
                                 gattCharacteristic.getDescriptors();
                         for (BluetoothGattDescriptor descriptor : descriptors) {
                             uuid = descriptor.getUuid().toString();
                             if (uuid.equals(GattAttributes.CLIENT_CHARACTERISTIC_CONFIGURATION)){
                                 descriptor.setValue(
                                         BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                                if (!bleService.writeDescriptor(bluetoothDevice, descriptor)) {
+                                if (!mBleService.writeDescriptor(bluetoothDevice, descriptor)) {
                                     Log.d(TAG, "Unable to write descriptor");
                                 }
                                 break;
                             }
-                        }
+                        }*/
                         break;
                     }
                 }
                 break;
             }
+        }
+        if (mGattCharacteristicMap.values().size() == mConnectedDevices) {
+            //TODO: Read with some interval
         }
     }
 
@@ -291,17 +265,18 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         if (mLocationSubscriberService != null) {
             mLocationSubscriberService.connect();
         }
-
+        if (mBleService != null) {
+            connectDevices();
+        }
     }
 
-    private void connect() {
-        if (bleService != null && mReadyToConnect) {
-            Handler handler = new Handler();
+    private void connectDevices() {
+        if (mBleService != null) {
             for (final BluetoothDevice device : mBluetoothDevices) {
-                handler.postDelayed(new Runnable() {
+                mHandler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        final boolean result = bleService.connect(device);
+                        final boolean result = mBleService.connect(device);
                         Log.d(TAG, "Connect request result=" + result);
                         //if (result) getDataButton.setEnabled(true);
                     }
@@ -315,7 +290,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         super.onDestroy();
         unbindService(mBleServiceConnection);
         unbindService(mGmsServiceConnection);
-        bleService = null;
+        mBleService = null;
         mLocationSubscriberService = null;
     }
 
@@ -324,7 +299,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK &&
                 (requestCode == LocationSubscriberService.REQUEST_CHECK_CONNECTION
                         || requestCode == LocationSubscriberService.REQUEST_CHECK_SETTINGS)) {
-            //the application should try to connect again.
+            //the application should try to connectDevices again.
             mLocationSubscriberService.connect();
         }
         super.onActivityResult(requestCode, resultCode, data);
@@ -333,23 +308,23 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private void readCharacteristic(BluetoothDevice device) {
         BluetoothGattCharacteristic characteristic = mGattCharacteristicMap.get(device);
         final int charaProp = characteristic.getProperties();
-//        if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
-//            // If there is an active notification on a characteristic, clear
-//            // it first so it doesn't publish the data field on the user interface.
-//            if (notifyCharacteristic != null) {
-//                bleService.setCharacteristicNotification(
-//                        notifyCharacteristic, false);
-//                notifyCharacteristic = null;
-//            }
-//            bleService.readCharacteristic(characteristic);
-//        }
-        if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
+        if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
+            // If there is an active notification on a characteristic, clear
+            // it first so it doesn't publish the data field on the user interface.
+            /*if (notifyCharacteristic != null) {
+                mBleService.setCharacteristicNotification(
+                        notifyCharacteristic, false);
+                notifyCharacteristic = null;
+            }*/
+            mBleService.readCharacteristic(device, characteristic);
+        }
+        /*if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
             notifyCharacteristic = characteristic;
-            if (!bleService.setCharacteristicNotification(device, characteristic, true)) {
+            if (!mBleService.setCharacteristicNotification(device, characteristic, true)) {
                 Toast.makeText(this, "Enable notifications failed",
                         Toast.LENGTH_SHORT).show();
             }
-        }
+        }*/
     }
 
     static IntentFilter makeGattUpdateIntentFilter() {
@@ -377,37 +352,34 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
             final String action = intent.getAction();
             switch (action) {
                 case BLEService.ACTION_GATT_CONNECTED: {
-                    connected = true;
-                    //UI info on connection
                     announce("Connected");
                     updateConnectionState(++mConnectedDevices);
-                    invalidateOptionsMenu();
-                    updateUI();
                     if (mConnectedDevices == mBluetoothDevices.size()) {
                         discoverServices();
                     }
                     break;
                 }
                 case BLEService.ACTION_GATT_DISCONNECTED: {
-                    connected = false;
-                    //UI info on disconnection
                     announce("Disconnected");
                     updateConnectionState(--mConnectedDevices);
-                    invalidateOptionsMenu();
-                    clearUI();
                     break;
                 }
                 case BLEService.ACTION_GATT_SERVICES_DISCOVERED: {
                     announce("Services discovered");
                     if (++servicesDiscovered == mConnectedDevices) {
-                        for (int i = 0; i<mConnectedDevices; i++) {
-                            searchGattServices(mBluetoothDevices.get(i));
+                        for (final BluetoothDevice device : mBluetoothDevices) {
+                            mHandler.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    searchGattServices(device);
+                                }
+                            }, 500); //ms
                         }
                     }
                     break;
                 }
                 case BLEService.ACTION_DATA_AVAILABLE: {
-                    mAngleData = intent.getStringExtra(BLEService.EXTRA_DATA);
+                    //mAngleData = intent.getStringExtra(BLEService.EXTRA_DATA);
                     handleData();
                     break;
                 }
@@ -421,8 +393,15 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     }
 
     private void discoverServices() {
-        if (bleService != null) {
-            bleService.startGattServicesDiscovery();
+        if (mBleService != null) {
+            for (final BluetoothDevice device : mBluetoothDevices) {
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        mBleService.startGattServicesDiscovery(device);
+                    }
+                }, 500); //ms
+            }
         }
     }
 }

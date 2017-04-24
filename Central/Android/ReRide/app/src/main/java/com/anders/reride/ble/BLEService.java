@@ -89,10 +89,8 @@ public class BLEService extends Service{
         return dataString;
     }
 
-    public void startGattServicesDiscovery() {
-        for (String deviceAddress : mBluetoothGattAPIMap.keySet()) {
-            mBluetoothGattAPIMap.get(deviceAddress).discoverServices();
-        }
+    public void startGattServicesDiscovery(BluetoothDevice device) {
+        mBluetoothGattAPIMap.get(device.getAddress()).discoverServices();
     }
 
     public class LocalBinder extends Binder {

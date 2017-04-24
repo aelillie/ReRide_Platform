@@ -33,7 +33,9 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.location.LocationSettingsResult;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Controls operations on a GATT server
@@ -63,6 +65,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private BLEService bleService;
     private LocationSubscriberService mLocationSubscriberService;
     private List<BluetoothDevice> mBluetoothDevices;
+    private Map<BluetoothDevice, BluetoothGattCharacteristic> mGattCharacteristicMap;
     private int mConnectedDevices;
     private boolean mReadyToConnect;
 
@@ -143,7 +146,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private AWSIoTMQTTBroker mAWSIoTMQTTBroker;
 
     private void updateUI() {
-        getDataButton.setEnabled(true);
+        //getDataButton.setEnabled(true);
     }
 
 
@@ -180,6 +183,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         String[] deviceAddresses = intent.getStringArrayExtra(EXTRAS_DEVICE_ADDRESS);
         if (deviceAddresses.length > 0) {
             mBluetoothDevices = new ArrayList<>(deviceAddresses.length);
+            mGattCharacteristicMap = new HashMap<>(deviceAddresses.length);
             BluetoothAdapter bluetoothAdapter = ((BluetoothManager)
                     getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
             for (String deviceAddress : deviceAddresses) {
@@ -222,7 +226,9 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private void streamData() {
         announce("Streaming data!");
         if (mGattCharacteristic != null) {
-            readCharacteristic(mGattCharacteristic);
+            for (BluetoothDevice device : mBluetoothDevices) {
+                readCharacteristic(device);
+            }
         } else {
             announce("No characteristic available");
         }
@@ -242,7 +248,9 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         mAWSIoTMQTTBroker.publish(mReRideJSON);
     }
 
-    private void searchGattServices(List<BluetoothGattService> supportedGattServices) {
+    private void searchGattServices(BluetoothDevice bluetoothDevice) {
+        List<BluetoothGattService> supportedGattServices =
+                bleService.getSupportedGattServices(bluetoothDevice);
         if (supportedGattServices == null) return;
         String uuid;
         for (BluetoothGattService gattService : supportedGattServices) {
@@ -261,7 +269,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                             if (uuid.equals(GattAttributes.CLIENT_CHARACTERISTIC_CONFIGURATION)){
                                 descriptor.setValue(
                                         BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                                if (!bleService.writeDescriptor(descriptor)) {
+                                if (!bleService.writeDescriptor(bluetoothDevice, descriptor)) {
                                     Log.d(TAG, "Unable to write descriptor");
                                 }
                                 break;
@@ -283,7 +291,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         if (mLocationSubscriberService != null) {
             mLocationSubscriberService.connect();
         }
-        connect();
+
     }
 
     private void connect() {
@@ -295,7 +303,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                     public void run() {
                         final boolean result = bleService.connect(device);
                         Log.d(TAG, "Connect request result=" + result);
-                        if (result) getDataButton.setEnabled(true);
+                        //if (result) getDataButton.setEnabled(true);
                     }
                 }, 500); //ms
             }
@@ -322,7 +330,8 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    private void readCharacteristic(BluetoothGattCharacteristic characteristic) {
+    private void readCharacteristic(BluetoothDevice device) {
+        BluetoothGattCharacteristic characteristic = mGattCharacteristicMap.get(device);
         final int charaProp = characteristic.getProperties();
 //        if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
 //            // If there is an active notification on a characteristic, clear
@@ -336,7 +345,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
 //        }
         if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
             notifyCharacteristic = characteristic;
-            if (!bleService.setCharacteristicNotification(characteristic, true)) {
+            if (!bleService.setCharacteristicNotification(device, characteristic, true)) {
                 Toast.makeText(this, "Enable notifications failed",
                         Toast.LENGTH_SHORT).show();
             }
@@ -362,6 +371,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     }
 
     private class GattBroadcastReceiver extends BroadcastReceiver {
+        private int servicesDiscovered;
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
@@ -373,6 +383,9 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                     updateConnectionState(++mConnectedDevices);
                     invalidateOptionsMenu();
                     updateUI();
+                    if (mConnectedDevices == mBluetoothDevices.size()) {
+                        discoverServices();
+                    }
                     break;
                 }
                 case BLEService.ACTION_GATT_DISCONNECTED: {
@@ -386,7 +399,11 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                 }
                 case BLEService.ACTION_GATT_SERVICES_DISCOVERED: {
                     announce("Services discovered");
-                    searchGattServices(bleService.getSupportedGattServices());
+                    if (++servicesDiscovered == mConnectedDevices) {
+                        for (int i = 0; i<mConnectedDevices; i++) {
+                            searchGattServices(mBluetoothDevices.get(i));
+                        }
+                    }
                     break;
                 }
                 case BLEService.ACTION_DATA_AVAILABLE: {
@@ -400,6 +417,12 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                 }
                 default: Log.d(TAG, "Action not implemented"); break;
             }
+        }
+    }
+
+    private void discoverServices() {
+        if (bleService != null) {
+            bleService.startGattServicesDiscovery();
         }
     }
 }

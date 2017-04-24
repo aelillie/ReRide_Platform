@@ -89,6 +89,12 @@ public class BLEService extends Service{
         return dataString;
     }
 
+    public void startGattServicesDiscovery() {
+        for (String deviceAddress : mBluetoothGattAPIMap.keySet()) {
+            mBluetoothGattAPIMap.get(deviceAddress).discoverServices();
+        }
+    }
+
     public class LocalBinder extends Binder {
         BLEService getService() {
             return BLEService.this;
@@ -171,7 +177,7 @@ public class BLEService extends Service{
         return mBluetoothGattAPIMap.get(bluetoothDevice.getAddress()).getServices();
     }
 
-    public class BLEGattCallback extends BluetoothGattCallback {
+    private class BLEGattCallback extends BluetoothGattCallback {
         /*
         Callback indicating when GATT client has
         connected/disconnected to/from a remote GATT server.
@@ -184,8 +190,6 @@ public class BLEService extends Service{
                 connectionState = STATE_CONNECTED;
                 broadcastUpdate(intentAction);
                 Log.i(TAG, "Connected to GATT server.");
-                Log.i(TAG, "Attempting to start service discovery" +
-                        gatt.discoverServices());
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 intentAction = ACTION_GATT_DISCONNECTED;
                 connectionState = STATE_DISCONNECTED;

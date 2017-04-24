@@ -198,17 +198,22 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private void streamData() {
         announce("Streaming data!");
         if (mGattCharacteristicMap.size() > 0) {
-            for (BluetoothDevice device : mGattCharacteristicMap.keySet()) {
-                readCharacteristic(device);
+            for (final BluetoothDevice device : mGattCharacteristicMap.keySet()) {
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        readCharacteristic(device);
+                    }
+                }, 1000); //ms
             }
         } else {
             announce("No characteristic available");
         }
-        mLocationSubscriberService.requestUpdates();
     }
 
 
     private void handleData() {
+        mLocationSubscriberService.requestUpdates(); //TODO: Get instead of request
         locationLongField.setText(String.valueOf(mLocation[LocationSubscriberService.LONGITUDE_ID]));
         locationLatField.setText(String.valueOf(mLocation[LocationSubscriberService.LATITUDE_ID]));
         timeField.setText(mTime);
@@ -251,9 +256,6 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                 }
                 break;
             }
-        }
-        if (mGattCharacteristicMap.values().size() == mConnectedDevices) {
-            //TODO: Read with some interval
         }
     }
 
@@ -375,6 +377,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                                 }
                             }, 500); //ms
                         }
+                        streamData();
                     }
                     break;
                 }

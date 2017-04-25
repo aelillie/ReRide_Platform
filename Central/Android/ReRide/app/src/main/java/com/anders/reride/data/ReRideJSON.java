@@ -51,7 +51,7 @@ import java.util.Map;
      "state": {
          "recorded": {
              "id": "10",
-             "time": "12:35:00",
+             "time": "123500",
              "sensors": [
                  {
                      "sensorId": "flex sensor",

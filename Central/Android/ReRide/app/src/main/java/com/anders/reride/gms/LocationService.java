@@ -1,6 +1,7 @@
 package com.anders.reride.gms;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
 import android.os.Binder;
@@ -23,75 +24,29 @@ import static com.google.android.gms.location.LocationServices.FusedLocationApi;
  * Class for retrieving current GPS position
  */
 
-public class LocationService extends Service
-        implements GoogleApiClient.ConnectionCallbacks,
+public class LocationService implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener{
+
     private static final String TAG = LocationSubscriberService.class.getCanonicalName();
 
-    //Request keys
-    public static final int REQUEST_CHECK_SETTINGS = 1;
-    public static final int REQUEST_CHECK_CONNECTION = 2;
-
-    //Actions
-    public static final String ACTION_CONNECTED =
-            "com.example.anders.flexsensor.gms.LocationSubscriberService.ACTION_CONNECTED";
-    public static final String ACTION_CONNECTION_FAILED =
-            "com.example.anders.flexsensor.gms.LocationSubscriberService.ACTION_CONNECTION_FAILED";
-
-    //Intent keys
-    public static final String ERROR_STRING_KEY =
-            "com.example.anders.flexsensor.gms.LocationSubscriberService.ERROR_STRING_KEY";
+    private boolean mRequiresResolution;
+    private boolean mConnected;
 
     //Location API
     private GoogleApiClient mGoogleApiClient;
     private PendingResult<LocationSettingsResult> mLocationSettingsResult;
 
-    private final IBinder binder = new LocationService.LocalBinder();
 
-    @Override
-    public void onCreate() {
-        super.onCreate();
-
+    public LocationService(Context context) {
         // Create an instance of GoogleAPIClient.
         if (mGoogleApiClient == null) {
-            mGoogleApiClient = new GoogleApiClient.Builder(this)
+            mGoogleApiClient = new GoogleApiClient.Builder(context)
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this)
                     .addApi(LocationServices.API)
                     .build();
         }
 
-    }
-
-    private void broadcastUpdate(final String action) {
-        final Intent intent = new Intent(action);
-        sendBroadcast(intent);
-    }
-
-    private void broadcastUpdate(String action, Parcelable result) {
-        final Intent intent = new Intent(action);
-        intent.putExtra(ERROR_STRING_KEY, result);
-        sendBroadcast(intent);
-    }
-
-    public class LocalBinder extends Binder {
-        public LocationService getService() {
-            return LocationService.this;
-        }
-    }
-
-    @Nullable
-    @Override
-    public IBinder onBind(Intent intent) {
-        connect();
-        return binder;
-    }
-
-    @Override
-    public boolean onUnbind(Intent intent) {
-        disconnect();
-        Log.d(TAG, "Disconnected");
-        return super.onUnbind(intent);
     }
 
     public void connect() {
@@ -119,11 +74,13 @@ public class LocationService extends Service
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        broadcastUpdate(ACTION_CONNECTED);
+        mConnected = true;
+        mRequiresResolution = false;
     }
 
     @Override
     public void onConnectionSuspended(int cause) {
+        mConnected = false;
         switch (cause) {
             case CAUSE_NETWORK_LOST:
                 //TODO: Try to reconnect network
@@ -140,15 +97,18 @@ public class LocationService extends Service
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        mConnected = false;
         Log.d(TAG, connectionResult.getErrorMessage());
         if (connectionResult.getErrorCode() == ConnectionResult.RESOLUTION_REQUIRED) {
-            broadcastUpdate(ACTION_CONNECTION_FAILED, connectionResult);
+            mRequiresResolution = true;
         }
     }
 
+    public boolean isRequiresResolution() {
+        return mRequiresResolution;
+    }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
+    public boolean isConnected() {
+        return mConnected;
     }
 }

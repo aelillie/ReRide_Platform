@@ -8,7 +8,7 @@ import java.util.TimeZone;
  */
 
 public class ReRideTimeManager {
-    public static String getTimeString(String gmtTimeZone) {
+    public static String getTimeString(String gmtTimeZone) { //TODO: Add date!!!
         Calendar now = Calendar.getInstance(TimeZone.getTimeZone(gmtTimeZone)); //Like GMT+2
         return now.get(Calendar.HOUR_OF_DAY) + ""
                 + now.get(Calendar.MINUTE) + ""

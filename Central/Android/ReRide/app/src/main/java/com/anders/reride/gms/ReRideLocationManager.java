@@ -24,10 +24,11 @@ import static com.google.android.gms.location.LocationServices.FusedLocationApi;
  * Class for retrieving current GPS position
  */
 
-public class LocationService implements GoogleApiClient.ConnectionCallbacks,
+public class ReRideLocationManager implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener{
 
     private static final String TAG = LocationSubscriberService.class.getCanonicalName();
+    public static final int REQUEST_CHECK_SETTINGS = 1;
 
     private boolean mRequiresResolution;
     private boolean mConnected;
@@ -35,9 +36,10 @@ public class LocationService implements GoogleApiClient.ConnectionCallbacks,
     //Location API
     private GoogleApiClient mGoogleApiClient;
     private PendingResult<LocationSettingsResult> mLocationSettingsResult;
+    private ConnectionResult mConnectionResult;
 
 
-    public LocationService(Context context) {
+    public ReRideLocationManager(Context context) {
         // Create an instance of GoogleAPIClient.
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(context)
@@ -50,18 +52,22 @@ public class LocationService implements GoogleApiClient.ConnectionCallbacks,
     }
 
     public void connect() {
-        mGoogleApiClient.connect();
-        Log.d(TAG, "Connected");
+        if (!mConnected) {
+            mGoogleApiClient.connect();
+        }
     }
 
     public void disconnect() {
         mGoogleApiClient.disconnect();
-        Log.d(TAG, "Disconnected");
+    }
+
+    public void reconnect() {
+        mGoogleApiClient.reconnect();
+        Log.d(TAG, "Reconnecting...");
     }
 
 
     public Location getLocation() {
-        //TODO: Return location
         try {
              Location location = FusedLocationApi.getLastLocation(
                     mGoogleApiClient);
@@ -74,12 +80,14 @@ public class LocationService implements GoogleApiClient.ConnectionCallbacks,
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
+        Log.d(TAG, "Connected");
         mConnected = true;
         mRequiresResolution = false;
     }
 
     @Override
     public void onConnectionSuspended(int cause) {
+        Log.d(TAG, "Disconnected");
         mConnected = false;
         switch (cause) {
             case CAUSE_NETWORK_LOST:
@@ -97,15 +105,25 @@ public class LocationService implements GoogleApiClient.ConnectionCallbacks,
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+        Log.d(TAG, "Disconnected");
         mConnected = false;
         Log.d(TAG, connectionResult.getErrorMessage());
         if (connectionResult.getErrorCode() == ConnectionResult.RESOLUTION_REQUIRED) {
             mRequiresResolution = true;
+            mConnectionResult = connectionResult;
         }
     }
 
-    public boolean isRequiresResolution() {
+    public ConnectionResult getConnectionResult() {
+        return mConnectionResult;
+    }
+
+    public boolean requiresResolution() {
         return mRequiresResolution;
+    }
+
+    public void setRequiresResolution(boolean enabled) {
+        mRequiresResolution = enabled;
     }
 
     public boolean isConnected() {

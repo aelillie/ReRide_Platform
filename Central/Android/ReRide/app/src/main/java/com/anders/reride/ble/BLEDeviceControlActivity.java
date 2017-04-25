@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
 import android.content.ServiceConnection;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -26,9 +27,8 @@ import com.anders.reride.R;
 import com.anders.reride.aws.AWSIoTHTTPBroker;
 import com.anders.reride.aws.AWSIoTMQTTBroker;
 import com.anders.reride.data.ReRideJSON;
-import com.anders.reride.gms.LocationSubscriberService;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.location.LocationSettingsResult;
+import com.anders.reride.gms.ReRideLocationManager;
+import com.anders.reride.gms.ReRideTimeManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,10 +61,10 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private TextView timeField;
 
     private String mUserId;
+    private Location mLastLocation;
 
     private BluetoothGattCharacteristic mNotifyCharacteristic;
     private BLEService mBleService;
-    private LocationSubscriberService mLocationSubscriberService;
     private List<BluetoothDevice> mBluetoothDevices;
     private Map<BluetoothDevice, BluetoothGattCharacteristic> mGattCharacteristicMap;
     private int mConnectedDevices;
@@ -84,65 +84,12 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
             mBleService = null;
         }
     };
-    private final ServiceConnection mGmsServiceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName componentName, IBinder service) {
-            mLocationSubscriberService = ((LocationSubscriberService.LocalBinder) service)
-                    .getService();
-            mLocationSubscriberService.connect();
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName componentName) {
-            mLocationSubscriberService = null;
-        }
-    };
-
-    private final BroadcastReceiver mLocationUpdateReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            switch (action) {
-                case LocationSubscriberService.ACTION_UPDATE_AVAILABLE:
-                    double[] location = intent.getDoubleArrayExtra(LocationSubscriberService.LAST_LOCATION_STRING_KEY);
-                    if (location != null) mLocation = location;
-                     mTime = intent.getStringExtra(LocationSubscriberService.LAST_TIME_STRING_KEY);
-                    break;
-                case LocationSubscriberService.ACTION_CONNECTED:
-                    announce("Location services connected");
-                    break;
-                case LocationSubscriberService.ACTION_CONNECTION_FAILED:
-                    ConnectionResult cr = intent.getParcelableExtra(
-                            LocationSubscriberService.ERROR_STRING_KEY);
-                    try {
-                        cr.startResolutionForResult(getParent(),
-                                LocationSubscriberService.REQUEST_CHECK_CONNECTION);
-                    } catch (IntentSender.SendIntentException e) {
-                        Log.d(TAG, e.getMessage());
-                    } break;
-                case LocationSubscriberService.ACTION_SETTINGS_FAILED:
-                    LocationSettingsResult lsr = intent.getParcelableExtra(
-                            LocationSubscriberService.ERROR_STRING_KEY);
-                    try {
-                        // Show the dialog by calling startResolutionForResult(),
-                        // and check the result in onActivityResult().
-                        lsr.getStatus().startResolutionForResult(getParent(),
-                                LocationSubscriberService.REQUEST_CHECK_SETTINGS);
-                    } catch (IntentSender.SendIntentException e) {
-                        Log.d(TAG, e.getMessage());
-                    } break;
-                default: Log.d(TAG, "Action not implemented"); break;
-            }
-
-        }
-    };
-    private double[] mLocation;
-    private String mTime;
 
     private final GattBroadcastReceiver gattUpdateReceiver = new GattBroadcastReceiver();
     private AWSIoTHTTPBroker mAWSIoTHTTPBroker;
     private AWSIoTMQTTBroker mAWSIoTMQTTBroker;
     private BluetoothAdapter mBluetoothAdapter;
+    private ReRideLocationManager mLocationManager;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -161,6 +108,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                 getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
         mAWSIoTHTTPBroker = new AWSIoTHTTPBroker(this, mUserId);
         mAWSIoTMQTTBroker = new AWSIoTMQTTBroker(this, mUserId);
+        mLocationManager = new ReRideLocationManager(this);
 
         //Receive devices info
         String[] deviceAddresses = intent.getStringArrayExtra(EXTRAS_DEVICE_ADDRESSES);
@@ -175,8 +123,6 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         initializeUIComponents();
         bindService(new Intent(this, BLEService.class),
                 mBleServiceConnection, Context.BIND_AUTO_CREATE);
-        bindService(new Intent(this, LocationSubscriberService.class),
-                mGmsServiceConnection, Context.BIND_AUTO_CREATE);
     }
 
     private void announce(String msg) {
@@ -216,15 +162,38 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
 
 
     private void handleData(BluetoothDevice device, String data) {
-        mLocationSubscriberService.requestUpdates(); //TODO: Get instead of request
-        locationLongField.setText(String.valueOf(mLocation[LocationSubscriberService.LONGITUDE_ID]));
-        locationLatField.setText(String.valueOf(mLocation[LocationSubscriberService.LATITUDE_ID]));
-        timeField.setText(mTime);
+        if (mLocationManager.requiresResolution()) {
+            try {
+                mLocationManager.getConnectionResult().startResolutionForResult(this,
+                        ReRideLocationManager.REQUEST_CHECK_SETTINGS);
+                mLocationManager.setRequiresResolution(false);
+                return;
+            } catch (IntentSender.SendIntentException e) {
+                announce("Fixing GMS connection failed. Reconnecting...");
+                e.printStackTrace();
+                mLocationManager.reconnect();
+                return;
+            }
+        }
+        if (mLocationManager.isConnected()) {
+            Location location = mLocationManager.getLocation();
+            if (location != null) mLastLocation = location;
+        }
+        if (mLastLocation == null) {
+            announce("Unable to find location");
+            return;
+        }
+        double lon = mLastLocation.getLongitude();
+        double lat = mLastLocation.getLatitude();
+        locationLongField.setText(String.valueOf(lon));
+        locationLatField.setText(String.valueOf(lat));
+        String time = ReRideTimeManager.getTimeString("GMT+2");
+        timeField.setText(time);
         if (TEST_GMS) {
-            //mAngleData = "5";
+            //mAngleData = "5"; //TODO: Handle multiple data
         }
         mReRideJSON.putSensorValue(device.getName(), data);
-        mReRideJSON.putRiderProperties(mTime, mLocation);
+        mReRideJSON.putRiderProperties(time, lon, lat);
         mAWSIoTMQTTBroker.publish(mReRideJSON);
     }
 
@@ -267,12 +236,11 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         registerReceiver(gattUpdateReceiver, makeGattUpdateIntentFilter());
-        registerReceiver(mLocationUpdateReceiver, makeLocationUpdateFilter());
-        if (mLocationSubscriberService != null) {
-            mLocationSubscriberService.connect();
-        }
         if (mBleService != null) {
             connectDevices();
+        }
+        if (mLocationManager != null) {
+            mLocationManager.connect();
         }
     }
 
@@ -295,18 +263,16 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         unbindService(mBleServiceConnection);
-        unbindService(mGmsServiceConnection);
+        mLocationManager.disconnect();
         mBleService = null;
-        mLocationSubscriberService = null;
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode == RESULT_OK &&
-                (requestCode == LocationSubscriberService.REQUEST_CHECK_CONNECTION
-                        || requestCode == LocationSubscriberService.REQUEST_CHECK_SETTINGS)) {
-            //the application should try to connectDevices again.
-            mLocationSubscriberService.connect();
+                (requestCode == ReRideLocationManager.REQUEST_CHECK_SETTINGS)) {
+            //the application should try to connect again.
+            mLocationManager.connect();
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -339,15 +305,6 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         intentFilter.addAction(BLEService.ACTION_GATT_DISCONNECTED);
         intentFilter.addAction(BLEService.ACTION_GATT_SERVICES_DISCOVERED);
         intentFilter.addAction(BLEService.ACTION_DATA_AVAILABLE);
-        return intentFilter;
-    }
-
-    static IntentFilter makeLocationUpdateFilter() {
-        final IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(LocationSubscriberService.ACTION_CONNECTED);
-        intentFilter.addAction(LocationSubscriberService.ACTION_UPDATE_AVAILABLE);
-        intentFilter.addAction(LocationSubscriberService.ACTION_CONNECTION_FAILED);
-        intentFilter.addAction(LocationSubscriberService.ACTION_SETTINGS_FAILED);
         return intentFilter;
     }
 

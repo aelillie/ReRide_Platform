@@ -187,7 +187,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         double lat = mLastLocation.getLatitude();
         locationLongField.setText(String.valueOf(lon));
         locationLatField.setText(String.valueOf(lat));
-        String time = ReRideTimeManager.getTimeString("GMT+2");
+        String time = ReRideTimeManager.now("GMT+2");
         timeField.setText(time);
         if (TEST_GMS) {
             //mAngleData = "5"; //TODO: Handle multiple data

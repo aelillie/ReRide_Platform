@@ -63,6 +63,7 @@ public class MainActivity extends AppCompatActivity{
     private BluetoothAdapter bluetoothAdapter;
     private Handler mHandler;
     private String mUserId = "1234";
+    private Intent mDeviceIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,6 +73,10 @@ public class MainActivity extends AppCompatActivity{
         toolbar.setTitle(R.string.device_scan_title);
         setSupportActionBar(toolbar);
         mHandler = new Handler();
+        mDeviceIntent = new Intent(getApplicationContext(),
+                BLEDeviceControlActivity.class);
+        mDeviceIntent.putExtra(BLEDeviceControlActivity.EXTRAS_USER_ID,
+                mUserId); //TODO: Get from dialog box at startup
 
         askForLocationPermission();
         if (BLEDeviceControlActivity.TEST_GMS) {
@@ -110,17 +115,13 @@ public class MainActivity extends AppCompatActivity{
             @Override
             public void onClick(View view) {
                 if (mDeviceAddresses.size() == 0) return;
-                final Intent intent = new Intent(getApplicationContext(),
-                        BLEDeviceControlActivity.class);
-                intent.putExtra(BLEDeviceControlActivity.EXTRAS_DEVICE_ADDRESSES,
+                mDeviceIntent.putExtra(BLEDeviceControlActivity.EXTRAS_DEVICE_ADDRESSES,
                         mDeviceAddresses.toArray());
-                intent.putExtra(BLEDeviceControlActivity.EXTRAS_USER_ID,
-                        mUserId); //TODO: Get from dialog box at startup
                 if (scanning) {
                     scanner.stopScan(callback);
                     scanning = false;
                 }
-                startActivity(intent);
+                startActivity(mDeviceIntent);
             }
         });
     }

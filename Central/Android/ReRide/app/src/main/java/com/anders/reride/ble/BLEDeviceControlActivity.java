@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * Controls operations on a GATT server
@@ -52,7 +53,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private static final int UPDATE_FREQUENCY = 1000; //ms
 
     //Debug settings
-    public static boolean TEST_GMS = false;
+    public static boolean TEST_GMS = true;
 
     //UI information
     private TextView connectionState;
@@ -90,6 +91,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private AWSIoTMQTTBroker mAWSIoTMQTTBroker;
     private BluetoothAdapter mBluetoothAdapter;
     private ReRideLocationManager mLocationManager;
+    private Random mRandomGenerator; //For testing
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -110,19 +112,23 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         mAWSIoTMQTTBroker = new AWSIoTMQTTBroker(this, mUserId);
         mLocationManager = new ReRideLocationManager(this);
 
-        //Receive devices info
-        String[] deviceAddresses = intent.getStringArrayExtra(EXTRAS_DEVICE_ADDRESSES);
-        mBluetoothDevices = new ArrayList<>(deviceAddresses.length);
-        mGattCharacteristicMap = new HashMap<>(deviceAddresses.length);
-        for (String deviceAddress : deviceAddresses) {
-            BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(deviceAddress);
-            mBluetoothDevices.add(device);
-            mReRideJSON.addSensor(device.getName(), "degrees"); //TODO: Custom unit
+        if (TEST_GMS) {
+            mRandomGenerator = new Random();
+        } else {
+            //Receive devices info
+            String[] deviceAddresses = intent.getStringArrayExtra(EXTRAS_DEVICE_ADDRESSES);
+            mBluetoothDevices = new ArrayList<>(deviceAddresses.length);
+            mGattCharacteristicMap = new HashMap<>(deviceAddresses.length);
+            for (String deviceAddress : deviceAddresses) {
+                BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(deviceAddress);
+                mBluetoothDevices.add(device);
+                mReRideJSON.addSensor(device.getName(), "degrees"); //TODO: Custom unit
+            }
+            bindService(new Intent(this, BLEService.class),
+                    mBleServiceConnection, Context.BIND_AUTO_CREATE);
         }
 
         initializeUIComponents();
-        bindService(new Intent(this, BLEService.class),
-                mBleServiceConnection, Context.BIND_AUTO_CREATE);
     }
 
     private void announce(String msg) {
@@ -137,7 +143,11 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         });
     }
     private void initializeUIComponents() {
-        ((TextView) findViewById(R.id.devices_number)).setText(mBluetoothDevices.size());
+        if (TEST_GMS) {
+            ((TextView) findViewById(R.id.devices_number)).setText(0);
+        } else {
+            ((TextView) findViewById(R.id.devices_number)).setText(mBluetoothDevices.size());
+        }
         connectionState = (TextView) findViewById(R.id.connection_state);
         locationLongField = (TextView) findViewById(R.id.location_long_value);
         locationLatField = (TextView) findViewById(R.id.location_lat_value);
@@ -146,17 +156,28 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
 
     private void streamData() {
         announce("Streaming data!");
-        if (mGattCharacteristicMap.size() > 0) {
-            for (final BluetoothDevice device : mGattCharacteristicMap.keySet()) {
+        if (TEST_GMS) {
+            while(true) {
                 mHandler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        readCharacteristic(device);
+                        handleData(null, String.valueOf(mRandomGenerator.nextInt(180)));
                     }
-                }, UPDATE_FREQUENCY); //ms
+                }, UPDATE_FREQUENCY);
             }
         } else {
-            announce("No characteristic available");
+            if (mGattCharacteristicMap.size() > 0) {
+                for (final BluetoothDevice device : mGattCharacteristicMap.keySet()) {
+                    mHandler.postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            readCharacteristic(device);
+                        }
+                    }, UPDATE_FREQUENCY); //ms
+                }
+            } else {
+                announce("No characteristic available");
+            }
         }
     }
 
@@ -189,9 +210,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         locationLatField.setText(String.valueOf(lat));
         String time = ReRideTimeManager.now("GMT+2");
         timeField.setText(time);
-        if (TEST_GMS) {
-            //mAngleData = "5"; //TODO: Handle multiple data
-        }
+        //TODO: Handle visualization of multiple data
         mReRideJSON.putSensorValue(device.getName(), data);
         mReRideJSON.putRiderProperties(time, lon, lat);
         mAWSIoTMQTTBroker.publish(mReRideJSON);
@@ -241,6 +260,9 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         }
         if (mLocationManager != null) {
             mLocationManager.connect();
+            if (TEST_GMS) {
+                streamData();
+            }
         }
     }
 

@@ -16,7 +16,7 @@
         android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
 
-    <LinearLayout
+    <!--<LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
@@ -95,21 +95,27 @@
                       android:text="@string/no_data"
                       android:textSize="18sp"/>
         </LinearLayout>
-        <!--Line-->
+        &lt;!&ndash;Line&ndash;&gt;
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:background="@android:color/darker_gray"/>
 
-        <!--Could present current data-->
+        &lt;!&ndash;Could present current data&ndash;&gt;
 
-        <!--Line-->
+        &lt;!&ndash;Line&ndash;&gt;
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:background="@android:color/darker_gray"/>
 
-        <!--Could present history data-->
-    </LinearLayout>
+        &lt;!&ndash;Could present history data&ndash;&gt;
+    </LinearLayout>-->
+
+    <TextView android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:text="@string/streaming_data"
+              android:textSize="30sp"
+              android:layout_gravity="center"/>
 
 </LinearLayout>

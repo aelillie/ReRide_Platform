@@ -34,4 +34,5 @@
     <string name="connect">Connect</string>
     <string name="devices_number">Devices:</string>
     <string name="label_connected">Connected:</string>
+    <string name="streaming_data">Streaming data!</string>
 </resources>

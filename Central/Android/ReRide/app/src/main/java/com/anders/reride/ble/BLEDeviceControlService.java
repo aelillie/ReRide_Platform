@@ -1,5 +1,6 @@
 package com.anders.reride.ble;
 
+import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
@@ -10,20 +11,14 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.IntentSender;
 import android.content.ServiceConnection;
 import android.location.Location;
-import android.os.Bundle;
+import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.widget.TextView;
-import android.widget.Toast;
 
-import com.anders.reride.R;
 import com.anders.reride.aws.AWSIoTHTTPBroker;
 import com.anders.reride.aws.AWSIoTMQTTBroker;
 import com.anders.reride.data.ReRideJSON;
@@ -40,8 +35,8 @@ import java.util.Random;
  * Controls operations on a GATT server
  */
 
-public class BLEDeviceControlActivity extends AppCompatActivity {
-    private final static String TAG = BLEDeviceControlActivity.class.getSimpleName();
+public class BLEDeviceControlService extends Service {
+    private final static String TAG = BLEDeviceControlService.class.getSimpleName();
 
     public static final String EXTRAS_DEVICE_ADDRESSES = "DEVICE_ADDRESSES";
     public static final String EXTRAS_USER_ID = "EXTRAS_USER_ID";
@@ -55,12 +50,6 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     //Debug settings
     public static boolean TEST_GMS = true;
 
-    //UI information
-    private TextView connectionState;
-    private TextView locationLongField;
-    private TextView locationLatField;
-    private TextView timeField;
-
     private String mUserId;
     private Location mLastLocation;
 
@@ -70,6 +59,8 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private Map<BluetoothDevice, BluetoothGattCharacteristic> mGattCharacteristicMap;
     private int mConnectedDevices;
     private Handler mHandler;
+
+    private final IBinder binder = new LocalBinder();
 
     private ReRideJSON mReRideJSON;
 
@@ -93,69 +84,8 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     private ReRideLocationManager mLocationManager;
     private Random mRandomGenerator; //For testing
 
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Intent intent = getIntent();
-        mUserId = intent.getStringExtra(EXTRAS_USER_ID);
-        setContentView(R.layout.activity_ble);
-        //Setup toolbar
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_ble);
-        toolbar.setTitle("Device control");
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        mHandler = new Handler();
-        mReRideJSON = ReRideJSON.getInstance(mUserId);
-        mBluetoothAdapter = ((BluetoothManager)
-                getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
-        mAWSIoTHTTPBroker = new AWSIoTHTTPBroker(this, mUserId);
-        mAWSIoTMQTTBroker = new AWSIoTMQTTBroker(this, mUserId);
-        mLocationManager = new ReRideLocationManager(this);
-
-        if (TEST_GMS) {
-            mRandomGenerator = new Random();
-        } else {
-            //Receive devices info
-            String[] deviceAddresses = intent.getStringArrayExtra(EXTRAS_DEVICE_ADDRESSES);
-            mBluetoothDevices = new ArrayList<>(deviceAddresses.length);
-            mGattCharacteristicMap = new HashMap<>(deviceAddresses.length);
-            for (String deviceAddress : deviceAddresses) {
-                BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(deviceAddress);
-                mBluetoothDevices.add(device);
-                mReRideJSON.addSensor(device.getName(), "degrees"); //TODO: Custom unit
-            }
-            bindService(new Intent(this, BLEService.class),
-                    mBleServiceConnection, Context.BIND_AUTO_CREATE);
-        }
-
-        initializeUIComponents();
-    }
-
-    private void announce(String msg) {
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-    }
-    private void updateConnectionState(final int connectedDevices) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                connectionState.setText(connectedDevices);
-            }
-        });
-    }
-    private void initializeUIComponents() {
-        if (TEST_GMS) {
-            ((TextView) findViewById(R.id.devices_number)).setText(0);
-        } else {
-            ((TextView) findViewById(R.id.devices_number)).setText(mBluetoothDevices.size());
-        }
-        connectionState = (TextView) findViewById(R.id.connection_state);
-        locationLongField = (TextView) findViewById(R.id.location_long_value);
-        locationLatField = (TextView) findViewById(R.id.location_lat_value);
-        timeField = (TextView) findViewById(R.id.time_value);
-    }
 
     private void streamData() {
-        announce("Streaming data!");
         if (TEST_GMS) {
             while(true) {
                 mHandler.postDelayed(new Runnable() {
@@ -175,42 +105,27 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                         }
                     }, UPDATE_FREQUENCY); //ms
                 }
-            } else {
-                announce("No characteristic available");
             }
         }
     }
 
+    public class LocalBinder extends Binder {
+        public BLEDeviceControlService getService() {
+            return BLEDeviceControlService.this;
+        }
+    }
 
     private void handleData(BluetoothDevice device, String data) {
-        if (mLocationManager.requiresResolution()) {
-            try {
-                mLocationManager.getConnectionResult().startResolutionForResult(this,
-                        ReRideLocationManager.REQUEST_CHECK_SETTINGS);
-                mLocationManager.setRequiresResolution(false);
-                return;
-            } catch (IntentSender.SendIntentException e) {
-                announce("Fixing GMS connection failed. Reconnecting...");
-                e.printStackTrace();
-                mLocationManager.reconnect();
-                return;
-            }
-        }
         if (mLocationManager.isConnected()) {
             Location location = mLocationManager.getLocation();
             if (location != null) mLastLocation = location;
         }
         if (mLastLocation == null) {
-            announce("Unable to find location");
             return;
         }
         double lon = mLastLocation.getLongitude();
         double lat = mLastLocation.getLatitude();
-        locationLongField.setText(String.valueOf(lon));
-        locationLatField.setText(String.valueOf(lat));
         String time = ReRideTimeManager.now("GMT+2");
-        timeField.setText(time);
-        //TODO: Handle visualization of multiple data
         mReRideJSON.putSensorValue(device.getName(), data);
         mReRideJSON.putRiderProperties(time, lon, lat);
         mAWSIoTMQTTBroker.publish(mReRideJSON);
@@ -251,20 +166,6 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        registerReceiver(gattUpdateReceiver, makeGattUpdateIntentFilter());
-        if (mBleService != null) {
-            connectDevices();
-        }
-        if (mLocationManager != null) {
-            mLocationManager.connect();
-            if (TEST_GMS) {
-                streamData();
-            }
-        }
-    }
 
     private void connectDevices() {
         if (mBleService != null) {
@@ -282,22 +183,55 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         super.onDestroy();
         unbindService(mBleServiceConnection);
         mLocationManager.disconnect();
         mBleService = null;
     }
 
+    @Nullable
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK &&
-                (requestCode == ReRideLocationManager.REQUEST_CHECK_SETTINGS)) {
-            //the application should try to connect again.
-            mLocationManager.connect();
+    public IBinder onBind(Intent intent) {
+        mHandler = new Handler();
+        mBluetoothAdapter = ((BluetoothManager)
+                getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
+        mUserId = intent.getStringExtra(EXTRAS_USER_ID);
+        mReRideJSON = ReRideJSON.getInstance(mUserId);
+        mAWSIoTHTTPBroker = new AWSIoTHTTPBroker(this, mUserId);
+        mAWSIoTMQTTBroker = new AWSIoTMQTTBroker(this, mUserId);
+        mLocationManager = ReRideLocationManager.getInstance(this);
+
+        if (TEST_GMS) {
+            mRandomGenerator = new Random();
+        } else {
+            //Receive devices info
+            String[] deviceAddresses = intent.getStringArrayExtra(EXTRAS_DEVICE_ADDRESSES);
+            mBluetoothDevices = new ArrayList<>(deviceAddresses.length);
+            mGattCharacteristicMap = new HashMap<>(deviceAddresses.length);
+            for (String deviceAddress : deviceAddresses) {
+                BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(deviceAddress);
+                mBluetoothDevices.add(device);
+                mReRideJSON.addSensor(device.getName(), "degrees"); //TODO: Custom unit
+            }
+            bindService(new Intent(this, BLEService.class),
+                    mBleServiceConnection, Context.BIND_AUTO_CREATE);
+            registerReceiver(gattUpdateReceiver, makeGattUpdateIntentFilter());
         }
-        super.onActivityResult(requestCode, resultCode, data);
+
+        if (mBleService != null) {
+            connectDevices();
+        }
+        if (mLocationManager != null) {
+            mLocationManager.connect();
+            if (TEST_GMS) {
+                streamData();
+            }
+        }
+        return binder;
     }
+
+
 
     private void readCharacteristic(BluetoothDevice device) {
         BluetoothGattCharacteristic characteristic = mGattCharacteristicMap.get(device);
@@ -337,21 +271,21 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
             final String action = intent.getAction();
             switch (action) {
                 case BLEService.ACTION_GATT_CONNECTED: {
-                    announce("Connected");
-                    updateConnectionState(++mConnectedDevices);
+                    ++mConnectedDevices;
                     if (mConnectedDevices == mBluetoothDevices.size()) {
+                        Log.d(TAG, "All connected");
                         discoverServices();
                     }
                     break;
                 }
                 case BLEService.ACTION_GATT_DISCONNECTED: {
-                    announce("Disconnected");
-                    updateConnectionState(--mConnectedDevices);
+                    --mConnectedDevices;
+                    Log.d(TAG, "GATT disconnected");
                     break;
                 }
                 case BLEService.ACTION_GATT_SERVICES_DISCOVERED: {
-                    announce("Services discovered");
                     if (++servicesDiscovered == mConnectedDevices) {
+                        Log.d(TAG, "All services discovered");
                         for (final BluetoothDevice device : mBluetoothDevices) {
                             mHandler.postDelayed(new Runnable() {
                                 @Override
@@ -371,7 +305,7 @@ public class BLEDeviceControlActivity extends AppCompatActivity {
                     break;
                 }
                 case BLEService.ACTION_WRITE: {
-                    announce("Descriptor written");
+                    Log.d(TAG, "Descriptor written");
                     break;
                 }
                 default: Log.d(TAG, "Action not implemented"); break;

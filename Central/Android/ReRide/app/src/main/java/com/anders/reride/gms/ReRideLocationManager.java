@@ -37,9 +37,10 @@ public class ReRideLocationManager implements GoogleApiClient.ConnectionCallback
     private GoogleApiClient mGoogleApiClient;
     private PendingResult<LocationSettingsResult> mLocationSettingsResult;
     private ConnectionResult mConnectionResult;
+    private static ReRideLocationManager mLocationManager;
 
 
-    public ReRideLocationManager(Context context) {
+    private ReRideLocationManager(Context context) {
         // Create an instance of GoogleAPIClient.
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(context)
@@ -49,6 +50,13 @@ public class ReRideLocationManager implements GoogleApiClient.ConnectionCallback
                     .build();
         }
 
+    }
+
+    public static ReRideLocationManager getInstance(Context context) {
+        if (mLocationManager == null) {
+            mLocationManager = new ReRideLocationManager(context);
+        }
+        return mLocationManager;
     }
 
     public void connect() {

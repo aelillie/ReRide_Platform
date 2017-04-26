@@ -9,11 +9,17 @@ import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
+import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.IntentSender;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -30,7 +36,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-import com.anders.reride.ble.BLEDeviceControlActivity;
+import com.anders.reride.ble.BLEDeviceControlService;
+import com.anders.reride.ble.ReRideDataActivity;
+import com.anders.reride.gms.ReRideLocationManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,6 +72,21 @@ public class MainActivity extends AppCompatActivity{
     private Handler mHandler;
     private String mUserId = "1234";
     private Intent mDeviceIntent;
+    private ReRideLocationManager mLocationManager;
+
+    private BLEDeviceControlService mBleDeviceService;
+    private final ServiceConnection mBleDeviceServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder service) {
+            mBleDeviceService = ((BLEDeviceControlService.LocalBinder) service).getService();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+            mBleDeviceService = null;
+        }
+    };
+    private DeviceBroadcastReceiver mDeviceBroadcastReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,13 +97,18 @@ public class MainActivity extends AppCompatActivity{
         setSupportActionBar(toolbar);
         mHandler = new Handler();
         mDeviceIntent = new Intent(getApplicationContext(),
-                BLEDeviceControlActivity.class);
-        mDeviceIntent.putExtra(BLEDeviceControlActivity.EXTRAS_USER_ID,
+                BLEDeviceControlService.class);
+        mDeviceIntent.putExtra(BLEDeviceControlService.EXTRAS_USER_ID,
                 mUserId); //TODO: Get from dialog box at startup
-
         askForLocationPermission();
-        if (BLEDeviceControlActivity.TEST_GMS) {
-            startActivity(new Intent(this, BLEDeviceControlActivity.class));
+        mLocationManager = ReRideLocationManager.getInstance(this);
+        mLocationManager.connect();
+        mDeviceBroadcastReceiver = new DeviceBroadcastReceiver();
+
+        if (BLEDeviceControlService.TEST_GMS) {
+            bindService(mDeviceIntent,
+                    mBleDeviceServiceConnection, Context.BIND_AUTO_CREATE);
+            startActivity(new Intent(this, ReRideDataActivity.class));
             finish();
         }
         checkForBLESupport();
@@ -114,16 +142,36 @@ public class MainActivity extends AppCompatActivity{
         mConnectButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                if (!mLocationManager.isConnected()) mLocationManager.connect();
+                if (mLocationManager.requiresResolution()) {
+                    try {
+                        mLocationManager.getConnectionResult().startResolutionForResult(getParent(),
+                                ReRideLocationManager.REQUEST_CHECK_SETTINGS);
+                        mLocationManager.setRequiresResolution(false);
+                        announce("Fixing location settings");
+                        return;
+                    } catch (IntentSender.SendIntentException e) {
+                        e.printStackTrace();
+                        mLocationManager.reconnect();
+                        return;
+                    }
+                }
                 if (mDeviceAddresses.size() == 0) return;
-                mDeviceIntent.putExtra(BLEDeviceControlActivity.EXTRAS_DEVICE_ADDRESSES,
+                mDeviceIntent.putExtra(BLEDeviceControlService.EXTRAS_DEVICE_ADDRESSES,
                         mDeviceAddresses.toArray());
                 if (scanning) {
                     scanner.stopScan(callback);
                     scanning = false;
                 }
-                startActivity(mDeviceIntent);
+                bindService(mDeviceIntent,
+                        mBleDeviceServiceConnection, Context.BIND_AUTO_CREATE);
+                startActivity(new Intent(getApplicationContext(), ReRideDataActivity.class));
             }
         });
+    }
+
+    private void announce(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
     private void onScanStop() {
@@ -153,6 +201,7 @@ public class MainActivity extends AppCompatActivity{
         super.onPause();
         scanBLEDevice(false);
         resetScanResult();
+        unregisterReceiver(mDeviceBroadcastReceiver);
     }
 
     private void resetScanResult() {
@@ -165,6 +214,9 @@ public class MainActivity extends AppCompatActivity{
     @Override
     protected void onResume() {
         super.onResume();
+        if (mBleDeviceService != null) {
+            registerReceiver(mDeviceBroadcastReceiver, makeDeviceUpdateIntentFilter());
+        }
         // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
         // fire an intent to display a dialog asking the user to grant permission to enable it.
         if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
@@ -179,6 +231,12 @@ public class MainActivity extends AppCompatActivity{
         if (requestCode == REQUEST_ENABLE_BT && resultCode == RESULT_CANCELED) {
             finish();
             return;
+        }
+        if (resultCode == RESULT_OK &&
+                (requestCode == ReRideLocationManager.REQUEST_CHECK_SETTINGS)) {
+            //the application should try to connect again.
+            mLocationManager.connect();
+            announce("Trying to connect again. Try again in a moment.");
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -324,6 +382,21 @@ public class MainActivity extends AppCompatActivity{
             }
             Toast.makeText(getApplicationContext(),
                     "Scan failed!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    static IntentFilter makeDeviceUpdateIntentFilter() {
+        final IntentFilter intentFilter = new IntentFilter();
+        //intentFilter.addAction(BLEService.ACTION_GATT_CONNECTED);
+        return intentFilter;
+    }
+
+    private class DeviceBroadcastReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            final String action = intent.getAction();
+            switch (action) {
+            }
         }
     }
 }

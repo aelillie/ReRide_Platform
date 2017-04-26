@@ -16,40 +16,33 @@
         android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
 
-    <!--<LinearLayout
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
 
+        <TextView android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:text="@string/streaming_data"
+              android:textSize="30sp"
+              android:layout_gravity="center"/>
         <LinearLayout android:orientation="horizontal"
                       android:layout_width="match_parent"
                       android:layout_height="wrap_content"
                       android:layout_margin="10dp">
             <TextView android:layout_width="wrap_content"
                       android:layout_height="wrap_content"
-                      android:text="@string/devices_number"
+                      android:text="@string/label_id"
                       android:textSize="18sp"/>
             <Space android:layout_width="5dp"
                    android:layout_height="wrap_content"/>
-            <TextView android:id="@+id/devices_number"
-                      android:layout_width="wrap_content"
+            <TextView android:id="@+id/id_value"
+                      android:layout_width="match_parent"
                       android:layout_height="wrap_content"
-                      android:text="@string/zero"
-                      android:textSize="18sp"/>
-            <Space android:layout_width="10dp"
-                   android:layout_height="wrap_content"/>
-            <TextView android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:text="@string/label_connected"
-                      android:textSize="18sp"/>
-            <Space android:layout_width="5dp"
-                   android:layout_height="wrap_content"/>
-            <TextView android:id="@+id/connection_state"
-                      android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:text="@string/zero"
+                      android:text="@string/no_data"
                       android:textSize="18sp"/>
         </LinearLayout>
+
         <LinearLayout android:orientation="horizontal"
                       android:layout_width="match_parent"
                       android:layout_height="wrap_content"
@@ -95,27 +88,26 @@
                       android:text="@string/no_data"
                       android:textSize="18sp"/>
         </LinearLayout>
-        &lt;!&ndash;Line&ndash;&gt;
+        <!--Line-->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:background="@android:color/darker_gray"/>
 
-        &lt;!&ndash;Could present current data&ndash;&gt;
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/data_recycler_view"
+            android:scrollbars="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
 
-        &lt;!&ndash;Line&ndash;&gt;
+        <!--Line-->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:background="@android:color/darker_gray"/>
 
-        &lt;!&ndash;Could present history data&ndash;&gt;
-    </LinearLayout>-->
+        <!--Could present history data-->
+    </LinearLayout>
 
-    <TextView android:layout_width="wrap_content"
-              android:layout_height="wrap_content"
-              android:text="@string/streaming_data"
-              android:textSize="30sp"
-              android:layout_gravity="center"/>
 
 </LinearLayout>

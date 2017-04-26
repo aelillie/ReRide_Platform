@@ -283,7 +283,7 @@ public class MainActivity extends AppCompatActivity{
         @Override
         public ViewAdapter.ItemViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
             View v = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.list_item, parent, false);
+                    .inflate(R.layout.devices_list_item, parent, false);
             return new ItemViewHolder(v);
         }
 

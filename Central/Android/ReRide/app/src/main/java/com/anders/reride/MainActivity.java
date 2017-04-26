@@ -216,9 +216,7 @@ public class MainActivity extends AppCompatActivity{
     @Override
     protected void onResume() {
         super.onResume();
-        if (mBleDeviceService != null) {
-            registerReceiver(mDeviceBroadcastReceiver, makeDeviceUpdateIntentFilter());
-        }
+        registerReceiver(mDeviceBroadcastReceiver, makeDeviceUpdateIntentFilter());
         // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
         // fire an intent to display a dialog asking the user to grant permission to enable it.
         if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {

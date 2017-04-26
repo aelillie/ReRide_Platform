@@ -1,9 +1,11 @@
 package com.anders.reride.aws;
 
 import android.content.Context;
+import android.os.Handler;
 import android.util.Log;
 import android.widget.TextView;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager;
@@ -109,7 +111,7 @@ public class AWSIoTMQTTBroker extends AWSIoTDataBroker{
         }*/
     }
 
-    public void publish(ReRideJSON reRideJSON) {
+    public void publish(final ReRideJSON reRideJSON) {
         try {
             mqttManager.publishString(reRideJSON.getRiderProperties().toString(),
                     MQTT_PUBLISH, AWSIotMqttQos.QOS0,
@@ -122,8 +124,15 @@ public class AWSIoTMQTTBroker extends AWSIoTDataBroker{
                             }
                         }
                     }, null);
-        } catch (Exception e) {
+        } catch (AmazonClientException e) {
             Log.e(LOG_TAG, "Publish error.", e);
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    publish(reRideJSON);
+                }
+            }, 1000);
+            connect();
         }
     }
 

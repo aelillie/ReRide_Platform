@@ -90,15 +90,21 @@ public class BLEDeviceControlService extends Service {
     private void streamData() {
         Log.d(TAG, "Ready to stream data");
         if (TEST_GMS) {
-            handleData("Flex sensor", String.valueOf(mRandomGenerator.nextInt(180)));
+            //handleData("Flex sensor", String.valueOf(mRandomGenerator.nextInt(180)));
             while(mAWSIoTMQTTBroker.isConnected()) {
-                mHandler.postDelayed(new Runnable() {
+                handleData("Flex sensor", String.valueOf(mRandomGenerator.nextInt(180)));
+                try {
+                    Thread.sleep(UPDATE_FREQUENCY);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                /*mHandler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
                         Log.d(TAG, "Handle!");
                         //handleData(null, String.valueOf(mRandomGenerator.nextInt(180)));
                     }
-                }, UPDATE_FREQUENCY);
+                }, UPDATE_FREQUENCY);*/
             }
         } else {
             if (mGattCharacteristicMap.size() > 0) {
@@ -237,7 +243,13 @@ public class BLEDeviceControlService extends Service {
         if (mLocationManager != null) {
             mLocationManager.connect();
             if (TEST_GMS) {
-                streamData();
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        streamData();
+
+                    }
+                }, 1000);
             }
         }
         return binder;

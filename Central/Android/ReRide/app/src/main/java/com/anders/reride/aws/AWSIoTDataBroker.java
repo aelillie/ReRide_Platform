@@ -41,12 +41,4 @@ abstract class AWSIoTDataBroker {
                 MY_REGION // Region
         );
     }
-
-
-    public void updateShadow(Bundle state) {
-        String newAngle = state.getString(BLEDeviceControlService.EXTRAS_SENSOR_DATA);
-        double[] newLocation = state.getDoubleArray(BLEDeviceControlService.EXTRAS_LOCATION_DATA);
-        if (newLocation == null) throw new IllegalArgumentException();
-        String newTime = state.getString(BLEDeviceControlService.EXTRAS_TIME_DATA);
-    }
 }

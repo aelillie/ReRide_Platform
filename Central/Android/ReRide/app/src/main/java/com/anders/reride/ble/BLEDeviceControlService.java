@@ -16,6 +16,8 @@ import android.location.Location;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -86,24 +88,29 @@ public class BLEDeviceControlService extends Service {
 
 
     private void streamData() {
+        Log.d(TAG, "Ready to stream data");
         if (TEST_GMS) {
-            while(true) {
+            handleData("Flex sensor", String.valueOf(mRandomGenerator.nextInt(180)));
+            while(mAWSIoTMQTTBroker.isConnected()) {
                 mHandler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        handleData(null, String.valueOf(mRandomGenerator.nextInt(180)));
+                        Log.d(TAG, "Handle!");
+                        //handleData(null, String.valueOf(mRandomGenerator.nextInt(180)));
                     }
                 }, UPDATE_FREQUENCY);
             }
         } else {
             if (mGattCharacteristicMap.size() > 0) {
-                for (final BluetoothDevice device : mGattCharacteristicMap.keySet()) {
-                    mHandler.postDelayed(new Runnable() {
-                        @Override
-                        public void run() {
-                            readCharacteristic(device);
-                        }
-                    }, UPDATE_FREQUENCY); //ms
+                while (mAWSIoTMQTTBroker.isConnected()) {
+                    for (final BluetoothDevice device : mGattCharacteristicMap.keySet()) {
+                        mHandler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                readCharacteristic(device);
+                            }
+                        }, UPDATE_FREQUENCY); //ms
+                    }
                 }
             }
         }
@@ -115,7 +122,8 @@ public class BLEDeviceControlService extends Service {
         }
     }
 
-    private void handleData(BluetoothDevice device, String data) {
+    private void handleData(String deviceName, String data) {
+        Log.d(TAG, "Handling data");
         if (mLocationManager.isConnected()) {
             Location location = mLocationManager.getLocation();
             if (location != null) mLastLocation = location;
@@ -126,8 +134,9 @@ public class BLEDeviceControlService extends Service {
         double lon = mLastLocation.getLongitude();
         double lat = mLastLocation.getLatitude();
         String time = ReRideTimeManager.now("GMT+2");
-        mReRideJSON.putSensorValue(device.getName(), data);
+        mReRideJSON.putSensorValue(deviceName, data);
         mReRideJSON.putRiderProperties(time, lon, lat);
+        Log.d(TAG, "Sending data package!");
         mAWSIoTMQTTBroker.publish(mReRideJSON);
     }
 
@@ -185,8 +194,9 @@ public class BLEDeviceControlService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        unbindService(mBleServiceConnection);
+        if (!TEST_GMS) unbindService(mBleServiceConnection);
         mLocationManager.disconnect();
+        mAWSIoTMQTTBroker.disconnect();
         mBleService = null;
     }
 
@@ -198,12 +208,14 @@ public class BLEDeviceControlService extends Service {
                 getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
         mUserId = intent.getStringExtra(EXTRAS_USER_ID);
         mReRideJSON = ReRideJSON.getInstance(mUserId);
-        mAWSIoTHTTPBroker = new AWSIoTHTTPBroker(this, mUserId);
+        //mAWSIoTHTTPBroker = new AWSIoTHTTPBroker(this, mUserId);
         mAWSIoTMQTTBroker = new AWSIoTMQTTBroker(this, mUserId);
+        mAWSIoTMQTTBroker.connect();
         mLocationManager = ReRideLocationManager.getInstance(this);
 
         if (TEST_GMS) {
             mRandomGenerator = new Random();
+            mReRideJSON.addSensor("Flex sensor", "degrees");
         } else {
             //Receive devices info
             String[] deviceAddresses = intent.getStringArrayExtra(EXTRAS_DEVICE_ADDRESSES);
@@ -301,7 +313,7 @@ public class BLEDeviceControlService extends Service {
                 case BLEService.ACTION_DATA_AVAILABLE: {
                     String data = intent.getStringExtra(BLEService.EXTRA_DATA);
                     String deviceAddress = intent.getStringExtra(BLEService.EXTRA_DEVICE_ADDRESS);
-                    handleData(mBluetoothAdapter.getRemoteDevice(deviceAddress), data);
+                    handleData(mBluetoothAdapter.getRemoteDevice(deviceAddress).getName(), data);
                     break;
                 }
                 case BLEService.ACTION_WRITE: {

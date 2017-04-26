@@ -104,13 +104,6 @@ public class MainActivity extends AppCompatActivity{
         mLocationManager = ReRideLocationManager.getInstance(this);
         mLocationManager.connect();
         mDeviceBroadcastReceiver = new DeviceBroadcastReceiver();
-
-        if (BLEDeviceControlService.TEST_GMS) {
-            bindService(mDeviceIntent,
-                    mBleDeviceServiceConnection, Context.BIND_AUTO_CREATE);
-            startActivity(new Intent(this, ReRideDataActivity.class));
-            finish();
-        }
         checkForBLESupport();
         setupScanSettings();
 
@@ -139,6 +132,7 @@ public class MainActivity extends AppCompatActivity{
             }
         });
         mConnectButton = (Button) findViewById(R.id.connect_button);
+        if (BLEDeviceControlService.TEST_GMS) mConnectButton.setEnabled(true);
         mConnectButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -156,12 +150,14 @@ public class MainActivity extends AppCompatActivity{
                         return;
                     }
                 }
-                if (mDeviceAddresses.size() == 0) return;
-                mDeviceIntent.putExtra(BLEDeviceControlService.EXTRAS_DEVICE_ADDRESSES,
-                        mDeviceAddresses.toArray());
-                if (scanning) {
-                    scanner.stopScan(callback);
-                    scanning = false;
+                if (!BLEDeviceControlService.TEST_GMS) {
+                    if (mDeviceAddresses.size() == 0) return;
+                    mDeviceIntent.putExtra(BLEDeviceControlService.EXTRAS_DEVICE_ADDRESSES,
+                            mDeviceAddresses.toArray());
+                    if (scanning) {
+                        scanner.stopScan(callback);
+                        scanning = false;
+                    }
                 }
                 bindService(mDeviceIntent,
                         mBleDeviceServiceConnection, Context.BIND_AUTO_CREATE);
@@ -202,6 +198,12 @@ public class MainActivity extends AppCompatActivity{
         scanBLEDevice(false);
         resetScanResult();
         unregisterReceiver(mDeviceBroadcastReceiver);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unbindService(mBleDeviceServiceConnection);
     }
 
     private void resetScanResult() {

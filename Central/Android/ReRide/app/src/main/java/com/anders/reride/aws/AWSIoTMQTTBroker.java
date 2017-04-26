@@ -32,6 +32,7 @@ public class AWSIoTMQTTBroker extends AWSIoTDataBroker{
 
     //UI
     private TextView mStatus;
+    private boolean mConnected;
 
     public AWSIoTMQTTBroker(Context context, String userID) {
         super(context, userID);
@@ -43,14 +44,18 @@ public class AWSIoTMQTTBroker extends AWSIoTDataBroker{
         mqttManager = new AWSIotMqttManager(clientId, CUSTOMER_SPECIFIC_ENDPOINT);
 
         // The following block uses a Cognito credentials provider for authentication with AWS IoT.
-        new Thread(new Runnable() {
+        /*new Thread(new Runnable() {
             @Override
             public void run() {
                 mAWSCredentials = credentialsProvider.getCredentials();
 
             }
-        }).start();
+        }).start();*/
 
+    }
+
+    public boolean isConnected() {
+        return mConnected;
     }
 
     public boolean connect() {
@@ -66,8 +71,11 @@ public class AWSIoTMQTTBroker extends AWSIoTDataBroker{
                         case Connecting:
                             Log.d(LOG_TAG, "Connecting"); break;
                         case Connected:
-                            Log.d(LOG_TAG, "Connected"); break;
+                            mConnected = true;
+                            Log.d(LOG_TAG, "Connected");
+                            break;
                         case ConnectionLost:
+                            mConnected = false;
                             if (throwable != null)
                                 Log.e(LOG_TAG, "Connection error.", throwable);
                             break;

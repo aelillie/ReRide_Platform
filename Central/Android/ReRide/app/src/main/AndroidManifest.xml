@@ -23,9 +23,9 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".ble.BLEDeviceControlService"
-                  android:parentActivityName=".MainActivity">
-        </activity>
+        <activity android:name=".ble.ReRideDataActivity"
+                  android:parentActivityName=".MainActivity"/>
+        <service android:name=".ble.BLEDeviceControlService"/>
         <service android:name=".ble.BLEService"/>
         <service android:name=".gms.LocationSubscriberService"
                  android:exported="false"/>

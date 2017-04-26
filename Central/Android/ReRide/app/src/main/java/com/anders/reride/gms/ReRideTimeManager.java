@@ -25,9 +25,9 @@ public class ReRideTimeManager {
      */
     private static String getTimeString(String gmtTimeZone) {
         Calendar now = getNow(gmtTimeZone);
-        return now.get(Calendar.HOUR_OF_DAY) + ""
-                + now.get(Calendar.MINUTE) + ""
-                + now.get(Calendar.SECOND);
+        return format(now.get(Calendar.HOUR_OF_DAY))
+                + format(now.get(Calendar.MINUTE))
+                + format(now.get(Calendar.SECOND));
     }
 
     /**
@@ -37,13 +37,17 @@ public class ReRideTimeManager {
      */
     private static String getDateString(String gmtTimeZone) {
         Calendar now = getNow(gmtTimeZone);
-        return now.get(Calendar.YEAR) + ""
-                + now.get(Calendar.MONTH) + ""
-                + now.get(Calendar.DAY_OF_MONTH);
+        return now.get(Calendar.YEAR)
+                + format(now.get(Calendar.MONTH)+1)
+                + format(now.get(Calendar.DAY_OF_MONTH));
     }
 
     private static Calendar getNow(String gmtTimeZone) {
         return Calendar.getInstance(TimeZone.getTimeZone(gmtTimeZone)); //Like GMT+2
+    }
+
+    private static String format(int time) {
+        return time < 10 ? "0"+time : ""+time;
     }
 
 }

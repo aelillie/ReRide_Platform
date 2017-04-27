@@ -36,6 +36,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import com.amazonaws.ClientConfiguration;
+import com.amazonaws.mobileconnectors.cognitoidentityprovider.CognitoUser;
+import com.amazonaws.mobileconnectors.cognitoidentityprovider.CognitoUserAttributes;
+import com.amazonaws.mobileconnectors.cognitoidentityprovider.CognitoUserCodeDeliveryDetails;
+import com.amazonaws.mobileconnectors.cognitoidentityprovider.CognitoUserPool;
+import com.amazonaws.mobileconnectors.cognitoidentityprovider.handlers.GenericHandler;
+import com.amazonaws.mobileconnectors.cognitoidentityprovider.handlers.SignUpHandler;
 import com.anders.reride.ble.BLEDeviceControlService;
 import com.anders.reride.ble.ReRideDataActivity;
 import com.anders.reride.gms.ReRideLocationManager;
@@ -70,9 +77,14 @@ public class MainActivity extends AppCompatActivity{
 
     private BluetoothAdapter bluetoothAdapter;
     private Handler mHandler;
-    private String mUserId = "1234";
     private Intent mDeviceIntent;
     private ReRideLocationManager mLocationManager;
+
+    //User sign-up settings
+    private String mUserId = "1234";
+    private String mUserPassword;
+    private String mUserEmail;
+    private String mThingId;
 
     private BLEDeviceControlService mBleDeviceService;
     private final ServiceConnection mBleDeviceServiceConnection = new ServiceConnection() {
@@ -87,6 +99,7 @@ public class MainActivity extends AppCompatActivity{
         }
     };
     private DeviceBroadcastReceiver mDeviceBroadcastReceiver;
+    private boolean userConfirmed;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -165,6 +178,65 @@ public class MainActivity extends AppCompatActivity{
                 startActivity(new Intent(getApplicationContext(), ReRideDataActivity.class));
             }
         });
+    }
+
+    private void foo() {
+        ClientConfiguration clientConfiguration = new ClientConfiguration();
+        CognitoUserPool userPool = new CognitoUserPool(this,
+                "poolId",
+                "clientId",
+                "Secret",
+                clientConfiguration);
+        CognitoUserAttributes userAttributes = new CognitoUserAttributes();
+        userAttributes.addAttribute("email", mUserEmail);
+        userAttributes.addAttribute("thingID", mThingId);
+
+        // Callback handler for confirmSignUp API
+        GenericHandler confirmationCallback = new GenericHandler() {
+
+            @Override
+            public void onSuccess() {
+                // User was successfully confirmed
+                userConfirmed = true;
+            }
+
+            @Override
+            public void onFailure(Exception exception) {
+                // User confirmation failed. Check exception for the cause.
+                userConfirmed = false;
+                Log.d(TAG, exception.getMessage());
+            }
+        };
+
+
+
+        SignUpHandler signupCallback = new SignUpHandler() {
+            @Override
+            public void onSuccess(CognitoUser user, boolean signUpConfirmationState,
+                                  CognitoUserCodeDeliveryDetails cognitoUserCodeDeliveryDetails) {
+                // Sign-up was successful
+
+                // Check if this user (cognitoUser) needs to be confirmed
+                if(!userConfirmed) {
+                    // This user must be confirmed and a confirmation code was sent to the user
+                    // cognitoUserCodeDeliveryDetails will indicate where the confirmation code was sent
+                    // Get the confirmation code from user
+                    announce(cognitoUserCodeDeliveryDetails.getDeliveryMedium() + " to "
+                        + cognitoUserCodeDeliveryDetails.getDestination());
+                }
+                else {
+                    // The user has already been confirmed
+                }
+            }
+
+            @Override
+            public void onFailure(Exception exception) {
+                // Sign-up failed, check exception for the cause
+                Log.d(TAG, exception.getMessage());
+            }
+        };
+        userPool.signUpInBackground(mUserId, mUserPassword, userAttributes, null, signupCallback);
+
     }
 
     private void announce(String msg) {

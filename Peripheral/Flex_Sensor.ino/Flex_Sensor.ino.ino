@@ -50,6 +50,7 @@ void setup()
   blePeripheral.addAttribute(sensingService);   // Add the BLE Battery service
   blePeripheral.addAttribute(windDirChar); // add the battery level characteristic
   windDirChar.setValue(oldFlexAngle);   // initial value for this characteristic
+  while(!Serial);
   Serial.println("Configured BLE");
   /* Now activate the BLE device.  It will start continuously transmitting BLE
      advertising packets and will be visible to remote BLE central devices

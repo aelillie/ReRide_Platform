@@ -24,7 +24,7 @@ import java.util.UUID;
 public class AWSIoTMQTTBroker extends AWSIoTDataBroker{
     static final String LOG_TAG = AWSIoTMQTTBroker.class.getCanonicalName();
 
-    public static final boolean TEST_MODE = true;
+    public static final boolean TEST_MODE = false;
 
     //AWS management
     private AWSIotMqttManager mqttManager;

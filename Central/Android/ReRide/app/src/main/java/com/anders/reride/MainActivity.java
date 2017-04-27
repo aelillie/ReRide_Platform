@@ -152,8 +152,9 @@ public class MainActivity extends AppCompatActivity{
                 }
                 if (!BLEDeviceControlService.TEST_GMS) {
                     if (mDeviceAddresses.size() == 0) return;
-                    mDeviceIntent.putExtra(BLEDeviceControlService.EXTRAS_DEVICE_ADDRESSES,
-                            mDeviceAddresses.toArray());
+                    mDeviceIntent.putStringArrayListExtra(
+                            BLEDeviceControlService.EXTRAS_DEVICE_ADDRESSES,
+                            (ArrayList<String>) mDeviceAddresses);
                     if (scanning) {
                         scanner.stopScan(callback);
                         scanning = false;

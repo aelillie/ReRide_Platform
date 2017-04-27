@@ -29,9 +29,11 @@ import com.anders.reride.gms.ReRideTimeManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * Controls operations on a GATT server
@@ -40,8 +42,10 @@ import java.util.Random;
 public class BLEDeviceControlService extends Service {
     private final static String TAG = BLEDeviceControlService.class.getSimpleName();
 
-    public static final String EXTRAS_DEVICE_ADDRESSES = "DEVICE_ADDRESSES";
-    public static final String EXTRAS_USER_ID = "EXTRAS_USER_ID";
+    public static final String EXTRAS_DEVICE_ADDRESSES =
+            "com.anders.reride.ble.DEVICE_ADDRESSES";
+    public static final String EXTRAS_USER_ID =
+            "com.anders.reride.ble.EXTRAS_USER_ID";
     public static final String EXTRAS_SENSOR_DATA = "SENSOR_DATA";
     public static final String EXTRAS_LOCATION_DATA = "LOCATION_DATA";
     public static final String EXTRAS_TIME_DATA = "TIME_DATA";
@@ -50,7 +54,7 @@ public class BLEDeviceControlService extends Service {
     private static final int UPDATE_FREQUENCY = 1000; //ms
 
     //Debug settings
-    public static boolean TEST_GMS = true;
+    public static boolean TEST_GMS = false;
 
     private String mUserId;
     private Location mLastLocation;
@@ -88,35 +92,19 @@ public class BLEDeviceControlService extends Service {
 
 
     private void streamData() {
-        Log.d(TAG, "Ready to stream data");
+        Log.d(TAG, "Streaming data");
         if (TEST_GMS) {
-            //handleData("Flex sensor", String.valueOf(mRandomGenerator.nextInt(180)));
-            while(mAWSIoTMQTTBroker.isConnected()) {
-                handleData("Flex sensor", String.valueOf(mRandomGenerator.nextInt(180)));
-                try {
-                    Thread.sleep(UPDATE_FREQUENCY);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                /*mHandler.postDelayed(new Runnable() {
+            handleData("TEST NAME HERE", String.valueOf(mRandomGenerator.nextInt(180)));
+        } else {
+            if (mGattCharacteristicMap.size() > 0 && mAWSIoTMQTTBroker.isConnected()) {
+                mHandler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        Log.d(TAG, "Handle!");
-                        //handleData(null, String.valueOf(mRandomGenerator.nextInt(180)));
+                        streamData();
                     }
-                }, UPDATE_FREQUENCY);*/
-            }
-        } else {
-            if (mGattCharacteristicMap.size() > 0) {
-                while (mAWSIoTMQTTBroker.isConnected()) {
-                    for (final BluetoothDevice device : mGattCharacteristicMap.keySet()) {
-                        mHandler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                readCharacteristic(device);
-                            }
-                        }, UPDATE_FREQUENCY); //ms
-                    }
+                }, UPDATE_FREQUENCY);
+                for (final BluetoothDevice device : mGattCharacteristicMap.keySet()) {
+                    readCharacteristic(device);
                 }
             }
         }
@@ -185,14 +173,8 @@ public class BLEDeviceControlService extends Service {
     private void connectDevices() {
         if (mBleService != null) {
             for (final BluetoothDevice device : mBluetoothDevices) {
-                mHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        final boolean result = mBleService.connect(device);
-                        Log.d(TAG, "Connect request result=" + result);
-                        //if (result) getDataButton.setEnabled(true);
-                    }
-                }, SLEEP_TIME); //ms
+                final boolean result = mBleService.connect(device);
+                Log.d(TAG, "Connect request result=" + result);
             }
         }
     }
@@ -224,9 +206,9 @@ public class BLEDeviceControlService extends Service {
             mReRideJSON.addSensor("Flex sensor", "degrees");
         } else {
             //Receive devices info
-            String[] deviceAddresses = intent.getStringArrayExtra(EXTRAS_DEVICE_ADDRESSES);
-            mBluetoothDevices = new ArrayList<>(deviceAddresses.length);
-            mGattCharacteristicMap = new HashMap<>(deviceAddresses.length);
+            List<String> deviceAddresses = intent.getStringArrayListExtra(EXTRAS_DEVICE_ADDRESSES);
+            mBluetoothDevices = new ArrayList<>(deviceAddresses.size());
+            mGattCharacteristicMap = new HashMap<>(deviceAddresses.size());
             for (String deviceAddress : deviceAddresses) {
                 BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(deviceAddress);
                 mBluetoothDevices.add(device);
@@ -311,14 +293,14 @@ public class BLEDeviceControlService extends Service {
                     if (++servicesDiscovered == mConnectedDevices) {
                         Log.d(TAG, "All services discovered");
                         for (final BluetoothDevice device : mBluetoothDevices) {
-                            mHandler.postDelayed(new Runnable() {
-                                @Override
-                                public void run() {
-                                    searchGattServices(device);
-                                }
-                            }, SLEEP_TIME); //ms
+                            searchGattServices(device);
                         }
-                        streamData();
+                        mHandler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                streamData();
+                            }
+                        }, SLEEP_TIME); //ms
                     }
                     break;
                 }
@@ -340,12 +322,7 @@ public class BLEDeviceControlService extends Service {
     private void discoverServices() {
         if (mBleService != null) {
             for (final BluetoothDevice device : mBluetoothDevices) {
-                mHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        mBleService.startGattServicesDiscovery(device);
-                    }
-                }, SLEEP_TIME); //ms
+                mBleService.startGattServicesDiscovery(device);
             }
         }
     }

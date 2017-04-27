@@ -11,6 +11,7 @@ import com.amazonaws.mobileconnectors.iot.AWSIotMqttClientStatusCallback;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttManager;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttMessageDeliveryCallback;
 import com.amazonaws.mobileconnectors.iot.AWSIotMqttQos;
+import com.anders.reride.ble.BLEDeviceControlService;
 import com.anders.reride.data.ReRideJSON;
 
 import java.util.UUID;
@@ -22,6 +23,8 @@ import java.util.UUID;
 
 public class AWSIoTMQTTBroker extends AWSIoTDataBroker{
     static final String LOG_TAG = AWSIoTMQTTBroker.class.getCanonicalName();
+
+    public static final boolean TEST_MODE = true;
 
     //AWS management
     private AWSIotMqttManager mqttManager;
@@ -62,6 +65,10 @@ public class AWSIoTMQTTBroker extends AWSIoTDataBroker{
 
     public boolean connect() {
         Log.d(LOG_TAG, "clientId = " + clientId);
+        if (TEST_MODE) {
+            mConnected = true;
+            return true;
+        }
         try {
             mqttManager.connect(credentialsProvider, new AWSIotMqttClientStatusCallback() {
                 @Override
@@ -113,6 +120,10 @@ public class AWSIoTMQTTBroker extends AWSIoTDataBroker{
 
     public void publish(final ReRideJSON reRideJSON) {
         try {
+            if (BLEDeviceControlService.TEST_GMS || TEST_MODE) {
+                Log.d(LOG_TAG, "Publish success (test)");
+                return;
+            }
             mqttManager.publishString(reRideJSON.getRiderProperties().toString(),
                     MQTT_PUBLISH, AWSIotMqttQos.QOS0,
                     new AWSIotMqttMessageDeliveryCallback() {
@@ -137,6 +148,10 @@ public class AWSIoTMQTTBroker extends AWSIoTDataBroker{
     }
 
     public boolean disconnect() {
+        if (TEST_MODE) {
+            mConnected = false;
+            return true;
+        }
         try {
             mqttManager.disconnect();
             return true;

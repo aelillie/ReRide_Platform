@@ -16,24 +16,20 @@ import android.location.Location;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
-import android.os.Looper;
-import android.os.Message;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.anders.reride.aws.AWSIoTHTTPBroker;
-import com.anders.reride.aws.AWSIoTMQTTBroker;
+import com.anders.reride.aws.AWSIoTShadowClient;
+import com.anders.reride.aws.AWSIoTMQTTClient;
 import com.anders.reride.data.ReRideJSON;
 import com.anders.reride.gms.ReRideLocationManager;
 import com.anders.reride.gms.ReRideTimeManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 /**
  * Controls operations on a GATT server
@@ -84,8 +80,8 @@ public class BLEDeviceControlService extends Service {
     };
 
     private final GattBroadcastReceiver gattUpdateReceiver = new GattBroadcastReceiver();
-    private AWSIoTHTTPBroker mAWSIoTHTTPBroker;
-    private AWSIoTMQTTBroker mAWSIoTMQTTBroker;
+    private AWSIoTShadowClient mAWSIoTShadowClient;
+    private AWSIoTMQTTClient mAWSIoTMQTTClient;
     private BluetoothAdapter mBluetoothAdapter;
     private ReRideLocationManager mLocationManager;
     private Random mRandomGenerator; //For testing
@@ -96,7 +92,7 @@ public class BLEDeviceControlService extends Service {
         if (TEST_GMS) {
             handleData("TEST NAME HERE", String.valueOf(mRandomGenerator.nextInt(180)));
         } else {
-            if (mGattCharacteristicMap.size() > 0 && mAWSIoTMQTTBroker.isConnected()) {
+            if (mGattCharacteristicMap.size() > 0 && mAWSIoTMQTTClient.isConnected()) {
                 mHandler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
@@ -131,7 +127,7 @@ public class BLEDeviceControlService extends Service {
         mReRideJSON.putSensorValue(deviceName, data);
         mReRideJSON.putRiderProperties(time, lon, lat);
         Log.d(TAG, "Sending data package!");
-        mAWSIoTMQTTBroker.publish(mReRideJSON);
+        mAWSIoTMQTTClient.publish(mReRideJSON);
     }
 
     private void searchGattServices(BluetoothDevice bluetoothDevice) {
@@ -184,7 +180,7 @@ public class BLEDeviceControlService extends Service {
         super.onDestroy();
         if (!TEST_GMS) unbindService(mBleServiceConnection);
         mLocationManager.disconnect();
-        mAWSIoTMQTTBroker.disconnect();
+        mAWSIoTMQTTClient.disconnect();
         mBleService = null;
     }
 
@@ -196,9 +192,9 @@ public class BLEDeviceControlService extends Service {
                 getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
         mUserId = intent.getStringExtra(EXTRAS_USER_ID);
         mReRideJSON = ReRideJSON.getInstance(mUserId);
-        //mAWSIoTHTTPBroker = new AWSIoTHTTPBroker(this, mUserId);
-        mAWSIoTMQTTBroker = new AWSIoTMQTTBroker(this, mUserId);
-        mAWSIoTMQTTBroker.connect();
+        //mAWSIoTShadowClient = new AWSIoTShadowClient(this, mUserId);
+        mAWSIoTMQTTClient = new AWSIoTMQTTClient(this, mUserId);
+        mAWSIoTMQTTClient.connect();
         mLocationManager = ReRideLocationManager.getInstance(this);
 
         if (TEST_GMS) {

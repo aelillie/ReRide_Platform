@@ -37,7 +37,7 @@ import android.widget.Toast;
 
 
 import com.anders.reride.ble.BLEDeviceControlService;
-import com.anders.reride.ble.ReRideDataActivity;
+import com.anders.reride.data.ReRideDataActivity;
 import com.anders.reride.gms.ReRideLocationManager;
 
 import java.util.ArrayList;

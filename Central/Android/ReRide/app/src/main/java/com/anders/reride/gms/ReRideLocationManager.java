@@ -27,7 +27,7 @@ import static com.google.android.gms.location.LocationServices.FusedLocationApi;
 public class ReRideLocationManager implements GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener{
 
-    private static final String TAG = LocationSubscriberService.class.getCanonicalName();
+    private static final String TAG = ReRideLocationManager.class.getCanonicalName();
     public static final int REQUEST_CHECK_SETTINGS = 1;
 
     private boolean mRequiresResolution;

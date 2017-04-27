@@ -1,4 +1,4 @@
-package com.anders.reride.ble;
+package com.anders.reride.data;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;

@@ -1,13 +1,14 @@
 package com.anders.reride.aws;
 
 /**
- * Representation of the flex sensor
+ * Representation of the flex sensor. Used to represent the IoT shadow of a particular
+ * environmental sensor, when subscribing to shadow updates.
  */
 
-class FlexSensorStatus {
+class SensorStatus {
     State state;
 
-    FlexSensorStatus() {
+    SensorStatus() {
         state = new State();
     }
 
@@ -24,7 +25,7 @@ class FlexSensorStatus {
             Desired() {
             }
 
-            Integer angle;
+            Integer value;
             String curState;
         }
 
@@ -32,7 +33,7 @@ class FlexSensorStatus {
             Delta() {
             }
 
-            public Integer angle;
+            public Integer value;
             public String curState;
         }
     }

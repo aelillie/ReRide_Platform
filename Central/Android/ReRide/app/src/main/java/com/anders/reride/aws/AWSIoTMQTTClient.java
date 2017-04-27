@@ -21,8 +21,8 @@ import java.util.UUID;
  * Responsible for communication with AWS IoT through MQTT
  */
 
-public class AWSIoTMQTTBroker extends AWSIoTDataBroker{
-    static final String LOG_TAG = AWSIoTMQTTBroker.class.getCanonicalName();
+public class AWSIoTMQTTClient extends AWSIoTDataBroker{
+    static final String LOG_TAG = AWSIoTMQTTClient.class.getCanonicalName();
 
     public static final boolean TEST_MODE = false;
 
@@ -39,7 +39,7 @@ public class AWSIoTMQTTBroker extends AWSIoTDataBroker{
     private TextView mStatus;
     private boolean mConnected;
 
-    public AWSIoTMQTTBroker(Context context, String userID) {
+    public AWSIoTMQTTClient(Context context, String userID) {
         super(context, userID);
         // MQTT client IDs are required to be unique per AWS IoT account.
         // This UUID is "practically unique" but does not _guarantee_

@@ -9,6 +9,9 @@ import com.anders.reride.model.ReRideDataItemsItemPayload;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * AWS API Gateway SDK for custom requests
+ */
 public class AWSApiClient {
     ApiClientFactory factory = new ApiClientFactory();
 

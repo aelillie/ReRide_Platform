@@ -1,6 +1,9 @@
 package com.anders.reride.aws;
 
-
+/**
+ * Generic async task for asynchronous operations
+ * @param <T> Generic type
+ */
 class AsyncTaskResult<T> {
     private T result;
     private Exception error;

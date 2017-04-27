@@ -1,9 +1,5 @@
 package com.anders.reride.data;
 
-import android.location.Location;
-
-import com.anders.reride.gms.LocationSubscriberService;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

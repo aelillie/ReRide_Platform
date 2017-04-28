@@ -4,6 +4,7 @@ import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
@@ -144,19 +145,6 @@ public class BLEDeviceControlService extends Service {
                     uuid = gattCharacteristic.getUuid().toString();
                     if (uuid.equals(GattAttributes.APPARENT_WIND_DIRECTION)) { //TODO: Fix
                         mGattCharacteristicMap.put(bluetoothDevice, gattCharacteristic);
-                        /*List<BluetoothGattDescriptor> descriptors =
-                                gattCharacteristic.getDescriptors();
-                        for (BluetoothGattDescriptor descriptor : descriptors) {
-                            uuid = descriptor.getUuid().toString();
-                            if (uuid.equals(GattAttributes.CLIENT_CHARACTERISTIC_CONFIGURATION)){
-                                descriptor.setValue(
-                                        BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-                                if (!mBleService.writeDescriptor(bluetoothDevice, descriptor)) {
-                                    Log.d(TAG, "Unable to write descriptor");
-                                }
-                                break;
-                            }
-                        }*/
                         break;
                     }
                 }
@@ -234,13 +222,29 @@ public class BLEDeviceControlService extends Service {
     }
 
 
+    private void enableNotification(BluetoothDevice device,
+                                 BluetoothGattCharacteristic gattCharacteristic) {
+        List<BluetoothGattDescriptor> descriptors =
+                                gattCharacteristic.getDescriptors();
+        String uuid;
+        for (BluetoothGattDescriptor descriptor : descriptors) {
+            uuid = descriptor.getUuid().toString();
+            if (uuid.equals(GattAttributes.CLIENT_CHARACTERISTIC_CONFIGURATION)){
+                descriptor.setValue(
+                        BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                if (!mBleService.writeDescriptor(device, descriptor)) {
+                    Log.d(TAG, "Unable to write descriptor");
+                }
+                break;
+            }
+        }
+    }
 
     private void readCharacteristic(BluetoothDevice device) {
         BluetoothGattCharacteristic characteristic = mGattCharacteristicMap.get(device);
         final int charaProp = characteristic.getProperties();
         if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
-            // If there is an active notification on a characteristic, clear
-            // it first so it doesn't publish the data field on the user interface.
+            // If there is an active notification on a characteristic, clear it
             if (mNotifyCharacteristic != null) {
                 mBleService.setCharacteristicNotification(device,
                         mNotifyCharacteristic, false);
@@ -248,13 +252,10 @@ public class BLEDeviceControlService extends Service {
             }
             mBleService.readCharacteristic(device, characteristic);
         }
-        /*if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
+        if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
             mNotifyCharacteristic = characteristic;
-            if (!mBleService.setCharacteristicNotification(device, characteristic, true)) {
-                Toast.makeText(this, "Enable notifications failed",
-                        Toast.LENGTH_SHORT).show();
-            }
-        }*/
+            mBleService.setCharacteristicNotification(device, characteristic, true);
+        }
     }
 
     static IntentFilter makeGattUpdateIntentFilter() {

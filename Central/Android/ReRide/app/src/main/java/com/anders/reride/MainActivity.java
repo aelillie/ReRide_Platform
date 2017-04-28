@@ -162,7 +162,9 @@ public class MainActivity extends AppCompatActivity{
                 }
                 bindService(mDeviceIntent,
                         mBleDeviceServiceConnection, Context.BIND_AUTO_CREATE);
-                startActivity(new Intent(getApplicationContext(), ReRideDataActivity.class));
+                Intent startIntent = new Intent(getApplicationContext(), ReRideDataActivity.class);
+                startIntent.putExtra(ReRideDataActivity.EXTRAS_USER_ID, mUserId);
+                startActivity(startIntent);
             }
         });
     }

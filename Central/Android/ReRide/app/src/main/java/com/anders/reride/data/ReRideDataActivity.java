@@ -1,6 +1,10 @@
 package com.anders.reride.data;
 
+import android.content.Context;
+import android.content.Intent;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -9,9 +13,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.anders.reride.R;
 import com.anders.reride.aws.AWSApiClient;
+import com.anders.reride.ble.BLEDeviceControlService;
 import com.anders.reride.model.ReRideDataItemsItemPayload;
 import com.anders.reride.model.ReRideDataItemsItemPayloadSensorsItem;
 
@@ -23,36 +29,119 @@ import java.util.List;
  */
 
 public class ReRideDataActivity extends AppCompatActivity {
+    private static final String TAG = ReRideDataActivity.class.getSimpleName();
+    private static final boolean DEBUG_MODE = true;
+
+    public static final String EXTRAS_USER_ID =
+            "com.anders.reride.data.EXTRAS_USER_ID";
 
     private AWSApiClient mAWSApiClient;
     private ViewAdapter mAdapter;
     private List<ReRideDataItemsItemPayloadSensorsItem> mRiderData;
+    private Handler mHandler;
 
     private String mId;
-    private String mTimeZone;
+    private String mTimeZone = "2"; //TODO: Necessary?
+    private TextView mIdText;
+    private TextView mTimeText;
+    private TextView mLatText;
+    private TextView mLonText;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ble);
+        Intent intent = getIntent();
+        if (DEBUG_MODE) {
+            mId = "1234";
+        } else {
+            mId = intent.getStringExtra(EXTRAS_USER_ID);
+        }
         mAWSApiClient = new AWSApiClient();
-        //TODO: Get user id from MainActivity
+        mHandler = new Handler();
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.data_recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRiderData = new ArrayList<>();
         mAdapter = new ViewAdapter(mRiderData);
         recyclerView.setAdapter(mAdapter);
 
-        //TODO: Initialize other UI components
+        initializeUIComponents();
+        announce("Data flow stopped!");
     }
 
-    private void getData() {
-        while (true) {
-            ReRideDataItemsItemPayload data = mAWSApiClient.getDataLatest(mId, mTimeZone);
-            mRiderData = data.getSensors();
-            mAdapter.notifyDataSetChanged();
-            //Also set other UI components
+    @Override
+    protected void onResume() {
+        super.onResume();
+        getData(true);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        getData(false);
+    }
+
+    private boolean isNetworkConnected() {
+        ConnectivityManager cm = (ConnectivityManager)
+                getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        return cm.getActiveNetworkInfo() != null;
+    }
+
+    private void initializeUIComponents() {
+        mIdText = (TextView) findViewById(R.id.id_value);
+        mIdText.setText(mId);
+        mTimeText = (TextView) findViewById(R.id.time_value);
+        mLatText = (TextView) findViewById(R.id.location_lat_value);
+        mLonText = (TextView) findViewById(R.id.location_lon_value);
+    }
+
+    private void announce(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+    }
+
+    private void getData(final boolean enabled) {
+        (new Thread(new Runnable()
+        {
+
+            @Override
+            public void run()
+            {
+                while (!Thread.interrupted() && enabled && isNetworkConnected())
+                    try
+                    {
+                        Thread.sleep(BLEDeviceControlService.UPDATE_FREQUENCY);
+                        final ReRideDataItemsItemPayload data =
+                                mAWSApiClient.getDataLatest(mId, mTimeZone);
+                        runOnUiThread(new Runnable() // start actions in UI thread
+                        {
+
+                            @Override
+                            public void run()
+                            {
+                                getData(data); // this action have to be in UI thread
+                            }
+                        });
+                    }
+                    catch (InterruptedException e)
+                    {
+                        announce("Operation halted");
+                    }
+            }
+        })).start(); // the while thread will start in BG thread
+    }
+
+    private void getData(ReRideDataItemsItemPayload data) {
+        if (!data.getId().equals(mId)) {
+            announce("ID not identical");
+            return;
         }
+        mRiderData = data.getSensors();
+        mAdapter.notifyDataSetChanged();
+        mIdText.setText(mId);
+        mTimeText.setText(data.getTime());
+        mLonText.setText(data.getLongitude());
+        mLatText.setText(data.getLatitude());
     }
 
     private class ViewAdapter extends RecyclerView.Adapter<ViewAdapter.ItemViewHolder> {

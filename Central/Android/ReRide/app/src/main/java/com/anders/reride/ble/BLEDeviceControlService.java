@@ -48,7 +48,7 @@ public class BLEDeviceControlService extends Service {
     public static final String EXTRAS_TIME_DATA = "TIME_DATA";
 
     private static final int SLEEP_TIME = 500; //ms
-    private static final int UPDATE_FREQUENCY = 1000; //ms
+    public static final int UPDATE_FREQUENCY = 1000; //ms
 
     //Debug settings
     public static boolean TEST_GMS = false;

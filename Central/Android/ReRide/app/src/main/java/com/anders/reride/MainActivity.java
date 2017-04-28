@@ -12,6 +12,7 @@ import android.bluetooth.le.ScanSettings;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
@@ -22,6 +23,8 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.DialogFragment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -31,6 +34,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -82,9 +86,6 @@ public class MainActivity extends AppCompatActivity{
 
     //User sign-up settings
     private String mUserId = "1234";
-    private String mUserPassword;
-    private String mUserEmail;
-    private String mThingId;
 
     private BLEDeviceControlService mBleDeviceService;
     private final ServiceConnection mBleDeviceServiceConnection = new ServiceConnection() {
@@ -108,6 +109,7 @@ public class MainActivity extends AppCompatActivity{
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_main);
         toolbar.setTitle(R.string.device_scan_title);
         setSupportActionBar(toolbar);
+        singIn();
         final Intent startIntent = new Intent(getApplicationContext(), ReRideDataActivity.class);
         startIntent.putExtra(ReRideDataActivity.EXTRAS_USER_ID, mUserId);
         if (ReRideDataActivity.DEBUG_MODE) {
@@ -187,63 +189,21 @@ public class MainActivity extends AppCompatActivity{
         });
     }
 
-    private void foo() {
-        ClientConfiguration clientConfiguration = new ClientConfiguration();
-        CognitoUserPool userPool = new CognitoUserPool(this,
-                "poolId",
-                "clientId",
-                "Secret",
-                clientConfiguration);
-        CognitoUserAttributes userAttributes = new CognitoUserAttributes();
-        userAttributes.addAttribute("email", mUserEmail);
-        userAttributes.addAttribute("thingID", mThingId);
+    private void singIn() {
 
-        // Callback handler for confirmSignUp API
-        GenericHandler confirmationCallback = new GenericHandler() {
-
-            @Override
-            public void onSuccess() {
-                // User was successfully confirmed
-                userConfirmed = true;
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setView(R.layout.dialog_signin);
+        builder.setPositiveButton(R.string.sign_in, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                mUserId = ((EditText) findViewById(R.id.username)).getText().toString();
             }
-
-            @Override
-            public void onFailure(Exception exception) {
-                // User confirmation failed. Check exception for the cause.
-                userConfirmed = false;
-                Log.d(TAG, exception.getMessage());
+        });
+        builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                finish();
             }
-        };
-
-
-
-        SignUpHandler signupCallback = new SignUpHandler() {
-            @Override
-            public void onSuccess(CognitoUser user, boolean signUpConfirmationState,
-                                  CognitoUserCodeDeliveryDetails cognitoUserCodeDeliveryDetails) {
-                // Sign-up was successful
-
-                // Check if this user (cognitoUser) needs to be confirmed
-                if(!userConfirmed) {
-                    // This user must be confirmed and a confirmation code was sent to the user
-                    // cognitoUserCodeDeliveryDetails will indicate where the confirmation code was sent
-                    // Get the confirmation code from user
-                    announce(cognitoUserCodeDeliveryDetails.getDeliveryMedium() + " to "
-                        + cognitoUserCodeDeliveryDetails.getDestination());
-                }
-                else {
-                    // The user has already been confirmed
-                }
-            }
-
-            @Override
-            public void onFailure(Exception exception) {
-                // Sign-up failed, check exception for the cause
-                Log.d(TAG, exception.getMessage());
-            }
-        };
-        userPool.signUpInBackground(mUserId, mUserPassword, userAttributes, null, signupCallback);
-
+        });
+        builder.create().show();
     }
 
     private void announce(String msg) {
@@ -275,6 +235,9 @@ public class MainActivity extends AppCompatActivity{
     @Override
     protected void onPause() {
         super.onPause();
+        if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
+            return;
+        }
         scanBLEDevice(false);
         resetScanResult();
         unregisterReceiver(mDeviceBroadcastReceiver);

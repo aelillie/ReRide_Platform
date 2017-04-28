@@ -38,4 +38,7 @@
     <string name="label_id">ID:</string>
     <string name="data_unit_label">Unit:</string>
     <string name="data_value_label">Value:</string>
+    <string name="username">Username</string>
+    <string name="sign_in">Sign in</string>
+    <string name="cancel">Cancel</string>
 </resources>

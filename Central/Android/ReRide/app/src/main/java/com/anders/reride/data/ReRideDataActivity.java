@@ -9,6 +9,8 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -30,7 +32,7 @@ import java.util.List;
 
 public class ReRideDataActivity extends AppCompatActivity {
     private static final String TAG = ReRideDataActivity.class.getSimpleName();
-    public static final boolean DEBUG_MODE = true;
+    public static final boolean DEBUG_MODE = false;
 
     public static final String EXTRAS_USER_ID =
             "com.anders.reride.data.EXTRAS_USER_ID";
@@ -51,6 +53,11 @@ public class ReRideDataActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ble);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_ble);
+        toolbar.setTitle(R.string.streaming_data);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
         Intent intent = getIntent();
         mId = intent.getStringExtra(EXTRAS_USER_ID);
         mAWSApiClient = new AWSApiClient();
@@ -69,12 +76,14 @@ public class ReRideDataActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         getData(true);
+        Log.d(TAG, "Starting data fetch");
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         getData(false);
+        Log.d(TAG, "Stopping data fetch");
     }
 
     private boolean isNetworkConnected() {
@@ -106,8 +115,11 @@ public class ReRideDataActivity extends AppCompatActivity {
                 while (!Thread.interrupted() && enabled && isNetworkConnected())
                     try
                     {
+                        Thread.sleep(BLEDeviceControlService.UPDATE_FREQUENCY);
                         final ReRideDataItemsItemPayload data =
                                 mAWSApiClient.getDataLatest(mId, mTimeZone);
+                        if (data == null) continue;
+                        Log.d(TAG, "Got latest data");
                         runOnUiThread(new Runnable() // start actions in UI thread
                         {
 
@@ -117,7 +129,6 @@ public class ReRideDataActivity extends AppCompatActivity {
                                 getData(data); // this action have to be in UI thread
                             }
                         });
-                        Thread.sleep(BLEDeviceControlService.UPDATE_FREQUENCY);
                     }
                     catch (InterruptedException e)
                     {
@@ -139,6 +150,7 @@ public class ReRideDataActivity extends AppCompatActivity {
         mTimeText.setText(data.getTime());
         mLonText.setText(data.getLongitude());
         mLatText.setText(data.getLatitude());
+        Log.d(TAG, "Updated UI with data");
     }
 
     private class ViewAdapter extends RecyclerView.Adapter<ViewAdapter.ItemViewHolder> {

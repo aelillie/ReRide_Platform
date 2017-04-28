@@ -213,6 +213,7 @@ public class MainActivity extends AppCompatActivity{
         super.onDestroy();
         if (mBleDeviceService != null) {
             unbindService(mBleDeviceServiceConnection);
+            Log.d(TAG, "Unbound service!");
         }
     }
 

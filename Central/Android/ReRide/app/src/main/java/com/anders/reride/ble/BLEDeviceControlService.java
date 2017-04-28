@@ -166,7 +166,11 @@ public class BLEDeviceControlService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (!TEST_GMS) unbindService(mBleServiceConnection);
+        Log.d(TAG, "Killing service");
+        if (!TEST_GMS) {
+            unregisterReceiver(gattUpdateReceiver);
+            unbindService(mBleServiceConnection);
+        }
         mLocationManager.disconnect();
         mAWSIoTMQTTClient.disconnect();
         mBleService = null;
@@ -220,6 +224,8 @@ public class BLEDeviceControlService extends Service {
         }
         return binder;
     }
+
+
 
 
     private void enableNotification(BluetoothDevice device,

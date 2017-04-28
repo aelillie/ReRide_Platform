@@ -153,16 +153,14 @@ public class BLEService extends Service{
 
     }
 
-    public void disconnect(BluetoothDevice bluetoothDevice) {
-        mBluetoothGattAPIMap.get(bluetoothDevice.getAddress()).disconnect();
-    }
-
     public void close() {
         if (mBluetoothGattAPIMap == null) {
             return;
         }
         for (String bleDeviceAddress : mBluetoothGattAPIMap.keySet()) {
-            mBluetoothGattAPIMap.get(bleDeviceAddress).close();
+            BluetoothGatt gatt = mBluetoothGattAPIMap.get(bleDeviceAddress);
+            gatt.disconnect();
+            gatt.close();
         }
     }
 

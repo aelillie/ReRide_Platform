@@ -14,6 +14,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -44,10 +45,13 @@ public class ReRideDataActivity extends AppCompatActivity {
 
     private String mId;
     private String mTimeZone = "2"; //TODO: Necessary?
+    private boolean mEnabled;
+
     private TextView mIdText;
     private TextView mTimeText;
     private TextView mLatText;
     private TextView mLonText;
+    private Button mDataButton;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -73,17 +77,12 @@ public class ReRideDataActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        getData(true);
-        Log.d(TAG, "Starting data fetch");
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        getData(false);
-        Log.d(TAG, "Stopping data fetch");
+    protected void onStop() {
+        super.onStop();
+        if (mEnabled) {
+            mEnabled = false;
+            mDataButton.setText(R.string.get_data_button_text);
+        }
     }
 
     private boolean isNetworkConnected() {
@@ -99,20 +98,34 @@ public class ReRideDataActivity extends AppCompatActivity {
         mTimeText = (TextView) findViewById(R.id.time_value);
         mLatText = (TextView) findViewById(R.id.location_lat_value);
         mLonText = (TextView) findViewById(R.id.location_lon_value);
+        mDataButton = (Button) findViewById(R.id.start_button);
+        mDataButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (mEnabled) {
+                    mEnabled = false;
+                    mDataButton.setText(R.string.get_data_button_text);
+                } else {
+                    mEnabled = true;
+                    mDataButton.setText(R.string.stop);
+                    getData();
+                }
+            }
+        });
     }
 
     private void announce(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
-    private void getData(final boolean enabled) {
+    private void getData() {
         (new Thread(new Runnable()
         {
 
             @Override
             public void run()
             {
-                while (!Thread.interrupted() && enabled && isNetworkConnected())
+                while (!Thread.interrupted() && mEnabled && isNetworkConnected())
                     try
                     {
                         Thread.sleep(BLEDeviceControlService.UPDATE_FREQUENCY);

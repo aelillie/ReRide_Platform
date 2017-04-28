@@ -309,6 +309,7 @@ public class BLEDeviceControlService extends Service {
                 }
                 case BLEService.ACTION_DATA_AVAILABLE: {
                     String data = intent.getStringExtra(BLEService.EXTRA_DATA);
+                    Log.d(TAG, "Data: " + data);
                     String deviceAddress = intent.getStringExtra(BLEService.EXTRA_DEVICE_ADDRESS);
                     handleData(mBluetoothAdapter.getRemoteDevice(deviceAddress).getName(), data);
                     break;

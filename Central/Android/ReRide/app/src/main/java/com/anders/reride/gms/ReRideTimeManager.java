@@ -46,6 +46,11 @@ public class ReRideTimeManager {
         return Calendar.getInstance(TimeZone.getTimeZone(gmtTimeZone)); //Like GMT+2
     }
 
+    /**
+     * Prefix one-digit integers with a zero
+     * @param time Specific time value
+     * @return Two-digit format
+     */
     private static String format(int time) {
         return time < 10 ? "0"+time : ""+time;
     }

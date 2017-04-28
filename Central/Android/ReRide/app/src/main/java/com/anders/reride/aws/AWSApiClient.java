@@ -9,6 +9,9 @@ import com.anders.reride.model.ReRideDataItemsItemPayload;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * AWS API Gateway SDK for custom requests
+ */
 public class AWSApiClient {
     ApiClientFactory factory = new ApiClientFactory();
 
@@ -17,6 +20,7 @@ public class AWSApiClient {
     public List<ReRideDataItemsItemPayload> getData(String id, String from, String to,
                                                     String timeZone) {
         ReRideData r = mReRideClient.rideDataGet(from, timeZone, id, to);
+        if (r.getCount()==0) return new ArrayList<>();
         List<ReRideDataItemsItem> items = r.getItems();
         List<ReRideDataItemsItemPayload> payloads = new ArrayList<>();
         for (ReRideDataItemsItem item : items) {
@@ -27,6 +31,6 @@ public class AWSApiClient {
 
     public ReRideDataItemsItemPayload getDataLatest(String id, String timeZone) {
         List<ReRideDataItemsItemPayload> data = getData(id, "0", "0", timeZone);
-        return data.get(0);
+        return data.isEmpty() ? null : data.get(0);
     }
 }

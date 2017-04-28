@@ -27,7 +27,7 @@ import java.util.Calendar;
 import java.util.TimeZone;
 
 /**
- * Provides a way to get location information
+ * Broadcasts location updates on a custom specified interval
  * source: https://developer.android.com/training/location/retrieve-current.html
  */
 

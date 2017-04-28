@@ -29,8 +29,6 @@ public class BLEService extends Service{
     private static final int STATE_DISCONNECTED = 0;
     private static final int STATE_CONNECTING = 1;
     private static final int STATE_CONNECTED = 2;
-    private static final UUID UUID_APPARENT_WIND_DIRECTION =
-            UUID.fromString(GattAttributes.APPARENT_WIND_DIRECTION);
     private final IBinder binder = new LocalBinder();
 
     private List<BluetoothGatt> mBluetoothGattAPIs;
@@ -64,21 +62,34 @@ public class BLEService extends Service{
     private void broadcastUpdate(final String action, final BluetoothDevice device,
                                  final BluetoothGattCharacteristic characteristic) {
         final Intent intent = new Intent(action);
-
-        if (UUID_APPARENT_WIND_DIRECTION.equals(characteristic.getUuid())) {
+        intent.putExtra(EXTRA_DEVICE_ADDRESS, device.getAddress());
+        String uuid = characteristic.getUuid().toString();
+        if (!GattAttributes.hasAttribute(uuid)) {
+            intent.putExtra(EXTRA_DATA, readUnknownData(characteristic));
+        } else {
             try {
-                int format = BluetoothGattCharacteristic.FORMAT_UINT16;
-                final int windDir = characteristic.getIntValue(format, 0);
-                Log.d(TAG, String.format("Apparent wind direction: %d", windDir));
-                intent.putExtra(EXTRA_DATA, String.valueOf(windDir));
-                intent.putExtra(EXTRA_DEVICE_ADDRESS, device.getAddress());
+                if (uuid.equals(GattAttributes.APPARENT_WIND_DIRECTION) ||
+                        uuid.equals(GattAttributes.WEIGHT)) {
+                    intent.putExtra(EXTRA_DATA, getValueUINT16(characteristic));
+                } else if (uuid.equals(GattAttributes.BATTERY_LEVEL) ||
+                        uuid.equals(GattAttributes.AGE)) {
+                    intent.putExtra(EXTRA_DATA, getValueUINT8(characteristic));
+                }
             } catch (NullPointerException e) {
                 intent.putExtra(EXTRA_DATA, readUnknownData(characteristic));
             }
-        } else {
-            intent.putExtra(EXTRA_DATA, readUnknownData(characteristic));
         }
         sendBroadcast(intent);
+    }
+
+    private String getValueUINT16(BluetoothGattCharacteristic characteristic) {
+        return String.valueOf(characteristic.getIntValue(
+                BluetoothGattCharacteristic.FORMAT_UINT16, 0));
+    }
+
+    private String getValueUINT8(BluetoothGattCharacteristic characteristic) {
+        return String.valueOf(characteristic.getIntValue(
+                BluetoothGattCharacteristic.FORMAT_UINT8, 0));
     }
 
     private String readUnknownData(BluetoothGattCharacteristic characteristic) {
@@ -142,16 +153,14 @@ public class BLEService extends Service{
 
     }
 
-    public void disconnect(BluetoothDevice bluetoothDevice) {
-        mBluetoothGattAPIMap.get(bluetoothDevice.getAddress()).disconnect();
-    }
-
     public void close() {
         if (mBluetoothGattAPIMap == null) {
             return;
         }
         for (String bleDeviceAddress : mBluetoothGattAPIMap.keySet()) {
-            mBluetoothGattAPIMap.get(bleDeviceAddress).close();
+            BluetoothGatt gatt = mBluetoothGattAPIMap.get(bleDeviceAddress);
+            gatt.disconnect();
+            gatt.close();
         }
     }
 

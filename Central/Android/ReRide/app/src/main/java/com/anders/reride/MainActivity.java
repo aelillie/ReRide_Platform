@@ -44,7 +44,7 @@ import com.amazonaws.mobileconnectors.cognitoidentityprovider.CognitoUserPool;
 import com.amazonaws.mobileconnectors.cognitoidentityprovider.handlers.GenericHandler;
 import com.amazonaws.mobileconnectors.cognitoidentityprovider.handlers.SignUpHandler;
 import com.anders.reride.ble.BLEDeviceControlService;
-import com.anders.reride.ble.ReRideDataActivity;
+import com.anders.reride.data.ReRideDataActivity;
 import com.anders.reride.gms.ReRideLocationManager;
 
 import java.util.ArrayList;
@@ -108,6 +108,12 @@ public class MainActivity extends AppCompatActivity{
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_main);
         toolbar.setTitle(R.string.device_scan_title);
         setSupportActionBar(toolbar);
+        final Intent startIntent = new Intent(getApplicationContext(), ReRideDataActivity.class);
+        startIntent.putExtra(ReRideDataActivity.EXTRAS_USER_ID, mUserId);
+        if (ReRideDataActivity.DEBUG_MODE) {
+            startActivity(startIntent);
+            finish();
+        }
         mHandler = new Handler();
         mDeviceIntent = new Intent(getApplicationContext(),
                 BLEDeviceControlService.class);
@@ -175,7 +181,8 @@ public class MainActivity extends AppCompatActivity{
                 }
                 bindService(mDeviceIntent,
                         mBleDeviceServiceConnection, Context.BIND_AUTO_CREATE);
-                startActivity(new Intent(getApplicationContext(), ReRideDataActivity.class));
+
+                startActivity(startIntent);
             }
         });
     }
@@ -276,7 +283,10 @@ public class MainActivity extends AppCompatActivity{
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        unbindService(mBleDeviceServiceConnection);
+        if (mBleDeviceService != null) {
+            unbindService(mBleDeviceServiceConnection);
+            Log.d(TAG, "Unbound service!");
+        }
     }
 
     private void resetScanResult() {

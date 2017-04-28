@@ -1,17 +1,17 @@
-{ 
-  "state": { 
-    "recorded": { 
-      "id": "10",
-      "time": "12:35:00",
-      "sensors": [
-        { 
-          "name": "flex sensor",
-          "value": "45",
-          "unit": "degrees"
-        }
-	    ],
-      "longitude": "12.324534",
-      "latitude": "55.123124"
-    }
-  }
-}
+{
+     "state": {
+         "recorded": {
+             "id": "10",
+             "time": "20170426123500",
+             "sensors": [
+                 {
+                     "sensorId": "flex sensor",
+                     "value": "45",
+                     "unit": "degrees"
+                 }
+             ],
+             "longitude": "12.324534",
+             "latitude": "55.123124"
+         }
+     }
+ }

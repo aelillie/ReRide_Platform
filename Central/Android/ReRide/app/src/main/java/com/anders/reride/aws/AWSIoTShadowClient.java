@@ -19,13 +19,13 @@ import java.nio.ByteBuffer;
  * Responsible for communication with AWS IoT through HTTP
  */
 
-public class AWSIoTHTTPBroker extends AWSIoTDataBroker{
-    private static final String LOG_TAG = AWSIoTHTTPBroker.class.getSimpleName();
+public class AWSIoTShadowClient extends AWSIoTDataBroker{
+    private static final String LOG_TAG = AWSIoTShadowClient.class.getSimpleName();
 
 
     private AWSIotDataClient iotDataClient;
 
-    public AWSIoTHTTPBroker(Context context, String userID) {
+    public AWSIoTShadowClient(Context context, String userID) {
         super(context, userID);
     }
 
@@ -40,9 +40,9 @@ public class AWSIoTHTTPBroker extends AWSIoTDataBroker{
 
     private void flexSensorStatusUpdated(String flexSensorStatusState) {
         Gson gson = new Gson();
-        FlexSensorStatus ts = gson.fromJson(flexSensorStatusState, FlexSensorStatus.class);
+        SensorStatus ts = gson.fromJson(flexSensorStatusState, SensorStatus.class);
 
-        Log.i(LOG_TAG, String.format("angle:  %d", ts.state.desired.angle));
+        Log.i(LOG_TAG, String.format("value:  %d", ts.state.desired.value));
         Log.i(LOG_TAG, String.format("curState: %s", ts.state.desired.curState));
     }
 

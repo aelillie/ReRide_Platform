@@ -138,12 +138,12 @@ public class BLEDeviceControlService extends Service {
         String uuid;
         for (BluetoothGattService gattService : supportedGattServices) {
             uuid = gattService.getUuid().toString();
-            if (uuid.equals(GattAttributes.ENVIRONMENTAL_SENSING)) {
+            if (GattAttributes.hasAttribute(uuid)) {
                 List<BluetoothGattCharacteristic> gattCharacteristics =
                         gattService.getCharacteristics();
                 for(BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
                     uuid = gattCharacteristic.getUuid().toString();
-                    if (uuid.equals(GattAttributes.APPARENT_WIND_DIRECTION)) { //TODO: Fix
+                    if (GattAttributes.hasAttribute(uuid)) {
                         mGattCharacteristicMap.put(bluetoothDevice, gattCharacteristic);
                         break;
                     }

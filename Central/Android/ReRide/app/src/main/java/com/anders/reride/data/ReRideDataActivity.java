@@ -30,7 +30,7 @@ import java.util.List;
 
 public class ReRideDataActivity extends AppCompatActivity {
     private static final String TAG = ReRideDataActivity.class.getSimpleName();
-    private static final boolean DEBUG_MODE = true;
+    public static final boolean DEBUG_MODE = true;
 
     public static final String EXTRAS_USER_ID =
             "com.anders.reride.data.EXTRAS_USER_ID";
@@ -52,21 +52,17 @@ public class ReRideDataActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ble);
         Intent intent = getIntent();
-        if (DEBUG_MODE) {
-            mId = "1234";
-        } else {
-            mId = intent.getStringExtra(EXTRAS_USER_ID);
-        }
+        mId = intent.getStringExtra(EXTRAS_USER_ID);
         mAWSApiClient = new AWSApiClient();
         mHandler = new Handler();
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.data_recycler_view);
+        recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRiderData = new ArrayList<>();
         mAdapter = new ViewAdapter(mRiderData);
         recyclerView.setAdapter(mAdapter);
 
         initializeUIComponents();
-        announce("Data flow stopped!");
     }
 
     @Override
@@ -110,7 +106,6 @@ public class ReRideDataActivity extends AppCompatActivity {
                 while (!Thread.interrupted() && enabled && isNetworkConnected())
                     try
                     {
-                        Thread.sleep(BLEDeviceControlService.UPDATE_FREQUENCY);
                         final ReRideDataItemsItemPayload data =
                                 mAWSApiClient.getDataLatest(mId, mTimeZone);
                         runOnUiThread(new Runnable() // start actions in UI thread
@@ -122,6 +117,7 @@ public class ReRideDataActivity extends AppCompatActivity {
                                 getData(data); // this action have to be in UI thread
                             }
                         });
+                        Thread.sleep(BLEDeviceControlService.UPDATE_FREQUENCY);
                     }
                     catch (InterruptedException e)
                     {
@@ -136,7 +132,8 @@ public class ReRideDataActivity extends AppCompatActivity {
             announce("ID not identical");
             return;
         }
-        mRiderData = data.getSensors();
+        mRiderData.clear();
+        mRiderData.addAll(data.getSensors());
         mAdapter.notifyDataSetChanged();
         mIdText.setText(mId);
         mTimeText.setText(data.getTime());

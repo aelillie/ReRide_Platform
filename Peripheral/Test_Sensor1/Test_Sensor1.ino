@@ -14,13 +14,13 @@ Transmit to BLE centrals
 
 //###BLE Characteristics###
 BLEPeripheral blePeripheral;       // BLE Peripheral Device (the board you're programming)
-BLEService batteryService("180F"); // BLE "Battery service"
+BLEService cyclingPowerService("1818"); // BLE "Battery service"
 
 // BLE Battery Level Characteristic
-BLEUnsignedCharCharacteristic batteryLevel("2A19",  // standard 16-bit characteristic UUID
-    BLERead | BLENotify);     // remote clients will be able to get notifications if this characteristic changes
+BLEUnsignedCharCharacteristic sensorLocation("2A5D",  // standard 16-bit characteristic UUID
+    BLERead);     // remote clients will be able to get notifications if this characteristic changes
 
-int value = 50;
+int value = 1;
 
 void setup() 
 {
@@ -31,11 +31,11 @@ void setup()
      This name will appear in advertising packets
      and can be used by remote devices to identify this BLE device
      The name can be changed but maybe be truncated based on space left in advertisement packet */
-  blePeripheral.setLocalName("TestSensor1");
-  blePeripheral.setAdvertisedServiceUuid(batteryService.uuid());  // add the service UUID
-  blePeripheral.addAttribute(batteryService);   // Add the BLE Battery service
-  blePeripheral.addAttribute(batteryLevel); // add the battery level characteristic
-  batteryLevel.setValue(value);   // initial value for this characteristic
+  blePeripheral.setLocalName("TestSensor2");
+  blePeripheral.setAdvertisedServiceUuid(cyclingPowerService.uuid());  // add the service UUID
+  blePeripheral.addAttribute(cyclingPowerService);   // Add the BLE Battery service
+  blePeripheral.addAttribute(sensorLocation); // add the battery level characteristic
+  sensorLocation.setValue(value);   // initial value for this characteristic
   Serial.println("Configured BLE");
   /* Now activate the BLE device.  It will start continuously transmitting BLE
      advertising packets and will be visible to remote BLE central devices
@@ -59,11 +59,7 @@ void loop()
     // turn on the LED to indicate the connection:
     digitalWrite(13, HIGH);
     while (central.connected()) {
-      if (value == 100) {
-        value = 0;
-      } else {
-        value = value + 1;
-      }
+      Serial.println("Value: " + value);
       delay(500);
     }
     Serial.print("Disconnected from central: ");

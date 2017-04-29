@@ -23,7 +23,6 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.DialogFragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -40,13 +39,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-import com.amazonaws.ClientConfiguration;
-import com.amazonaws.mobileconnectors.cognitoidentityprovider.CognitoUser;
-import com.amazonaws.mobileconnectors.cognitoidentityprovider.CognitoUserAttributes;
-import com.amazonaws.mobileconnectors.cognitoidentityprovider.CognitoUserCodeDeliveryDetails;
-import com.amazonaws.mobileconnectors.cognitoidentityprovider.CognitoUserPool;
-import com.amazonaws.mobileconnectors.cognitoidentityprovider.handlers.GenericHandler;
-import com.amazonaws.mobileconnectors.cognitoidentityprovider.handlers.SignUpHandler;
 import com.anders.reride.ble.BLEDeviceControlService;
 import com.anders.reride.data.ReRideDataActivity;
 import com.anders.reride.gms.ReRideLocationManager;
@@ -109,7 +101,7 @@ public class MainActivity extends AppCompatActivity{
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_main);
         toolbar.setTitle(R.string.device_scan_title);
         setSupportActionBar(toolbar);
-        singIn();
+        signIn();
         final Intent startIntent = new Intent(getApplicationContext(), ReRideDataActivity.class);
         startIntent.putExtra(ReRideDataActivity.EXTRAS_USER_ID, mUserId);
         if (ReRideDataActivity.DEBUG_MODE) {
@@ -189,13 +181,14 @@ public class MainActivity extends AppCompatActivity{
         });
     }
 
-    private void singIn() {
-
+    private void signIn() {
+        final View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_signin, null);
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setView(R.layout.dialog_signin);
+        builder.setView(dialogView);
         builder.setPositiveButton(R.string.sign_in, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-                mUserId = ((EditText) findViewById(R.id.username)).getText().toString();
+                mUserId = ((EditText) dialogView.findViewById(R.id.username))
+                        .getText().toString();
             }
         });
         builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {

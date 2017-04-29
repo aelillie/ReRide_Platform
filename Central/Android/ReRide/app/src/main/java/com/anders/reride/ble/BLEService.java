@@ -51,6 +51,8 @@ public class BLEService extends Service{
             "com.anders.reride.ble.EXTRA_DATA";
     public static final String EXTRA_DEVICE_ADDRESS =
             "com.anders.reride.ble.EXTRA_DEVICE_ADDRESS";
+    public static final String EXTRA_CHARACTERISTIC_NAME =
+            "com.anders.reride.ble.EXTRA_CHARACTERISTIC_NAME";
     public static final String ACTION_WRITE =
             "com.anders.reride.ble.ACTION_WRITE";
 
@@ -89,6 +91,8 @@ public class BLEService extends Service{
                 intent.putExtra(EXTRA_DATA, readUnknownData(characteristic));
             }
         }
+        intent.putExtra(EXTRA_CHARACTERISTIC_NAME,
+                GattAttributes.lookup(characteristic.getUuid().toString(), "Unknown"));
         sendBroadcast(intent);
     }
 

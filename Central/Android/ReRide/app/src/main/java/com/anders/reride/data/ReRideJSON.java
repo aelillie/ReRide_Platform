@@ -28,6 +28,7 @@ import java.util.Map;
                          "type": "object",
                          "properties": {
                              "sensorId": { "type" : "string" },
+                             "name": { "type" : "string" },
                              "value": { "type" : "string" },
                              "unit": { "type" : "string" }
                          },
@@ -51,6 +52,7 @@ import java.util.Map;
              "sensors": [
                  {
                      "sensorId": "flex sensor",
+                     "Apparent Wind Direction",
                      "value": "45",
                      "unit": "degrees"
                  }
@@ -75,6 +77,7 @@ public class ReRideJSON {
     public static final String TIME = "time";
     public static final String SENSORS = "sensors";
     public static final String SENSOR_ID = "sensorId";
+    public static final String CHARACTERISTIC_NAME = "name";
     public static final String SENSOR_UNIT = "unit";
     public static final String ID = "id";
     public static final String REPORTED = "reported";
@@ -138,9 +141,11 @@ public class ReRideJSON {
         }
     }
 
-    public boolean putSensorValue(String sensorId, String value) {
+    public boolean putSensorValue(String sensorId, String value, String characteristicName) {
         try {
-            mSensors.getJSONObject(mSensorIndex.get(sensorId)).put(VALUE, value);
+            JSONObject sensor = mSensors.getJSONObject(mSensorIndex.get(sensorId));
+            sensor.put(VALUE, value);
+            sensor.put(CHARACTERISTIC_NAME, characteristicName);
             return true;
         } catch (JSONException e) {
             e.printStackTrace();

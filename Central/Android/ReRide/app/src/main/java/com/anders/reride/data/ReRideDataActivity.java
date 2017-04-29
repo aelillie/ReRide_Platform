@@ -184,6 +184,8 @@ public class ReRideDataActivity extends AppCompatActivity {
                 holder.sensorName.setText(sensorData.getString(ReRideJSON.SENSOR_ID));
                 holder.sensorUnit.setText(sensorData.getString(ReRideJSON.SENSOR_UNIT));
                 holder.sensorValue.setText(sensorData.getString(ReRideJSON.VALUE));
+                holder.characteristicName.setText(sensorData.getString(
+                        ReRideJSON.CHARACTERISTIC_NAME));
             } catch (JSONException e) {
                 announce(e.getMessage());
                 e.printStackTrace();
@@ -203,6 +205,7 @@ public class ReRideDataActivity extends AppCompatActivity {
             TextView sensorName;
             TextView sensorUnit;
             TextView sensorValue;
+            TextView characteristicName;
 
 
             ItemViewHolder(View itemView) {
@@ -210,6 +213,7 @@ public class ReRideDataActivity extends AppCompatActivity {
                 sensorName = (TextView) itemView.findViewById(R.id.sensor_name);
                 sensorUnit = (TextView) itemView.findViewById(R.id.data_unit);
                 sensorValue = (TextView) itemView.findViewById(R.id.data_value);
+                characteristicName = (TextView) itemView.findViewById(R.id.characteristic_name);
             }
         }
     }

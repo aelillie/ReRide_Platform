@@ -95,7 +95,8 @@ public class BLEDeviceControlService extends Service {
     private void streamData() {
         Log.d(TAG, "Streaming data");
         if (TEST_GMS) {
-            handleData("TEST NAME", String.valueOf(mRandomGenerator.nextInt(180)));
+            handleData("TEST NAME", String.valueOf(mRandomGenerator.nextInt(180)),
+                    "Apparent Wind Direction");
         } else {
             if (mGattCharacteristicMap.size() > 0 && mAWSIoTMQTTClient.isConnected()) {
                 mHandler.postDelayed(new Runnable() {
@@ -117,7 +118,7 @@ public class BLEDeviceControlService extends Service {
         }
     }
 
-    private void handleData(String deviceName, String data) {
+    private void handleData(String deviceName, String data, String characteristicName) {
         Log.d(TAG, "Handling data");
         Intent intent = new Intent(ACTION_DATA_UPDATE);
         if (mLocationManager.isConnected()) {
@@ -130,7 +131,8 @@ public class BLEDeviceControlService extends Service {
         double lon = mLastLocation.getLongitude();
         double lat = mLastLocation.getLatitude();
         String time = ReRideTimeManager.now("GMT+2"); //TODO: Custom time zone
-        mReRideJSON.putSensorValue(deviceName, data == null ? "No data" : data);
+        mReRideJSON.putSensorValue(deviceName, data == null ? "No data" : data,
+                characteristicName);
         mReRideJSON.putRiderProperties(time, lon, lat);
         Log.d(TAG, "Sending data package!");
         mAWSIoTMQTTClient.publish(mReRideJSON);
@@ -349,9 +351,13 @@ public class BLEDeviceControlService extends Service {
                 }
                 case BLEService.ACTION_DATA_AVAILABLE: {
                     String data = intent.getStringExtra(BLEService.EXTRA_DATA);
+                    String characteristicName = intent.getStringExtra(
+                            BLEService.EXTRA_CHARACTERISTIC_NAME);
                     Log.d(TAG, "Data: " + data);
                     String deviceAddress = intent.getStringExtra(BLEService.EXTRA_DEVICE_ADDRESS);
-                    handleData(mBluetoothAdapter.getRemoteDevice(deviceAddress).getName(), data);
+                    handleData(mBluetoothAdapter.getRemoteDevice(deviceAddress).getName(),
+                            data,
+                            characteristicName);
                     break;
                 }
                 case BLEService.ACTION_WRITE: {

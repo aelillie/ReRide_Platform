@@ -43,9 +43,6 @@ public class BLEDeviceControlService extends Service {
             "com.anders.reride.ble.DEVICE_ADDRESSES";
     public static final String EXTRAS_USER_ID =
             "com.anders.reride.ble.EXTRAS_USER_ID";
-    public static final String EXTRAS_SENSOR_DATA = "SENSOR_DATA";
-    public static final String EXTRAS_LOCATION_DATA = "LOCATION_DATA";
-    public static final String EXTRAS_TIME_DATA = "TIME_DATA";
 
     private static final int SLEEP_TIME = 500; //ms
     public static final int UPDATE_FREQUENCY = 1000; //ms
@@ -59,7 +56,7 @@ public class BLEDeviceControlService extends Service {
     private BluetoothGattCharacteristic mNotifyCharacteristic;
     private BLEService mBleService;
     private List<BluetoothDevice> mBluetoothDevices;
-    private Map<BluetoothDevice, BluetoothGattCharacteristic> mGattCharacteristicMap;
+    private Map<BluetoothDevice, List<BluetoothGattCharacteristic>> mGattCharacteristicMap;
     private int mConnectedDevices;
     private Handler mHandler;
 
@@ -101,7 +98,7 @@ public class BLEDeviceControlService extends Service {
                     }
                 }, UPDATE_FREQUENCY);
                 for (final BluetoothDevice device : mGattCharacteristicMap.keySet()) {
-                    readCharacteristic(device);
+                    readCharacteristics(device);
                 }
             }
         }
@@ -144,11 +141,15 @@ public class BLEDeviceControlService extends Service {
                 for(BluetoothGattCharacteristic gattCharacteristic : gattCharacteristics) {
                     uuid = gattCharacteristic.getUuid().toString();
                     if (GattAttributes.hasAttribute(uuid)) {
-                        mGattCharacteristicMap.put(bluetoothDevice, gattCharacteristic);
-                        break;
+                        List<BluetoothGattCharacteristic> characteristics =
+                                mGattCharacteristicMap.get(bluetoothDevice);
+                        if (characteristics == null) {
+                            characteristics = new ArrayList<>();
+                        }
+                        characteristics.add(gattCharacteristic);
+                        mGattCharacteristicMap.put(bluetoothDevice, characteristics);
                     }
                 }
-                break;
             }
         }
     }
@@ -246,8 +247,14 @@ public class BLEDeviceControlService extends Service {
         }
     }
 
-    private void readCharacteristic(BluetoothDevice device) {
-        BluetoothGattCharacteristic characteristic = mGattCharacteristicMap.get(device);
+    private void readCharacteristics(BluetoothDevice device) {
+        for (BluetoothGattCharacteristic characteristic : mGattCharacteristicMap.get(device)) {
+            readCharacteristic(device, characteristic);
+        }
+    }
+
+    private void readCharacteristic(BluetoothDevice device,
+                                    BluetoothGattCharacteristic characteristic) {
         final int charaProp = characteristic.getProperties();
         if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
             // If there is an active notification on a characteristic, clear it

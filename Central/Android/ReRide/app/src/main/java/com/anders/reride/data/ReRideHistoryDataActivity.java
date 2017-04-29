@@ -57,7 +57,7 @@ public class ReRideHistoryDataActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_historical_data);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_ble);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_historical_data);
         toolbar.setTitle(R.string.historical_data);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);

@@ -97,8 +97,7 @@ public class MainActivity extends AppCompatActivity{
         mHandler = new Handler();
         mDeviceIntent = new Intent(getApplicationContext(),
                 BLEDeviceControlService.class);
-        mDeviceIntent.putExtra(BLEDeviceControlService.EXTRAS_USER_ID,
-                mUserId); //TODO: Get from dialog box at startup
+        mDeviceIntent.putExtra(BLEDeviceControlService.EXTRAS_USER_ID, mUserId);
         askForLocationPermission();
         mLocationManager = ReRideLocationManager.getInstance(this);
         mLocationManager.connect();
@@ -196,7 +195,6 @@ public class MainActivity extends AppCompatActivity{
                 getApplicationContext().getSystemService(Context.BLUETOOTH_SERVICE);
         bluetoothAdapter = bluetoothManager.getAdapter();
         Log.d(TAG, "BLE adapter found");
-        scanner = bluetoothAdapter.getBluetoothLeScanner();
         callback = new BLECallback();
         /*ScanFilter filter = new ScanFilter.Builder().build();
         filters = new ArrayList<>();
@@ -243,6 +241,7 @@ public class MainActivity extends AppCompatActivity{
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
+
     }
 
     @Override
@@ -356,6 +355,9 @@ public class MainActivity extends AppCompatActivity{
         if (bluetoothAdapter == null) {
             Toast.makeText(this, "BT not enabled",
                     Toast.LENGTH_LONG).show();
+            return;
+        } else {
+            scanner = bluetoothAdapter.getBluetoothLeScanner();
         }
         if (enable) {
             // Stops scanning after a pre-defined scan period.

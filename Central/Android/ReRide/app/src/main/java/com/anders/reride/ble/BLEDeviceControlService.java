@@ -72,7 +72,10 @@ public class BLEDeviceControlService extends Service {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder service) {
             mBleService = ((BLEService.LocalBinder) service).getService();
-            connectDevices();
+            if (!TEST_GMS) {
+
+                connectDevices();
+            }
         }
 
         @Override

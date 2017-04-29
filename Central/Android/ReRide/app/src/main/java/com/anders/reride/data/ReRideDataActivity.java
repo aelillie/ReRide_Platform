@@ -112,7 +112,7 @@ public class ReRideDataActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_ble_data);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_main);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_ble_data);
         toolbar.setTitle(R.string.streaming_data);
         setSupportActionBar(toolbar);
 
@@ -128,7 +128,7 @@ public class ReRideDataActivity extends AppCompatActivity {
         locationLatField = (TextView) findViewById(R.id.location_lat_value);
         timeField = (TextView) findViewById(R.id.time_value);
 
-        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.historical_data_recycler_view);
+        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.data_recycler_view);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         try {

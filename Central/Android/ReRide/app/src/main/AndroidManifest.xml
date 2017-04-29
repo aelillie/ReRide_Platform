@@ -26,6 +26,8 @@
         </activity>
         <activity android:name=".data.ReRideHistoryDataActivity"
                   android:parentActivityName=".MainActivity"/>
+        <activity android:name=".data.ReRideDataActivity"
+                  android:parentActivityName=".MainActivity"/>
         <service android:name=".ble.BLEDeviceControlService"/>
         <service android:name=".ble.BLEService"/>
         <service android:name=".gms.LocationSubscriberService"

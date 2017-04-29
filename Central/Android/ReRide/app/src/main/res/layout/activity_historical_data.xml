@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:layout_margin="10dp">
     <android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar_ble"
+        android:id="@+id/toolbar_historical_data"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"

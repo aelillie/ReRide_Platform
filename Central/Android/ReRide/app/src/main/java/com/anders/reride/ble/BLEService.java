@@ -108,8 +108,8 @@ public class BLEService extends Service{
         mBluetoothGattAPIMap.get(device.getAddress()).discoverServices();
     }
 
-    class LocalBinder extends Binder {
-        BLEService getService() {
+    public class LocalBinder extends Binder {
+        public BLEService getService() {
             return BLEService.this;
         }
     }
@@ -128,10 +128,11 @@ public class BLEService extends Service{
         return binder;
     }
 
+
     @Override
-    public boolean onUnbind(Intent intent) {
+    public void onDestroy() {
+        super.onDestroy();
         close();
-        return super.onUnbind(intent);
     }
 
     public boolean connect(BluetoothDevice bluetoothDevice) {

@@ -40,7 +40,7 @@ import android.widget.Toast;
 
 
 import com.anders.reride.ble.BLEDeviceControlService;
-import com.anders.reride.data.ReRideDataActivity;
+import com.anders.reride.data.ReRideHistoryDataActivity;
 import com.anders.reride.gms.ReRideLocationManager;
 
 import java.util.ArrayList;
@@ -80,18 +80,6 @@ public class MainActivity extends AppCompatActivity{
     private String mUserId = "1234";
 
     private BLEDeviceControlService mBleDeviceService;
-    private final ServiceConnection mBleDeviceServiceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName componentName, IBinder service) {
-            mBleDeviceService = ((BLEDeviceControlService.LocalBinder) service).getService();
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName componentName) {
-            mBleDeviceService = null;
-        }
-    };
-    private DeviceBroadcastReceiver mDeviceBroadcastReceiver;
     private boolean userConfirmed;
 
     @Override
@@ -102,9 +90,9 @@ public class MainActivity extends AppCompatActivity{
         toolbar.setTitle(R.string.device_scan_title);
         setSupportActionBar(toolbar);
         signIn();
-        final Intent startIntent = new Intent(getApplicationContext(), ReRideDataActivity.class);
-        startIntent.putExtra(ReRideDataActivity.EXTRAS_USER_ID, mUserId);
-        if (ReRideDataActivity.DEBUG_MODE) {
+        final Intent startIntent = new Intent(getApplicationContext(), ReRideHistoryDataActivity.class);
+        startIntent.putExtra(ReRideHistoryDataActivity.EXTRAS_USER_ID, mUserId);
+        if (ReRideHistoryDataActivity.DEBUG_MODE) {
             startActivity(startIntent);
             finish();
         }
@@ -116,7 +104,6 @@ public class MainActivity extends AppCompatActivity{
         askForLocationPermission();
         mLocationManager = ReRideLocationManager.getInstance(this);
         mLocationManager.connect();
-        mDeviceBroadcastReceiver = new DeviceBroadcastReceiver();
         checkForBLESupport();
         setupScanSettings();
 
@@ -173,9 +160,7 @@ public class MainActivity extends AppCompatActivity{
                         scanning = false;
                     }
                 }
-                bindService(mDeviceIntent,
-                        mBleDeviceServiceConnection, Context.BIND_AUTO_CREATE);
-
+                startService(mDeviceIntent);
                 startActivity(startIntent);
             }
         });
@@ -233,14 +218,13 @@ public class MainActivity extends AppCompatActivity{
         }
         scanBLEDevice(false);
         resetScanResult();
-        unregisterReceiver(mDeviceBroadcastReceiver);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         if (mBleDeviceService != null) {
-            unbindService(mBleDeviceServiceConnection);
+            stopService(new Intent(this, BLEDeviceControlService.class));
             Log.d(TAG, "Unbound service!");
         }
     }
@@ -255,7 +239,6 @@ public class MainActivity extends AppCompatActivity{
     @Override
     protected void onResume() {
         super.onResume();
-        registerReceiver(mDeviceBroadcastReceiver, makeDeviceUpdateIntentFilter());
         // Ensures Bluetooth is enabled on the device.  If Bluetooth is not currently enabled,
         // fire an intent to display a dialog asking the user to grant permission to enable it.
         if (bluetoothAdapter == null || !bluetoothAdapter.isEnabled()) {
@@ -421,21 +404,6 @@ public class MainActivity extends AppCompatActivity{
             }
             Toast.makeText(getApplicationContext(),
                     "Scan failed!", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    static IntentFilter makeDeviceUpdateIntentFilter() {
-        final IntentFilter intentFilter = new IntentFilter();
-        //intentFilter.addAction(BLEService.ACTION_GATT_CONNECTED);
-        return intentFilter;
-    }
-
-    private class DeviceBroadcastReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            final String action = intent.getAction();
-            switch (action) {
-            }
         }
     }
 }

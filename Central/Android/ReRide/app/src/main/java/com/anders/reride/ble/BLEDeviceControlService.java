@@ -17,6 +17,7 @@ import android.location.Location;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
+import android.support.annotation.IntDef;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -43,6 +44,18 @@ public class BLEDeviceControlService extends Service {
             "com.anders.reride.ble.DEVICE_ADDRESSES";
     public static final String EXTRAS_USER_ID =
             "com.anders.reride.ble.EXTRAS_USER_ID";
+
+    public static final String EXTRAS_LAT_VALUE =
+            "com.anders.reride.ble.EXTRAS_LAT_VALUE";
+    public static final String EXTRAS_LON_VALUE =
+            "com.anders.reride.ble.EXTRAS_LON_VALUE";
+    public static final String EXTRAS_TIME_VALUE =
+            "com.anders.reride.ble.EXTRAS_TIME_VALUE";
+    public static final String EXTRAS_ID_VALUE =
+            "com.anders.reride.ble.EXTRAS_ID_VALUE";
+
+    public static final String ACTION_DATA_UPDATE =
+            "com.anders.reride.ble.ACTION_DATA_UPDATE";
 
     private static final int SLEEP_TIME = 500; //ms
     public static final int UPDATE_FREQUENCY = 1000; //ms
@@ -112,6 +125,7 @@ public class BLEDeviceControlService extends Service {
 
     private void handleData(String deviceName, String data) {
         Log.d(TAG, "Handling data");
+        Intent intent = new Intent(ACTION_DATA_UPDATE);
         if (mLocationManager.isConnected()) {
             Location location = mLocationManager.getLocation();
             if (location != null) mLastLocation = location;
@@ -126,6 +140,7 @@ public class BLEDeviceControlService extends Service {
         mReRideJSON.putRiderProperties(time, lon, lat);
         Log.d(TAG, "Sending data package!");
         mAWSIoTMQTTClient.publish(mReRideJSON);
+        sendBroadcast(intent);
     }
 
     private void searchGattServices(BluetoothDevice bluetoothDevice) {
@@ -177,18 +192,25 @@ public class BLEDeviceControlService extends Service {
         mBleService = null;
     }
 
-    @Nullable
     @Override
-    public IBinder onBind(Intent intent) {
+    public void onCreate() {
+        super.onCreate();
         mHandler = new Handler();
         mBluetoothAdapter = ((BluetoothManager)
                 getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
-        mUserId = intent.getStringExtra(EXTRAS_USER_ID);
-        mReRideJSON = ReRideJSON.getInstance(mUserId);
         //mAWSIoTShadowClient = new AWSIoTShadowClient(this, mUserId);
         mAWSIoTMQTTClient = new AWSIoTMQTTClient(this, mUserId);
         mAWSIoTMQTTClient.connect();
         mLocationManager = ReRideLocationManager.getInstance(this);
+        bindService(new Intent(this, BLEService.class),
+                mBleServiceConnection, Context.BIND_AUTO_CREATE);
+        registerReceiver(gattUpdateReceiver, makeGattUpdateIntentFilter());
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        mUserId = intent.getStringExtra(EXTRAS_USER_ID);
+        mReRideJSON = ReRideJSON.getInstance(mUserId);
 
         if (TEST_GMS) {
             mRandomGenerator = new Random();
@@ -203,15 +225,13 @@ public class BLEDeviceControlService extends Service {
                 mBluetoothDevices.add(device);
                 mReRideJSON.addSensor(device.getName(), "degrees"); //TODO: Custom unit
             }
-            bindService(new Intent(this, BLEService.class),
-                    mBleServiceConnection, Context.BIND_AUTO_CREATE);
-            registerReceiver(gattUpdateReceiver, makeGattUpdateIntentFilter());
+
         }
 
         if (mBleService != null) {
             connectDevices();
         }
-        if (mLocationManager != null) {
+        if (mLocationManager != null && !mLocationManager.isConnected()) {
             mLocationManager.connect();
             if (TEST_GMS) {
                 mHandler.postDelayed(new Runnable() {
@@ -223,8 +243,16 @@ public class BLEDeviceControlService extends Service {
                 }, 1000);
             }
         }
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
         return binder;
     }
+
+
 
 
 

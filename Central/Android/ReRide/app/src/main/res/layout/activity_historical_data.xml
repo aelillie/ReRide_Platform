@@ -36,7 +36,7 @@
                       android:textSize="18sp"/>
             <Space android:layout_width="5dp"
                    android:layout_height="wrap_content"/>
-            <TextView android:id="@+id/id_value"
+            <TextView android:id="@+id/id_history_value"
                       android:layout_width="match_parent"
                       android:layout_height="wrap_content"
                       android:text="@string/no_data"
@@ -53,7 +53,7 @@
                       android:textSize="18sp"/>
             <Space android:layout_width="5dp"
                    android:layout_height="wrap_content"/>
-            <TextView android:id="@+id/location_lon_value"
+            <TextView android:id="@+id/location_lon_history_value"
                       android:layout_width="wrap_content"
                       android:layout_height="wrap_content"
                       android:text="@string/no_data"
@@ -66,7 +66,7 @@
                       android:textSize="18sp"/>
             <Space android:layout_width="5dp"
                    android:layout_height="wrap_content"/>
-            <TextView android:id="@+id/location_lat_value"
+            <TextView android:id="@+id/location_lat_history_value"
                       android:layout_width="wrap_content"
                       android:layout_height="wrap_content"
                       android:text="@string/no_data"
@@ -82,7 +82,7 @@
                       android:textSize="18sp"/>
             <Space android:layout_width="5dp"
                    android:layout_height="wrap_content"/>
-            <TextView android:id="@+id/time_value"
+            <TextView android:id="@+id/time_history_value"
                       android:layout_width="match_parent"
                       android:layout_height="wrap_content"
                       android:text="@string/no_data"

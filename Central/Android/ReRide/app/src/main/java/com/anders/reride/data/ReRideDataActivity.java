@@ -20,6 +20,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.anders.reride.MainActivity;
 import com.anders.reride.R;
 import com.anders.reride.ble.BLEDeviceControlService;
 
@@ -117,7 +118,7 @@ public class ReRideDataActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         Intent intent = getIntent();
-        mId = intent.getStringExtra(BLEDeviceControlService.EXTRAS_USER_ID);
+        mId = intent.getStringExtra(MainActivity.EXTRAS_USER_ID);
 
         mReRideJson = ReRideJSON.getInstance(mId);
         mRiderProperties = mReRideJson.getRiderProperties();

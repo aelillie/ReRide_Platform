@@ -9,18 +9,13 @@ import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.IntentSender;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
@@ -38,9 +33,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-
 import com.anders.reride.ble.BLEDeviceControlService;
-import com.anders.reride.data.ReRideHistoryDataActivity;
+import com.anders.reride.data.ReRideDataActivity;
 import com.anders.reride.gms.ReRideLocationManager;
 
 import java.util.ArrayList;
@@ -56,6 +50,9 @@ public class MainActivity extends AppCompatActivity{
             new String[]{Manifest.permission.ACCESS_COARSE_LOCATION,
                     Manifest.permission.ACCESS_FINE_LOCATION};
     private static final long SCAN_PERIOD = 10000; // Stops scanning after 10 seconds.
+
+    public static final String EXTRAS_USER_ID =
+            "com.anders.reride.EXTRAS_USER_ID";
 
     private List<BluetoothDevice> mScannedDevices;
     private List<String> mDeviceAddresses;
@@ -90,9 +87,10 @@ public class MainActivity extends AppCompatActivity{
         toolbar.setTitle(R.string.device_scan_title);
         setSupportActionBar(toolbar);
         signIn();
-        final Intent startIntent = new Intent(getApplicationContext(), ReRideHistoryDataActivity.class);
-        startIntent.putExtra(ReRideHistoryDataActivity.EXTRAS_USER_ID, mUserId);
-        if (ReRideHistoryDataActivity.DEBUG_MODE) {
+        final Intent startIntent = new Intent(getApplicationContext(),
+                ReRideDataActivity.class);
+        startIntent.putExtra(EXTRAS_USER_ID, mUserId);
+        if (ReRideDataActivity.DEBUG_MODE) {
             startActivity(startIntent);
             finish();
         }

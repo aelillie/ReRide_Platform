@@ -70,6 +70,17 @@ public class ReRideJSON {
     private Map<String, Integer> mSensorIndex;
     private int mCurrentIndex;
 
+    public static final String LATITUDE = "latitude";
+    public static final String LONGITUDE = "longitude";
+    public static final String TIME = "time";
+    public static final String SENSORS = "sensors";
+    public static final String SENSOR_ID = "sensorId";
+    public static final String SENSOR_UNIT = "unit";
+    public static final String ID = "id";
+    public static final String REPORTED = "reported";
+    public static final String STATE = "state";
+    public static final String VALUE = "value";
+
     private static ReRideJSON mReRideJSON;
 
     private ReRideJSON(String id) {
@@ -80,10 +91,10 @@ public class ReRideJSON {
         mSensors = new JSONArray();
         mSensorIndex = new HashMap<>();
         try {
-            mRiderProperties.put("sensors", mSensors);
-            mRiderProperties.put("id", id);
-            mRecorded.put("reported", mRiderProperties);
-            mState.put("state", mRecorded);
+            mRiderProperties.put(SENSORS, mSensors);
+            mRiderProperties.put(ID, id);
+            mRecorded.put(REPORTED, mRiderProperties);
+            mState.put(STATE, mRecorded);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -92,8 +103,8 @@ public class ReRideJSON {
     public boolean addSensor(String sensorId, String unit) {
         try {
             JSONObject sensor = new JSONObject();
-            sensor.put("sensorId", sensorId);
-            sensor.put("unit", unit);
+            sensor.put(SENSOR_ID, sensorId);
+            sensor.put(SENSOR_UNIT, unit);
             mSensorIndex.put(sensorId, mCurrentIndex);
             mSensors.put(mCurrentIndex, sensor);
             mCurrentIndex++;
@@ -117,9 +128,9 @@ public class ReRideJSON {
 
     public boolean putRiderProperties(String time, double lon, double lat) {
             try {
-            mRiderProperties.put("time", time);
-            mRiderProperties.put("longitude", lon);
-            mRiderProperties.put("latitude", lat);
+            mRiderProperties.put(TIME, time);
+            mRiderProperties.put(LONGITUDE, lon);
+            mRiderProperties.put(LATITUDE, lat);
             return true;
         } catch (JSONException e) {
             e.printStackTrace();
@@ -129,7 +140,7 @@ public class ReRideJSON {
 
     public boolean putSensorValue(String sensorId, String value) {
         try {
-            mSensors.getJSONObject(mSensorIndex.get(sensorId)).put("value", value);
+            mSensors.getJSONObject(mSensorIndex.get(sensorId)).put(VALUE, value);
             return true;
         } catch (JSONException e) {
             e.printStackTrace();

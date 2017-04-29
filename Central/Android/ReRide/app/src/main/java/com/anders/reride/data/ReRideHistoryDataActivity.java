@@ -66,7 +66,7 @@ public class ReRideHistoryDataActivity extends AppCompatActivity {
         mId = intent.getStringExtra(EXTRAS_USER_ID);
         mAWSApiClient = new AWSApiClient();
         mHandler = new Handler();
-        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.data_recycler_view);
+        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.historical_data_recycler_view);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRiderData = new ArrayList<>();

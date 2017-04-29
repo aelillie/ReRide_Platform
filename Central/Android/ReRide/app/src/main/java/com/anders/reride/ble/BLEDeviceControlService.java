@@ -45,15 +45,6 @@ public class BLEDeviceControlService extends Service {
     public static final String EXTRAS_USER_ID =
             "com.anders.reride.ble.EXTRAS_USER_ID";
 
-    public static final String EXTRAS_LAT_VALUE =
-            "com.anders.reride.ble.EXTRAS_LAT_VALUE";
-    public static final String EXTRAS_LON_VALUE =
-            "com.anders.reride.ble.EXTRAS_LON_VALUE";
-    public static final String EXTRAS_TIME_VALUE =
-            "com.anders.reride.ble.EXTRAS_TIME_VALUE";
-    public static final String EXTRAS_ID_VALUE =
-            "com.anders.reride.ble.EXTRAS_ID_VALUE";
-
     public static final String ACTION_DATA_UPDATE =
             "com.anders.reride.ble.ACTION_DATA_UPDATE";
 

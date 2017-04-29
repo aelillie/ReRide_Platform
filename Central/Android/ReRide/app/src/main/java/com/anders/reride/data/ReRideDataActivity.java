@@ -10,14 +10,25 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.anders.reride.R;
 import com.anders.reride.ble.BLEDeviceControlService;
-import com.anders.reride.ble.BLEService;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Shows current data
@@ -25,12 +36,13 @@ import com.anders.reride.ble.BLEService;
 
 public class ReRideDataActivity extends AppCompatActivity {
     private static final String TAG = ReRideDataActivity.class.getSimpleName();
+    public static final boolean DEBUG_MODE = false;
 
     private BLEDeviceControlService mBleDeviceService;
+    private ReRideJSON mReRideJson;
 
-    private TextView connectionState;
-    private TextView dataField;
-    private TextView locationLongField;
+    private TextView idField;
+    private TextView locationLonField;
     private TextView locationLatField;
     private TextView timeField;
 
@@ -53,12 +65,16 @@ public class ReRideDataActivity extends AppCompatActivity {
             final String action = intent.getAction();
             switch (action) {
                 case BLEDeviceControlService.ACTION_DATA_UPDATE: {
+                    updateUI();
                     break;
                 }
                 default: Log.d(TAG, "Action not implemented"); break;
             }
         }
     };
+    private ViewAdapter mAdapter;
+    private JSONObject mRiderProperties;
+    private String mId;
 
     private void announce(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
@@ -68,9 +84,28 @@ public class ReRideDataActivity extends AppCompatActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                //Update
+                try {
+                    locationLatField.setText(mRiderProperties.getString(ReRideJSON.LATITUDE));
+                    locationLonField.setText(mRiderProperties.getString(ReRideJSON.LONGITUDE));
+                    timeField.setText(formatTime(mRiderProperties.getString(ReRideJSON.TIME)));
+                    mAdapter.notifyDataSetChanged(); //Update sensor values
+                } catch (JSONException e) {
+                    announce("Data could not be fetched!");
+                    e.printStackTrace();
+                }
             }
         });
+    }
+
+    private String formatTime(String simpleTime) {
+        String time =
+                simpleTime.substring(0, 4) + "." + //Year
+                simpleTime.substring(4, 6) + "." + //Month
+                simpleTime.substring(6, 8) + " " + //Day
+                simpleTime.substring(8, 10) + ":" + //Hour
+                simpleTime.substring(10, 12) + ":" + //Minutes
+                simpleTime.substring(12, 14); //Seconds
+        return time; //YYYY.MM.DD HH:MM:SS
     }
 
     @Override
@@ -81,11 +116,28 @@ public class ReRideDataActivity extends AppCompatActivity {
         toolbar.setTitle(R.string.streaming_data);
         setSupportActionBar(toolbar);
 
-        connectionState = (TextView) findViewById(R.id.connection_state);
-        dataField = (TextView) findViewById(R.id.data_value);
-        locationLongField = (TextView) findViewById(R.id.location_lon_value);
+        Intent intent = getIntent();
+        mId = intent.getStringExtra(BLEDeviceControlService.EXTRAS_USER_ID);
+
+        mReRideJson = ReRideJSON.getInstance(mId);
+        mRiderProperties = mReRideJson.getRiderProperties();
+
+        idField = (TextView) findViewById(R.id.id__value);
+        idField.setText(mId);
+        locationLonField = (TextView) findViewById(R.id.location_lon_value);
         locationLatField = (TextView) findViewById(R.id.location_lat_value);
         timeField = (TextView) findViewById(R.id.time_value);
+
+        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.historical_data_recycler_view);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        try {
+            mAdapter = new ViewAdapter(mRiderProperties.getJSONArray(ReRideJSON.SENSORS));
+            recyclerView.setAdapter(mAdapter);
+        } catch (JSONException e) {
+            announce("No available sensor data");
+            e.printStackTrace();
+        }
 
         bindService(new Intent(this, BLEDeviceControlService.class),
                 mBleDeviceServiceConnection, Context.BIND_AUTO_CREATE);
@@ -108,6 +160,55 @@ public class ReRideDataActivity extends AppCompatActivity {
         super.onDestroy();
         unbindService(mBleDeviceServiceConnection);
         mBleDeviceService = null;
+    }
+
+    private class ViewAdapter extends RecyclerView.Adapter<ViewAdapter.ItemViewHolder> {
+        private JSONArray data;
+        ViewAdapter(JSONArray data) {
+            this.data = data;
+        }
+
+        @Override
+        public ViewAdapter.ItemViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            View v = LayoutInflater.from(parent.getContext())
+                    .inflate(R.layout.data_list_item, parent, false);
+            return new ItemViewHolder(v);
+        }
+
+        @Override
+        public void onBindViewHolder(final ItemViewHolder holder, int position) {
+            try {
+                JSONObject sensorData = data.getJSONObject(position);
+                holder.sensorName.setText(sensorData.getString(ReRideJSON.SENSOR_ID));
+                holder.sensorUnit.setText(sensorData.getString(ReRideJSON.SENSOR_UNIT));
+                holder.sensorValue.setText(sensorData.getString(ReRideJSON.VALUE));
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public int getItemCount() {
+            return data.length();
+        }
+
+        void clear() {
+            data = null;
+        }
+
+        class ItemViewHolder extends RecyclerView.ViewHolder {
+            TextView sensorName;
+            TextView sensorUnit;
+            TextView sensorValue;
+
+
+            ItemViewHolder(View itemView) {
+                super(itemView);
+                sensorName = (TextView) itemView.findViewById(R.id.sensor_name);
+                sensorUnit = (TextView) itemView.findViewById(R.id.data_unit);
+                sensorValue = (TextView) itemView.findViewById(R.id.data_value);
+            }
+        }
     }
 
     static IntentFilter makeGattUpdateIntentFilter() {

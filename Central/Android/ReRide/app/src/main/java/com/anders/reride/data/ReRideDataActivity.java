@@ -185,6 +185,7 @@ public class ReRideDataActivity extends AppCompatActivity {
                 holder.sensorUnit.setText(sensorData.getString(ReRideJSON.SENSOR_UNIT));
                 holder.sensorValue.setText(sensorData.getString(ReRideJSON.VALUE));
             } catch (JSONException e) {
+                announce(e.getMessage());
                 e.printStackTrace();
             }
         }

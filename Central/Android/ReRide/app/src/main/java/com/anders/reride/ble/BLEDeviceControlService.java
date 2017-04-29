@@ -20,6 +20,7 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.anders.reride.R;
 import com.anders.reride.aws.AWSIoTShadowClient;
 import com.anders.reride.aws.AWSIoTMQTTClient;
 import com.anders.reride.data.ReRideJSON;
@@ -129,7 +130,7 @@ public class BLEDeviceControlService extends Service {
         double lon = mLastLocation.getLongitude();
         double lat = mLastLocation.getLatitude();
         String time = ReRideTimeManager.now("GMT+2"); //TODO: Custom time zone
-        mReRideJSON.putSensorValue(deviceName, data);
+        mReRideJSON.putSensorValue(deviceName, data == null ? "No data" : data);
         mReRideJSON.putRiderProperties(time, lon, lat);
         Log.d(TAG, "Sending data package!");
         mAWSIoTMQTTClient.publish(mReRideJSON);
@@ -290,8 +291,8 @@ public class BLEDeviceControlService extends Service {
             mBleService.readCharacteristic(device, characteristic);
         }
         if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
-            mNotifyCharacteristic = characteristic;
-            mBleService.setCharacteristicNotification(device, characteristic, true);
+            /*mNotifyCharacteristic = characteristic;
+            mBleService.setCharacteristicNotification(device, characteristic, true);*/
         }
     }
 

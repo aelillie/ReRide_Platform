@@ -59,7 +59,6 @@ void loop()
     // turn on the LED to indicate the connection:
     digitalWrite(13, HIGH);
     while (central.connected()) {
-      Serial.println("Value: " + value);
       delay(500);
     }
     Serial.print("Disconnected from central: ");

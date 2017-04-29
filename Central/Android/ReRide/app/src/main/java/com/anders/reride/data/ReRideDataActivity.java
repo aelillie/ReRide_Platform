@@ -116,6 +116,8 @@ public class ReRideDataActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_ble_data);
         toolbar.setTitle(R.string.streaming_data);
         setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
 
         Intent intent = getIntent();
         mId = intent.getStringExtra(MainActivity.EXTRAS_USER_ID);

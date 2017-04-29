@@ -68,12 +68,18 @@ public class BLEService extends Service{
             intent.putExtra(EXTRA_DATA, readUnknownData(characteristic));
         } else {
             try {
-                if (uuid.equals(GattAttributes.APPARENT_WIND_DIRECTION) ||
+                if (uuid.equals(GattAttributes.HEART_RATE_MEASUREMENT)) {
+                    if ((characteristic.getProperties() & 0x01) != 0) {
+                        intent.putExtra(EXTRA_DATA, getValueUINT16(characteristic, 1));
+                    } else {
+                        intent.putExtra(EXTRA_DATA, getValueUINT8(characteristic, 1));
+                    }
+                } else if (uuid.equals(GattAttributes.APPARENT_WIND_DIRECTION) ||
                         uuid.equals(GattAttributes.WEIGHT)) {
-                    intent.putExtra(EXTRA_DATA, getValueUINT16(characteristic));
+                    intent.putExtra(EXTRA_DATA, getValueUINT16(characteristic, 0));
                 } else if (uuid.equals(GattAttributes.BATTERY_LEVEL) ||
                         uuid.equals(GattAttributes.AGE)) {
-                    intent.putExtra(EXTRA_DATA, getValueUINT8(characteristic));
+                    intent.putExtra(EXTRA_DATA, getValueUINT8(characteristic, 0));
                 }
             } catch (NullPointerException e) {
                 intent.putExtra(EXTRA_DATA, readUnknownData(characteristic));
@@ -82,14 +88,14 @@ public class BLEService extends Service{
         sendBroadcast(intent);
     }
 
-    private String getValueUINT16(BluetoothGattCharacteristic characteristic) {
+    private String getValueUINT16(BluetoothGattCharacteristic characteristic, int offset) {
         return String.valueOf(characteristic.getIntValue(
-                BluetoothGattCharacteristic.FORMAT_UINT16, 0));
+                BluetoothGattCharacteristic.FORMAT_UINT16, offset));
     }
 
-    private String getValueUINT8(BluetoothGattCharacteristic characteristic) {
+    private String getValueUINT8(BluetoothGattCharacteristic characteristic, int offset) {
         return String.valueOf(characteristic.getIntValue(
-                BluetoothGattCharacteristic.FORMAT_UINT8, 0));
+                BluetoothGattCharacteristic.FORMAT_UINT8, offset));
     }
 
     private String readUnknownData(BluetoothGattCharacteristic characteristic) {

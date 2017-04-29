@@ -17,7 +17,6 @@ import android.location.Location;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
-import android.support.annotation.IntDef;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -95,7 +94,7 @@ public class BLEDeviceControlService extends Service {
     private void streamData() {
         Log.d(TAG, "Streaming data");
         if (TEST_GMS) {
-            handleData("TEST NAME HERE", String.valueOf(mRandomGenerator.nextInt(180)));
+            handleData("TEST NAME", String.valueOf(mRandomGenerator.nextInt(180)));
         } else {
             if (mGattCharacteristicMap.size() > 0 && mAWSIoTMQTTClient.isConnected()) {
                 mHandler.postDelayed(new Runnable() {
@@ -129,7 +128,7 @@ public class BLEDeviceControlService extends Service {
         }
         double lon = mLastLocation.getLongitude();
         double lat = mLastLocation.getLatitude();
-        String time = ReRideTimeManager.now("GMT+2");
+        String time = ReRideTimeManager.now("GMT+2"); //TODO: Custom time zone
         mReRideJSON.putSensorValue(deviceName, data);
         mReRideJSON.putRiderProperties(time, lon, lat);
         Log.d(TAG, "Sending data package!");
@@ -157,6 +156,10 @@ public class BLEDeviceControlService extends Service {
                         }
                         characteristics.add(gattCharacteristic);
                         mGattCharacteristicMap.put(bluetoothDevice, characteristics);
+                        String unit = GattAttributes.lookupUnit(
+                                gattCharacteristic.getUuid().toString(),
+                                "generic");
+                        mReRideJSON.addSensor(bluetoothDevice.getName(), unit);
                     }
                 }
             }
@@ -217,7 +220,6 @@ public class BLEDeviceControlService extends Service {
             for (String deviceAddress : deviceAddresses) {
                 BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(deviceAddress);
                 mBluetoothDevices.add(device);
-                mReRideJSON.addSensor(device.getName(), "degrees"); //TODO: Custom unit
             }
 
         }

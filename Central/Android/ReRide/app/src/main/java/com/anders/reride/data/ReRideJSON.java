@@ -155,4 +155,8 @@ public class ReRideJSON {
     public JSONObject getRiderProperties() {
         return mRiderProperties;
     }
+
+    public void removeSensor(String sensorId) {
+        mSensors.remove(mSensorIndex.get(sensorId));
+    }
 }

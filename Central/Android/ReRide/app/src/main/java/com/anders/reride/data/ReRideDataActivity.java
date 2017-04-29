@@ -132,7 +132,6 @@ public class ReRideDataActivity extends AppCompatActivity {
         timeField = (TextView) findViewById(R.id.time_value);
 
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.data_recycler_view);
-        recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         try {
             mAdapter = new ViewAdapter(mRiderProperties.getJSONArray(ReRideJSON.SENSORS));

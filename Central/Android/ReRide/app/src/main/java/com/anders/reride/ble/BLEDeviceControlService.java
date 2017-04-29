@@ -319,8 +319,16 @@ public class BLEDeviceControlService extends Service {
                     break;
                 }
                 case BLEService.ACTION_GATT_DISCONNECTED: {
-                    --mConnectedDevices;
                     Log.d(TAG, "GATT disconnected");
+                    --mConnectedDevices;
+                    String address = intent.getStringExtra(BLEService.EXTRA_DEVICE_ADDRESS);
+                    for (BluetoothDevice device : mGattCharacteristicMap.keySet()) {
+                        if (device.getAddress().equals(address)) {
+                            mGattCharacteristicMap.remove(device);
+                            mReRideJSON.removeSensor(device.getName());
+                            break;
+                        }
+                    }
                     break;
                 }
                 case BLEService.ACTION_GATT_SERVICES_DISCOVERED: {

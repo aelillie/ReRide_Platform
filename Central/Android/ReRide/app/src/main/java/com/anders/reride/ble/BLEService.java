@@ -59,6 +59,10 @@ public class BLEService extends Service{
         sendBroadcast(intent);
     }
 
+    private void broadcastUpdate(Intent intent) {
+        sendBroadcast(intent);
+    }
+
     private void broadcastUpdate(final String action, final BluetoothDevice device,
                                  final BluetoothGattCharacteristic characteristic) {
         final Intent intent = new Intent(action);
@@ -209,10 +213,11 @@ public class BLEService extends Service{
                 broadcastUpdate(intentAction);
                 Log.i(TAG, "Connected to GATT server.");
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                intentAction = ACTION_GATT_DISCONNECTED;
+                Intent intent = new Intent(ACTION_GATT_DISCONNECTED);
+                intent.putExtra(EXTRA_DEVICE_ADDRESS, gatt.getDevice().getAddress());
                 connectionState = STATE_DISCONNECTED;
                 Log.i(TAG, "Disconnected from GATT server.");
-                broadcastUpdate(intentAction);
+                broadcastUpdate(intent);
             }
         }
 
@@ -256,4 +261,5 @@ public class BLEService extends Service{
             }
         }
     }
+
 }

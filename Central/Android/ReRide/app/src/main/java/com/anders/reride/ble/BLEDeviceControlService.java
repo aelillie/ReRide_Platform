@@ -128,7 +128,7 @@ public class BLEDeviceControlService extends Service {
         }
         double lon = mLastLocation.getLongitude();
         double lat = mLastLocation.getLatitude();
-        String time = ReRideTimeManager.now("GMT+2"); //TODO: Custom time zone
+        String time = ReRideTimeManager.now();
         mReRideJSON.putSensorValue(deviceName, data == null ? "No data" : data,
                 characteristicName);
         mReRideJSON.putRiderProperties(time, lon, lat);

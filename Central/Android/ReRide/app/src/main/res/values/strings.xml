@@ -52,4 +52,5 @@
     <string name="preference_user_id_default">1234</string>
     <string name="preference_timezone_default">2</string>
     <string name="change_settings">Change settings</string>
+    <string name="label_timezone">Timezone:</string>
 </resources>

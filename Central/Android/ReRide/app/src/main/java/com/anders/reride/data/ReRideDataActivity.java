@@ -96,14 +96,12 @@ public class ReRideDataActivity extends AppCompatActivity {
     }
 
     private String formatTime(String simpleTime) {
-        String time =
-                simpleTime.substring(0, 4) + "." + //Year
-                simpleTime.substring(4, 6) + "." + //Month
-                simpleTime.substring(6, 8) + " " + //Day
-                simpleTime.substring(8, 10) + ":" + //Hour
-                simpleTime.substring(10, 12) + ":" + //Minutes
-                simpleTime.substring(12, 14); //Seconds
-        return time; //YYYY.MM.DD HH:MM:SS
+        return simpleTime.substring(0, 4) + "." + //Year
+        simpleTime.substring(4, 6) + "." + //Month
+        simpleTime.substring(6, 8) + " " + //Day
+        simpleTime.substring(8, 10) + ":" + //Hour
+        simpleTime.substring(10, 12) + ":" + //Minutes
+        simpleTime.substring(12, 14); //YYYY.MM.DD HH:MM:SS
     }
 
     @Override

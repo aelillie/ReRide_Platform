@@ -13,6 +13,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.anders.reride.ble.BLEScanActivity;
 import com.anders.reride.data.MultiRiderActivity;
@@ -30,11 +32,16 @@ public class MainActivity extends AppCompatActivity {
     private static final String PREFERENCE_TIMEZONE =
             "com.anders.reride.PREFERENCE_TIMEZONE";
     private SharedPreferences mPreferences;
+    private Button multiRideButton;
+    private Button dataButton;
+    private Button settingsButton;
+    private Button rideButton;
+    private TextView idText;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_startup);
+        setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_main);
         toolbar.setTitle(R.string.app_name);
         setSupportActionBar(toolbar);
@@ -43,10 +50,10 @@ public class MainActivity extends AppCompatActivity {
         mPreferences = this.getPreferences(Context.MODE_PRIVATE);
         if (mPreferences.contains(PREFERENCE_USER_ID) &&
                 mPreferences.contains(PREFERENCE_TIMEZONE)) {
-            ReRideUserData.USER_ID = mPreferences.getString(PREFERENCE_USER_ID,
+            String userId = mPreferences.getString(PREFERENCE_USER_ID,
                     getResources().getString(R.string.preference_user_id_default));
-            ReRideUserData.TIMEZONE = mPreferences.getString(PREFERENCE_TIMEZONE,
-                    getResources().getString(R.string.preference_timezone_default));
+            idText.setText(userId);
+            updateUserSettings(userId);
         } else {
             signIn();
         }
@@ -54,8 +61,13 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void updateUserSettings(String userId) {
+        ReRideUserData.USER_ID = userId;
+    }
+
     private void initializeUIComponents() {
-        Button rideButton = (Button) findViewById(R.id.button_start_ride);
+        idText = (TextView) findViewById(R.id.id_text);
+        rideButton = (Button) findViewById(R.id.button_start_ride);
         rideButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -63,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
                         BLEScanActivity.class));
             }
         });
-        Button multiRideButton = (Button) findViewById(R.id.button_multi_rider);
+        multiRideButton = (Button) findViewById(R.id.button_multi_rider);
         multiRideButton.setEnabled(false); //TODO: Implement activity
         multiRideButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -72,7 +84,7 @@ public class MainActivity extends AppCompatActivity {
                         MultiRiderActivity.class));
             }
         });
-        Button dataButton = (Button) findViewById(R.id.button_rider_data);
+        dataButton = (Button) findViewById(R.id.button_rider_data);
         dataButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -80,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
                         ReRideHistoryDataActivity.class));
             }
         });
-        Button settingsButton = (Button) findViewById(R.id.button_change_settings);
+        settingsButton = (Button) findViewById(R.id.button_change_settings);
         settingsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -89,30 +101,53 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void announce(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+    }
+
+    private void enableButtons(boolean enable) {
+        rideButton.setEnabled(enable);
+        multiRideButton.setEnabled(enable);
+        dataButton.setEnabled(enable);
+    }
+
 
     private void signIn() {
         final View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_signin, null);
-        final String[] userId = new String[1];
-        final String[] timeZone = new String[1];
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setView(dialogView);
         builder.setPositiveButton(R.string.sign_in, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-                userId[0] = ((EditText) dialogView.findViewById(R.id.username))
+                String userId = ((EditText) dialogView.findViewById(R.id.username))
                         .getText().toString();
-                timeZone[0] = ((EditText) dialogView.findViewById(R.id.timeZone))
-                        .getText().toString();
+                boolean success = saveSettings(userId);
+                if (!success) {
+                    builder.create().show();
+                } else {
+                    announce("Success");
+                    enableButtons(true);
+                }
             }
         });
         builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
-                finish();
+                enableButtons(false);
             }
         });
         builder.create().show();
+
+    }
+
+    private boolean saveSettings(String userId) {
         SharedPreferences.Editor editor = mPreferences.edit();
-        editor.putString(PREFERENCE_USER_ID, userId[0]);
-        editor.putString(PREFERENCE_TIMEZONE, timeZone[0]);
+        if (userId.isEmpty()) {
+            announce("Please enter all settings");
+            return false;
+        }
+        editor.putString(PREFERENCE_USER_ID, userId);
         editor.apply(); //In background
+        idText.setText(userId);
+        updateUserSettings(userId);
+        return true;
     }
 }

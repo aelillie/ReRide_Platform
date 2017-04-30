@@ -21,6 +21,7 @@ import android.widget.Toast;
 import com.anders.reride.R;
 import com.anders.reride.aws.AWSApiClient;
 import com.anders.reride.ble.BLEDeviceControlService;
+import com.anders.reride.gms.ReRideTimeManager;
 import com.anders.reride.model.ReRideDataItemsItemPayload;
 import com.anders.reride.model.ReRideDataItemsItemPayloadSensorsItem;
 
@@ -40,9 +41,9 @@ public class ReRideHistoryDataActivity extends AppCompatActivity {
     private List<ReRideDataItemsItemPayloadSensorsItem> mRiderData;
 
     private String mId = ReRideUserData.USER_ID;
-    private String mTimeZone = ReRideUserData.TIMEZONE;
-    private boolean mEnabled;
+    private String mTimeZone = ReRideTimeManager.TIMEZONE;
 
+    private boolean mEnabled;
     private TextView mIdText;
     private TextView mTimeText;
     private TextView mLatText;
@@ -153,10 +154,19 @@ public class ReRideHistoryDataActivity extends AppCompatActivity {
         mRiderData.addAll(data.getSensors());
         mAdapter.notifyDataSetChanged();
         mIdText.setText(mId);
-        mTimeText.setText(data.getTime());
+        mTimeText.setText(formatTime(data.getTime()));
         mLonText.setText(data.getLongitude());
         mLatText.setText(data.getLatitude());
         Log.d(TAG, "Updated UI with data");
+    }
+
+    private String formatTime(String simpleTime) {
+        return simpleTime.substring(0, 4) + "." + //Year
+                simpleTime.substring(4, 6) + "." + //Month
+                simpleTime.substring(6, 8) + " " + //Day
+                simpleTime.substring(8, 10) + ":" + //Hour
+                simpleTime.substring(10, 12) + ":" + //Minutes
+                simpleTime.substring(12, 14); //YYYY.MM.DD HH:MM:SS
     }
 
     private class ViewAdapter extends RecyclerView.Adapter<ViewAdapter.ItemViewHolder> {

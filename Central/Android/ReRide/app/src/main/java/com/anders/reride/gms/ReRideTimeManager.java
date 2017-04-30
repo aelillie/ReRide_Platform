@@ -1,5 +1,7 @@
 package com.anders.reride.gms;
 
+import com.anders.reride.data.ReRideUserData;
+
 import java.util.Calendar;
 import java.util.TimeZone;
 
@@ -9,22 +11,25 @@ import java.util.TimeZone;
 
 public class ReRideTimeManager {
 
+    public static final String TIMEZONE =
+            String.valueOf(
+                    TimeZone.getDefault().getOffset(getNow().getTimeInMillis())/1000/60/60
+            );
+
     /**
      * Get current date and time
-     * @param gmtTimeZone The current time zone (GMT)
      * @return Truncated datetime string without spaces in the format (YYYYMMDDHHMMSS)
      */
-    public static String now(String gmtTimeZone) {
-        return getDateString(gmtTimeZone)+getTimeString(gmtTimeZone);
+    public static String now() {
+        Calendar now = getNow();
+        return getDateString(now)+getTimeString(now);
     }
 
     /**
      * Get current time
-     * @param gmtTimeZone The current time zone (GMT)
      * @return Truncated time string without spaces in the format (HHMMSS)
      */
-    private static String getTimeString(String gmtTimeZone) {
-        Calendar now = getNow(gmtTimeZone);
+    private static String getTimeString(Calendar now) {
         return format(now.get(Calendar.HOUR_OF_DAY))
                 + format(now.get(Calendar.MINUTE))
                 + format(now.get(Calendar.SECOND));
@@ -32,18 +37,16 @@ public class ReRideTimeManager {
 
     /**
      * Get current date
-     * @param gmtTimeZone The current time zone (GMT)
      * @return Truncated date string without spaces in the format (YYYYMMDD)
      */
-    private static String getDateString(String gmtTimeZone) {
-        Calendar now = getNow(gmtTimeZone);
+    private static String getDateString(Calendar now) {
         return now.get(Calendar.YEAR)
                 + format(now.get(Calendar.MONTH)+1)
                 + format(now.get(Calendar.DAY_OF_MONTH));
     }
 
-    private static Calendar getNow(String gmtTimeZone) {
-        return Calendar.getInstance(TimeZone.getTimeZone(gmtTimeZone)); //Like GMT+2
+    private static Calendar getNow() {
+        return Calendar.getInstance(TimeZone.getDefault()); //Like GMT+2
     }
 
     /**

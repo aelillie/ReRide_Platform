@@ -5,6 +5,5 @@ package com.anders.reride.data;
  */
 
 public class ReRideUserData {
-    public static String TIMEZONE;
     public static String USER_ID;
 }

@@ -13,6 +13,7 @@ String test, test1, test2;
 
 void setup() {
   Serial.begin(9600);
+  while(!Serial);
   blePeripheral.setLocalName("ReRide");
   blePeripheral.setAdvertisedServiceUuid(pressureSensorService.uuid());
   blePeripheral.addAttribute(pressureSensorService);

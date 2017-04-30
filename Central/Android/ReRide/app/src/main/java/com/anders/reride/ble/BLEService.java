@@ -80,6 +80,7 @@ public class BLEService extends Service{
                     intent.putExtra(EXTRA_DATA, getValueUINT8(characteristic, 0));
                 }
             } catch (NullPointerException e) {
+                Log.d(TAG, e.getMessage());
                 intent.putExtra(EXTRA_DATA, readUnknownData(characteristic));
             }
         }
@@ -87,8 +88,9 @@ public class BLEService extends Service{
     }
 
     private String getValueUINT16(BluetoothGattCharacteristic characteristic, int offset) {
-        return String.valueOf(characteristic.getIntValue(
-                BluetoothGattCharacteristic.FORMAT_UINT16, offset));
+        int value = characteristic.getIntValue(
+                BluetoothGattCharacteristic.FORMAT_UINT16, offset);
+        return String.valueOf(value);
     }
 
     private String getValueUINT8(BluetoothGattCharacteristic characteristic, int offset) {

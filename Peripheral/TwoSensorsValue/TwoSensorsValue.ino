@@ -3,12 +3,13 @@
 BLEPeripheral blePeripheral;
 BLEService pressureSensorService = BLEService ("181C");
 
-BLEUnsignedCharCharacteristic sensorOneReadingChar("2A80", BLERead | BLENotify); //Age
+BLEUnsignedCharCharacteristic sensorOneReadingChar("2A80", BLERead | BLEWrite); //Age
 
-BLEUnsignedCharCharacteristic sensorTwoReadingChar("2A98", BLERead | BLENotify); //Weight
+BLEUnsignedIntCharacteristic sensorTwoReadingChar("2A98", BLERead | BLEWrite); //Weight
 
 //int fakeSensorValue = 0;
-int sensorOne, sensorTwo;
+uint8_t sensorOne; 
+uint16_t sensorTwo;
 String test, test1, test2;
 
 void setup() {

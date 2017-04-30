@@ -20,16 +20,13 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.anders.reride.MainActivity;
+import com.anders.reride.ble.BLEScanActivity;
 import com.anders.reride.R;
 import com.anders.reride.ble.BLEDeviceControlService;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Shows current data
@@ -75,7 +72,7 @@ public class ReRideDataActivity extends AppCompatActivity {
     };
     private ViewAdapter mAdapter;
     private JSONObject mRiderProperties;
-    private String mId;
+    private String mId = ReRideUserData.USER_ID;
 
     private void announce(String msg) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
@@ -119,9 +116,6 @@ public class ReRideDataActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-        Intent intent = getIntent();
-        mId = intent.getStringExtra(MainActivity.EXTRAS_USER_ID);
-
         mReRideJson = ReRideJSON.getInstance(mId);
         mRiderProperties = mReRideJson.getRiderProperties();
 
@@ -146,14 +140,14 @@ public class ReRideDataActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
+    protected void onResume() {
+        super.onResume();
         registerReceiver(gattUpdateReceiver, makeGattUpdateIntentFilter());
     }
 
     @Override
-    protected void onStop() {
-        super.onStop();
+    protected void onPause() {
+        super.onPause();
         unregisterReceiver(gattUpdateReceiver);
     }
 

@@ -35,16 +35,12 @@ public class ReRideHistoryDataActivity extends AppCompatActivity {
     private static final String TAG = ReRideHistoryDataActivity.class.getSimpleName();
     public static final boolean DEBUG_MODE = false;
 
-    public static final String EXTRAS_USER_ID =
-            "com.anders.reride.data.EXTRAS_USER_ID";
-
     private AWSApiClient mAWSApiClient;
     private ViewAdapter mAdapter;
     private List<ReRideDataItemsItemPayloadSensorsItem> mRiderData;
-    private Handler mHandler;
 
-    private String mId;
-    private String mTimeZone = "2"; //TODO: Necessary?
+    private String mId = ReRideUserData.USER_ID;
+    private String mTimeZone = ReRideUserData.TIMEZONE;
     private boolean mEnabled;
 
     private TextView mIdText;
@@ -62,10 +58,7 @@ public class ReRideHistoryDataActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
-        Intent intent = getIntent();
-        mId = intent.getStringExtra(EXTRAS_USER_ID);
         mAWSApiClient = new AWSApiClient();
-        mHandler = new Handler();
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.historical_data_recycler_view);
         recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));

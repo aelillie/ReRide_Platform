@@ -24,6 +24,7 @@ import com.anders.reride.R;
 import com.anders.reride.aws.AWSIoTShadowClient;
 import com.anders.reride.aws.AWSIoTMQTTClient;
 import com.anders.reride.data.ReRideJSON;
+import com.anders.reride.data.ReRideUserData;
 import com.anders.reride.gms.ReRideLocationManager;
 import com.anders.reride.gms.ReRideTimeManager;
 
@@ -42,9 +43,6 @@ public class BLEDeviceControlService extends Service {
 
     public static final String EXTRAS_DEVICE_ADDRESSES =
             "com.anders.reride.ble.DEVICE_ADDRESSES";
-    public static final String EXTRAS_USER_ID =
-            "com.anders.reride.ble.EXTRAS_USER_ID";
-
     public static final String ACTION_DATA_UPDATE =
             "com.anders.reride.ble.ACTION_DATA_UPDATE";
 
@@ -54,7 +52,7 @@ public class BLEDeviceControlService extends Service {
     //Debug settings
     public static boolean TEST_GMS = false;
 
-    private String mUserId;
+    private String mUserId = ReRideUserData.USER_ID;
     private Location mLastLocation;
 
     private BluetoothGattCharacteristic mNotifyCharacteristic;
@@ -209,7 +207,6 @@ public class BLEDeviceControlService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        mUserId = intent.getStringExtra(EXTRAS_USER_ID);
         mReRideJSON = ReRideJSON.getInstance(mUserId);
 
         if (TEST_GMS) {

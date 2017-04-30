@@ -72,17 +72,17 @@ public class ReRideJSON {
     private Map<String, Integer> mSensorIndex;
     private int mCurrentIndex;
 
-    public static final String LATITUDE = "latitude";
-    public static final String LONGITUDE = "longitude";
-    public static final String TIME = "time";
-    public static final String SENSORS = "sensors";
-    public static final String SENSOR_ID = "sensorId";
-    public static final String CHARACTERISTIC_NAME = "name";
-    public static final String SENSOR_UNIT = "unit";
-    public static final String ID = "id";
-    public static final String REPORTED = "reported";
-    public static final String STATE = "state";
-    public static final String VALUE = "value";
+    static final String LATITUDE = "latitude";
+    static final String LONGITUDE = "longitude";
+    static final String TIME = "time";
+    static final String SENSORS = "sensors";
+    static final String SENSOR_ID = "sensorId";
+    static final String CHARACTERISTIC_NAME = "name";
+    static final String SENSOR_UNIT = "unit";
+    static final String ID = "id";
+    static final String REPORTED = "reported";
+    static final String STATE = "state";
+    static final String VALUE = "value";
 
     private static ReRideJSON mReRideJSON;
 

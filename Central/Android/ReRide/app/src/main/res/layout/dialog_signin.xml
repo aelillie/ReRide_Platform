@@ -4,12 +4,15 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent">
 
-    <ImageView
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="64dp"
         android:scaleType="center"
         android:background="#FFFFBB33"
-        android:contentDescription="@string/app_name" />
+        android:textStyle="bold"
+        android:gravity="center"
+        android:textSize="50sp"
+        android:text="@string/login"/>
     <EditText
         android:id="@+id/username"
         android:inputType="textEmailAddress"
@@ -20,5 +23,15 @@
         android:layout_marginRight="4dp"
         android:layout_marginBottom="4dp"
         android:hint="@string/username" />
+    <EditText
+        android:id="@+id/timeZone"
+        android:inputType="number"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="4dp"
+        android:layout_marginBottom="4dp"
+        android:hint="@string/timezone_hint" />
 
 </LinearLayout>

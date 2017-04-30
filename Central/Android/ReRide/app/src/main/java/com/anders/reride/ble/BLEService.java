@@ -26,16 +26,9 @@ import java.util.UUID;
 
 public class BLEService extends Service{
     private static final String TAG = BLEService.class.getSimpleName();
-    private static final int STATE_DISCONNECTED = 0;
-    private static final int STATE_CONNECTING = 1;
-    private static final int STATE_CONNECTED = 2;
     private final IBinder binder = new LocalBinder();
 
-    private List<BluetoothGatt> mBluetoothGattAPIs;
-
-    private List<String> mBluetoothDeviceAddresses;
     private Map<String, BluetoothGatt> mBluetoothGattAPIMap;
-    private int connectionState = STATE_DISCONNECTED;
 
     //GATT actions
     public static final String ACTION_GATT_CONNECTED =
@@ -131,8 +124,6 @@ public class BLEService extends Service{
     @Override
     public void onCreate() {
         super.onCreate();
-        mBluetoothDeviceAddresses = new ArrayList<>();
-        mBluetoothGattAPIs = new ArrayList<>();
         mBluetoothGattAPIMap = new HashMap<>();
     }
 
@@ -155,7 +146,6 @@ public class BLEService extends Service{
             && mBluetoothGattAPIMap.containsKey(bleDeviceAddress)) {
             Log.d(TAG, "Trying to use an existing bluetooth gatt for connection.");
             if (mBluetoothGattAPIMap.get(bleDeviceAddress).connect()) {
-                connectionState = STATE_CONNECTING;
                 return true;
             } else return false;
         }
@@ -163,7 +153,6 @@ public class BLEService extends Service{
         mBluetoothGattAPIMap.put(bleDeviceAddress,
                 bluetoothDevice.connectGatt(this, false, new BLEGattCallback()));
         Log.d(TAG, "Trying to create a new connection.");
-        connectionState = STATE_CONNECTING;
         return true;
 
     }
@@ -213,13 +202,11 @@ public class BLEService extends Service{
             String intentAction;
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 intentAction = ACTION_GATT_CONNECTED;
-                connectionState = STATE_CONNECTED;
                 broadcastUpdate(intentAction);
                 Log.i(TAG, "Connected to GATT server.");
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Intent intent = new Intent(ACTION_GATT_DISCONNECTED);
                 intent.putExtra(EXTRA_DEVICE_ADDRESS, gatt.getDevice().getAddress());
-                connectionState = STATE_DISCONNECTED;
                 Log.i(TAG, "Disconnected from GATT server.");
                 broadcastUpdate(intent);
             }

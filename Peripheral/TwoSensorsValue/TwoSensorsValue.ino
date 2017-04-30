@@ -13,12 +13,14 @@ String test, test1, test2;
 
 void setup() {
   Serial.begin(9600);
-  while(!Serial);
   blePeripheral.setLocalName("ReRide");
   blePeripheral.setAdvertisedServiceUuid(pressureSensorService.uuid());
   blePeripheral.addAttribute(pressureSensorService);
   blePeripheral.addAttribute(sensorOneReadingChar);
   blePeripheral.addAttribute(sensorTwoReadingChar);
+  sensorTwoReadingChar.setValue(sensorTwo);
+  sensorOneReadingChar.setValue(sensorOne);
+  while(!Serial);
   blePeripheral.begin();
   Serial.println("Bluetooth device active, waiting for connections...");
 }

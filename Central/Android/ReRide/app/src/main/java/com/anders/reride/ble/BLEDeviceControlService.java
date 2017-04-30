@@ -58,7 +58,6 @@ public class BLEDeviceControlService extends Service {
     private BLEService mBleService;
     private List<BluetoothDevice> mBluetoothDevices;
     private Map<BluetoothDevice, List<BluetoothGattCharacteristic>> mGattCharacteristicMap;
-    private int mConnectedDevices;
     private Handler mHandler;
 
     private final IBinder binder = new LocalBinder();
@@ -87,24 +86,24 @@ public class BLEDeviceControlService extends Service {
     private BluetoothAdapter mBluetoothAdapter;
     private ReRideLocationManager mLocationManager;
     private Random mRandomGenerator; //For testing
+    private Runnable mStreamer = new Runnable() {
+        @Override
+        public void run() {
+            streamData();
+        }
+    };
 
 
     private void streamData() {
-        Log.d(TAG, "Streaming data");
         if (TEST_GMS) {
-            handleData("TEST NAME", String.valueOf(mRandomGenerator.nextInt(180)),
-                    "Apparent Wind Direction");
+            handleData("2a73", String.valueOf(mRandomGenerator.nextInt(180)));
         } else {
             if (mGattCharacteristicMap.size() > 0 && mAWSIoTMQTTClient.isConnected()) {
-                mHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        streamData();
-                    }
-                }, UPDATE_FREQUENCY);
                 for (final BluetoothDevice device : mGattCharacteristicMap.keySet()) {
                     readCharacteristics(device);
                 }
+                publish();
+                mHandler.postDelayed(mStreamer, UPDATE_FREQUENCY);
             }
         }
     }
@@ -115,9 +114,8 @@ public class BLEDeviceControlService extends Service {
         }
     }
 
-    private void handleData(String deviceName, String data, String characteristicUuid) {
+    private void handleData(String characteristicUuid, String data) {
         Log.d(TAG, "Handling data");
-        Intent intent = new Intent(ACTION_DATA_UPDATE);
         if (mLocationManager.isConnected()) {
             Location location = mLocationManager.getLocation();
             if (location != null) mLastLocation = location;
@@ -128,15 +126,17 @@ public class BLEDeviceControlService extends Service {
         double lon = mLastLocation.getLongitude();
         double lat = mLastLocation.getLatitude();
         String time = ReRideTimeManager.now();
-        mReRideJSON.putSensorValue(deviceName, data == null ? "No data" : data,
-                characteristicUuid);
+        mReRideJSON.putSensorValue(characteristicUuid, data == null ? "No data" : data);
         mReRideJSON.putRiderProperties(time, lon, lat);
-        Log.d(TAG, "Sending data package!");
-        mAWSIoTMQTTClient.publish(mReRideJSON);
-        sendBroadcast(intent);
     }
 
-    private void searchGattServices(BluetoothDevice bluetoothDevice) {
+    private void publish() {
+        Log.d(TAG, "Sending data package!");
+        mAWSIoTMQTTClient.publish(mReRideJSON);
+        sendBroadcast(new Intent(ACTION_DATA_UPDATE));
+    }
+
+    private void searchGattCharacteristics(BluetoothDevice bluetoothDevice) {
         List<BluetoothGattService> supportedGattServices =
                 mBleService.getSupportedGattServices(bluetoothDevice);
         if (supportedGattServices == null) return;
@@ -156,10 +156,9 @@ public class BLEDeviceControlService extends Service {
                         }
                         characteristics.add(gattCharacteristic);
                         mGattCharacteristicMap.put(bluetoothDevice, characteristics);
-                        String unit = GattAttributes.lookupUnit(
-                                gattCharacteristic.getUuid().toString(),
-                                "generic");
-                        mReRideJSON.addSensor(bluetoothDevice.getName(), unit);
+                        mReRideJSON.addSensor(bluetoothDevice.getName(),
+                                GattAttributes.lookupUnit(uuid, "generic"),
+                                GattAttributes.shortUuidString(uuid));
                     }
                 }
             }
@@ -171,7 +170,7 @@ public class BLEDeviceControlService extends Service {
         if (mBleService != null) {
             for (final BluetoothDevice device : mBluetoothDevices) {
                 final boolean result = mBleService.connect(device);
-                Log.d(TAG, "Connect request result=" + result);
+                Log.d(TAG, "Connect " + device.getAddress() + " request result = " + result);
             }
         }
     }
@@ -211,7 +210,7 @@ public class BLEDeviceControlService extends Service {
 
         if (TEST_GMS) {
             mRandomGenerator = new Random();
-            mReRideJSON.addSensor("Flex sensor", "degrees");
+            mReRideJSON.addSensor("Flex sensor", "degrees", "2a73");
         } else {
             //Receive devices info
             List<String> deviceAddresses = intent.getStringArrayListExtra(EXTRAS_DEVICE_ADDRESSES);
@@ -274,6 +273,7 @@ public class BLEDeviceControlService extends Service {
     private void readCharacteristics(BluetoothDevice device) {
         for (BluetoothGattCharacteristic characteristic : mGattCharacteristicMap.get(device)) {
             readCharacteristic(device, characteristic);
+            //Would make sense to sleep here
         }
     }
 
@@ -305,14 +305,15 @@ public class BLEDeviceControlService extends Service {
     }
 
     private class GattBroadcastReceiver extends BroadcastReceiver {
+        private int connectedDevices;
         private int servicesDiscovered;
         @Override
         public void onReceive(Context context, Intent intent) {
             final String action = intent.getAction();
             switch (action) {
                 case BLEService.ACTION_GATT_CONNECTED: {
-                    ++mConnectedDevices;
-                    if (mConnectedDevices == mBluetoothDevices.size()) {
+                    ++connectedDevices;
+                    if (connectedDevices == mBluetoothDevices.size()) {
                         Log.d(TAG, "All connected");
                         discoverServices();
                     }
@@ -320,7 +321,7 @@ public class BLEDeviceControlService extends Service {
                 }
                 case BLEService.ACTION_GATT_DISCONNECTED: {
                     Log.d(TAG, "GATT disconnected");
-                    --mConnectedDevices;
+                    --connectedDevices;
                     String address = intent.getStringExtra(BLEService.EXTRA_DEVICE_ADDRESS);
                     for (BluetoothDevice device : mGattCharacteristicMap.keySet()) {
                         if (device.getAddress().equals(address)) {
@@ -332,17 +333,18 @@ public class BLEDeviceControlService extends Service {
                     break;
                 }
                 case BLEService.ACTION_GATT_SERVICES_DISCOVERED: {
-                    if (++servicesDiscovered == mConnectedDevices) {
+                    if (++servicesDiscovered == connectedDevices) {
                         Log.d(TAG, "All services discovered");
                         for (final BluetoothDevice device : mBluetoothDevices) {
-                            searchGattServices(device);
+                            searchGattCharacteristics(device);
                         }
-                        mHandler.postDelayed(new Runnable() {
+                        streamData();
+                        /*mHandler.postDelayed(new Runnable() {
                             @Override
                             public void run() {
                                 streamData();
                             }
-                        }, SLEEP_TIME); //ms
+                        }, SLEEP_TIME); //ms*/
                     }
                     break;
                 }
@@ -351,10 +353,7 @@ public class BLEDeviceControlService extends Service {
                     String characteristicUuid = intent.getStringExtra(
                             BLEService.EXTRA_CHARACTERISTIC_UUID);
                     Log.d(TAG, "Data: " + data);
-                    String deviceAddress = intent.getStringExtra(BLEService.EXTRA_DEVICE_ADDRESS);
-                    handleData(mBluetoothAdapter.getRemoteDevice(deviceAddress).getName(),
-                            data,
-                            characteristicUuid);
+                    handleData(characteristicUuid, data);
                     break;
                 }
                 case BLEService.ACTION_WRITE: {

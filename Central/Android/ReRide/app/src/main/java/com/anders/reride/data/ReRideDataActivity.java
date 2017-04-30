@@ -87,8 +87,7 @@ public class ReRideDataActivity extends AppCompatActivity {
                     timeField.setText(formatTime(mRiderProperties.getString(ReRideJSON.TIME)));
                     mAdapter.notifyDataSetChanged(); //Update sensor values
                 } catch (JSONException e) {
-                    announce("Data could not be fetched!");
-                    e.printStackTrace();
+                    Log.d(TAG, e.getMessage());
                 }
             }
         });
@@ -178,8 +177,7 @@ public class ReRideDataActivity extends AppCompatActivity {
                 holder.characteristicName.setText(sensorData.getString(
                         ReRideJSON.CHARACTERISTIC));
             } catch (JSONException e) {
-                announce(e.getMessage());
-                e.printStackTrace();
+                Log.d(TAG, e.getMessage());
             }
         }
 

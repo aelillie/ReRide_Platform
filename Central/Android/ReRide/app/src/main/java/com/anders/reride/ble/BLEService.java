@@ -56,11 +56,12 @@ public class BLEService extends Service{
         sendBroadcast(intent);
     }
 
-    private void broadcastUpdate(final String action, final BluetoothDevice device,
+    private void broadcastUpdate(final String action,
                                  final BluetoothGattCharacteristic characteristic) {
         final Intent intent = new Intent(action);
-        intent.putExtra(EXTRA_DEVICE_ADDRESS, device.getAddress());
         String uuid = characteristic.getUuid().toString();
+        intent.putExtra(EXTRA_CHARACTERISTIC_UUID,
+                GattAttributes.shortUuidString(characteristic.getUuid()));
         if (!GattAttributes.hasAttribute(uuid)) {
             intent.putExtra(EXTRA_DATA, readUnknownData(characteristic));
         } else {
@@ -82,8 +83,6 @@ public class BLEService extends Service{
                 intent.putExtra(EXTRA_DATA, readUnknownData(characteristic));
             }
         }
-        intent.putExtra(EXTRA_CHARACTERISTIC_UUID,
-                GattAttributes.shortUuidString(characteristic.getUuid()));
         sendBroadcast(intent);
     }
 
@@ -226,7 +225,7 @@ public class BLEService extends Service{
         public void onCharacteristicRead(BluetoothGatt gatt,
                                          BluetoothGattCharacteristic characteristic, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                broadcastUpdate(ACTION_DATA_AVAILABLE, gatt.getDevice(), characteristic);
+                broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
             }
         }
 
@@ -235,7 +234,7 @@ public class BLEService extends Service{
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
-            broadcastUpdate(ACTION_DATA_AVAILABLE, gatt.getDevice(), characteristic);
+            broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
         }
 
         @Override

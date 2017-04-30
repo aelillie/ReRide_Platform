@@ -70,6 +70,10 @@ class GattAttributes {
     }
 
     static String shortUuidString(UUID uuid) {
-        return uuid.toString().substring(4, 8);
+        return shortUuidString(uuid.toString());
+    }
+
+    static String shortUuidString(String uuid) {
+        return uuid.substring(4, 8);
     }
 }

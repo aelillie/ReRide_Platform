@@ -1,5 +1,7 @@
 package com.anders.reride.data;
 
+import android.util.Log;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -65,6 +67,7 @@ import java.util.Map;
  */
 
 public class ReRideJSON {
+    private static final String TAG = ReRideJSON.class.getSimpleName();
     private JSONObject mState;
     private JSONObject mRecorded;
     private JSONObject mRiderProperties;
@@ -103,12 +106,13 @@ public class ReRideJSON {
         }
     }
 
-    public boolean addSensor(String sensorName, String unit) {
+    public boolean addSensor(String sensorName, String unit, String characteristicUuid) {
         try {
             JSONObject sensor = new JSONObject();
             sensor.put(SENSOR_NAME, sensorName);
             sensor.put(SENSOR_UNIT, unit);
-            mSensorIndex.put(sensorName, mCurrentIndex);
+            sensor.put(CHARACTERISTIC, characteristicUuid);
+            mSensorIndex.put(characteristicUuid, mCurrentIndex);
             mSensors.put(mCurrentIndex, sensor);
             mCurrentIndex++;
             return true;
@@ -141,11 +145,10 @@ public class ReRideJSON {
         }
     }
 
-    public boolean putSensorValue(String sensorName, String value, String characteristicUuid) {
+    public boolean putSensorValue(String characteristicUuid, String value) {
         try {
-            JSONObject sensor = mSensors.getJSONObject(mSensorIndex.get(sensorName));
+            JSONObject sensor = mSensors.getJSONObject(mSensorIndex.get(characteristicUuid));
             sensor.put(VALUE, value);
-            sensor.put(CHARACTERISTIC, characteristicUuid);
             return true;
         } catch (JSONException e) {
             e.printStackTrace();
@@ -162,12 +165,31 @@ public class ReRideJSON {
     }
 
     public void removeSensor(String sensorName) {
-        mSensors.remove(mSensorIndex.get(sensorName));
+        try {
+            for (int i = 0; i < mSensors.length(); i++) {
+                JSONObject sensor = mSensors.getJSONObject(i);
+                if (sensor.getString(SENSOR_NAME).equals(sensorName)) {
+                    removeSensor(i, sensor.getString(CHARACTERISTIC));
+                }
+            }
+        } catch (JSONException e) {
+            Log.d(TAG, e.getMessage());
+        }
+    }
+
+    private void removeSensor(int index, String characteristic) {
+        mSensors.remove(index);
+        mSensorIndex.remove(characteristic);
+        mCurrentIndex--;
     }
 
     public void clear() {
-        for (String sensorName : mSensorIndex.keySet()) {
-            removeSensor(sensorName);
+        for (int i = 0; i < mSensors.length(); i++) {
+            try {
+                removeSensor(i, mSensors.getJSONObject(i).getString(CHARACTERISTIC));
+            } catch (JSONException e) {
+                Log.d(TAG, e.getMessage());
+            }
         }
         mState.remove(STATE);
         mRecorded.remove(RECORDED);

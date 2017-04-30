@@ -109,7 +109,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void enableButtons(boolean enable) {
         rideButton.setEnabled(enable);
-        multiRideButton.setEnabled(enable);
+        //multiRideButton.setEnabled(enable);
         dataButton.setEnabled(enable);
     }
 

@@ -268,11 +268,11 @@ public class BLEDeviceControlService extends Service {
             int p = descriptor.getPermissions();
             byte[] val = descriptor.getValue();
             if (uuid.equals(GattAttributes.CLIENT_CHARACTERISTIC_CONFIGURATION)){
-                /*descriptor.setValue(
+                descriptor.setValue(
                         BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                 if (!mBleService.writeDescriptor(device, descriptor)) {
                     Log.d(TAG, "Unable to write descriptor");
-                }*/
+                }
                 break;
             }
         }
@@ -280,7 +280,7 @@ public class BLEDeviceControlService extends Service {
 
     private void readCharacteristics(BluetoothDevice device) {
         for (BluetoothGattCharacteristic characteristic : mGattCharacteristicMap.get(device)) {
-            //if (characteristic.getUuid().toString().equals(GattAttributes.AGE)) continue;
+            if (characteristic.getUuid().toString().equals(GattAttributes.AGE)) continue;
             //enableNotification(device, characteristic);
             readCharacteristic(device, characteristic);
             //Would make sense to sleep here

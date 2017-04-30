@@ -84,18 +84,23 @@ public class BLEService extends Service{
                 intent.putExtra(EXTRA_DATA, readUnknownData(characteristic));
             }
         }
+        Log.d(TAG, "Broadcasting data");
         sendBroadcast(intent);
     }
 
     private String getValueUINT16(BluetoothGattCharacteristic characteristic, int offset) {
-        int value = characteristic.getIntValue(
-                BluetoothGattCharacteristic.FORMAT_UINT16, offset);
+        int value = characteristic.getValue()[0];
+//        int value = characteristic.getIntValue(
+//                BluetoothGattCharacteristic.FORMAT_UINT16, offset);
+        Log.d(TAG, "DATA: " + value);
         return String.valueOf(value);
     }
 
     private String getValueUINT8(BluetoothGattCharacteristic characteristic, int offset) {
-        return String.valueOf(characteristic.getIntValue(
-                BluetoothGattCharacteristic.FORMAT_UINT8, offset));
+        int value = characteristic.getIntValue(
+                BluetoothGattCharacteristic.FORMAT_UINT8, offset);
+        Log.d(TAG, "DATA: " + value);
+        return String.valueOf(value);
     }
 
     private String readUnknownData(BluetoothGattCharacteristic characteristic) {
@@ -227,6 +232,7 @@ public class BLEService extends Service{
         public void onCharacteristicRead(BluetoothGatt gatt,
                                          BluetoothGattCharacteristic characteristic, int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.d(TAG, "Found data!");
                 broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
             }
         }

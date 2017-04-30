@@ -27,8 +27,8 @@ import java.util.Map;
                      "items": {
                          "type": "object",
                          "properties": {
-                             "sensorId": { "type" : "string" },
                              "name": { "type" : "string" },
+                             "characteristic": { "type" : "string" },
                              "value": { "type" : "string" },
                              "unit": { "type" : "string" }
                          },
@@ -51,8 +51,8 @@ import java.util.Map;
              "time": "20170426123500",
              "sensors": [
                  {
-                     "sensorId": "flex sensor",
-                     "Apparent Wind Direction",
+                     "name": "flex sensor",
+                     "characteristic": "Apparent Wind Direction",
                      "value": "45",
                      "unit": "degrees"
                  }
@@ -76,11 +76,11 @@ public class ReRideJSON {
     static final String LONGITUDE = "longitude";
     static final String TIME = "time";
     static final String SENSORS = "sensors";
-    static final String SENSOR_ID = "sensorId";
-    static final String CHARACTERISTIC_NAME = "name";
+    static final String SENSOR_NAME = "name";
+    static final String CHARACTERISTIC = "characteristic";
     static final String SENSOR_UNIT = "unit";
     static final String ID = "id";
-    static final String REPORTED = "reported";
+    static final String RECORDED = "recorded";
     static final String STATE = "state";
     static final String VALUE = "value";
 
@@ -96,19 +96,19 @@ public class ReRideJSON {
         try {
             mRiderProperties.put(SENSORS, mSensors);
             mRiderProperties.put(ID, id);
-            mRecorded.put(REPORTED, mRiderProperties);
+            mRecorded.put(RECORDED, mRiderProperties);
             mState.put(STATE, mRecorded);
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
-    public boolean addSensor(String sensorId, String unit) {
+    public boolean addSensor(String sensorName, String unit) {
         try {
             JSONObject sensor = new JSONObject();
-            sensor.put(SENSOR_ID, sensorId);
+            sensor.put(SENSOR_NAME, sensorName);
             sensor.put(SENSOR_UNIT, unit);
-            mSensorIndex.put(sensorId, mCurrentIndex);
+            mSensorIndex.put(sensorName, mCurrentIndex);
             mSensors.put(mCurrentIndex, sensor);
             mCurrentIndex++;
             return true;
@@ -141,11 +141,11 @@ public class ReRideJSON {
         }
     }
 
-    public boolean putSensorValue(String sensorId, String value, String characteristicName) {
+    public boolean putSensorValue(String sensorName, String value, String characteristicUuid) {
         try {
-            JSONObject sensor = mSensors.getJSONObject(mSensorIndex.get(sensorId));
+            JSONObject sensor = mSensors.getJSONObject(mSensorIndex.get(sensorName));
             sensor.put(VALUE, value);
-            sensor.put(CHARACTERISTIC_NAME, characteristicName);
+            sensor.put(CHARACTERISTIC, characteristicUuid);
             return true;
         } catch (JSONException e) {
             e.printStackTrace();
@@ -161,7 +161,20 @@ public class ReRideJSON {
         return mRiderProperties;
     }
 
-    public void removeSensor(String sensorId) {
-        mSensors.remove(mSensorIndex.get(sensorId));
+    public void removeSensor(String sensorName) {
+        mSensors.remove(mSensorIndex.get(sensorName));
+    }
+
+    public void clear() {
+        for (String sensorName : mSensorIndex.keySet()) {
+            removeSensor(sensorName);
+        }
+        mState.remove(STATE);
+        mRecorded.remove(RECORDED);
+        mRiderProperties.remove(ID);
+        mRiderProperties.remove(SENSORS);
+        mRiderProperties.remove(TIME);
+        mRiderProperties.remove(LONGITUDE);
+        mRiderProperties.remove(LATITUDE);
     }
 }

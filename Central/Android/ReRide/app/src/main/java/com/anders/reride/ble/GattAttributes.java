@@ -68,4 +68,8 @@ class GattAttributes {
     static boolean hasAttribute(String uuid) {
         return attributes.containsKey(uuid);
     }
+
+    static String shortUuidString(UUID uuid) {
+        return uuid.toString().substring(4, 8);
+    }
 }

@@ -14,11 +14,9 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Manages connection and operations on a GATT server
@@ -44,8 +42,8 @@ public class BLEService extends Service{
             "com.anders.reride.ble.EXTRA_DATA";
     public static final String EXTRA_DEVICE_ADDRESS =
             "com.anders.reride.ble.EXTRA_DEVICE_ADDRESS";
-    public static final String EXTRA_CHARACTERISTIC_NAME =
-            "com.anders.reride.ble.EXTRA_CHARACTERISTIC_NAME";
+    public static final String EXTRA_CHARACTERISTIC_UUID =
+            "com.anders.reride.ble.EXTRA_CHARACTERISTIC_UUID";
     public static final String ACTION_WRITE =
             "com.anders.reride.ble.ACTION_WRITE";
 
@@ -84,8 +82,8 @@ public class BLEService extends Service{
                 intent.putExtra(EXTRA_DATA, readUnknownData(characteristic));
             }
         }
-        intent.putExtra(EXTRA_CHARACTERISTIC_NAME,
-                GattAttributes.lookup(characteristic.getUuid().toString(), "Unknown"));
+        intent.putExtra(EXTRA_CHARACTERISTIC_UUID,
+                GattAttributes.shortUuidString(characteristic.getUuid()));
         sendBroadcast(intent);
     }
 
@@ -115,8 +113,8 @@ public class BLEService extends Service{
         mBluetoothGattAPIMap.get(device.getAddress()).discoverServices();
     }
 
-    public class LocalBinder extends Binder {
-        public BLEService getService() {
+    class LocalBinder extends Binder {
+        BLEService getService() {
             return BLEService.this;
         }
     }
@@ -145,9 +143,7 @@ public class BLEService extends Service{
         if (mBluetoothGattAPIMap != null && mBluetoothGattAPIMap.get(bleDeviceAddress) != null
             && mBluetoothGattAPIMap.containsKey(bleDeviceAddress)) {
             Log.d(TAG, "Trying to use an existing bluetooth gatt for connection.");
-            if (mBluetoothGattAPIMap.get(bleDeviceAddress).connect()) {
-                return true;
-            } else return false;
+            return mBluetoothGattAPIMap.get(bleDeviceAddress).connect();
         }
         //No existing GATT connection established. Find new
         mBluetoothGattAPIMap.put(bleDeviceAddress,

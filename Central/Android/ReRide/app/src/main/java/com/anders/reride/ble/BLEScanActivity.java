@@ -10,7 +10,6 @@ import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
@@ -18,7 +17,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -28,7 +26,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -59,8 +56,6 @@ public class BLEScanActivity extends AppCompatActivity{
     private ViewAdapter adapter;
     private boolean scanning;
     private BluetoothLeScanner scanner;
-    private List<ScanFilter> filters;
-    private ScanSettings settings;
     private BLECallback callback;
 
     private Button mScanButton;
@@ -69,7 +64,7 @@ public class BLEScanActivity extends AppCompatActivity{
 
     private BluetoothAdapter bluetoothAdapter;
     private Handler mHandler;
-    private Intent mDeviceIntent;
+    private Intent mDeviceControl;
     private ReRideLocationManager mLocationManager;
 
 
@@ -83,18 +78,19 @@ public class BLEScanActivity extends AppCompatActivity{
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
 
-        final Intent startIntent = new Intent(getApplicationContext(),
+        final Intent reRideData = new Intent(getApplicationContext(),
                 ReRideDataActivity.class);
+        mDeviceControl = new Intent(getApplicationContext(),
+                BLEDeviceControlService.class);
         if (ReRideDataActivity.DEBUG_MODE) {
-            startActivity(startIntent);
+            startActivity(reRideData);
             finish();
         }
         mHandler = new Handler();
-        mDeviceIntent = new Intent(getApplicationContext(),
-                BLEDeviceControlService.class);
-        askForLocationPermission();
         mLocationManager = ReRideLocationManager.getInstance(this);
-        mLocationManager.connect();
+        if (locationAccessPermitted()) {
+            mLocationManager.connect();
+        }
         checkForBLESupport();
         setupScanSettings();
 
@@ -143,7 +139,7 @@ public class BLEScanActivity extends AppCompatActivity{
                 }
                 if (!BLEDeviceControlService.TEST_GMS) {
                     if (mDeviceAddresses.size() == 0) return;
-                    mDeviceIntent.putStringArrayListExtra(
+                    mDeviceControl.putStringArrayListExtra(
                             BLEDeviceControlService.EXTRAS_DEVICE_ADDRESSES,
                             (ArrayList<String>) mDeviceAddresses);
                     if (scanning) {
@@ -151,8 +147,8 @@ public class BLEScanActivity extends AppCompatActivity{
                         scanning = false;
                     }
                 }
-                startService(mDeviceIntent);
-                startActivity(startIntent);
+                startService(mDeviceControl);
+                startActivity(reRideData);
             }
         });
     }
@@ -174,14 +170,6 @@ public class BLEScanActivity extends AppCompatActivity{
         bluetoothAdapter = bluetoothManager.getAdapter();
         Log.d(TAG, "BLE adapter found");
         callback = new BLECallback();
-        /*ScanFilter filter = new ScanFilter.Builder().build();
-        filters = new ArrayList<>();
-        filters.add(filter);
-        ScanSettings.Builder settingsBuilder = new ScanSettings.Builder();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            settingsBuilder.setCallbackType(ScanSettings.CALLBACK_TYPE_FIRST_MATCH);
-        }
-        settings = settingsBuilder.build();*/
     }
 
     @Override
@@ -197,6 +185,7 @@ public class BLEScanActivity extends AppCompatActivity{
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        mLocationManager.disconnect();
         stopService(new Intent(this, BLEDeviceControlService.class));
         Log.d(TAG, "Stopped service!");
     }
@@ -217,6 +206,9 @@ public class BLEScanActivity extends AppCompatActivity{
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
         }
+        if (mLocationManager != null && !mLocationManager.isConnected()) {
+            mLocationManager.connect();
+        }
 
     }
 
@@ -231,12 +223,11 @@ public class BLEScanActivity extends AppCompatActivity{
                 (requestCode == ReRideLocationManager.REQUEST_CHECK_SETTINGS)) {
             //the application should try to connect again.
             mLocationManager.connect();
-            announce("Trying to connect again. Try again in a moment.");
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
 
-    private void askForLocationPermission() {
+    private boolean locationAccessPermitted() {
         // Prompt for permissions
         if (ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
@@ -246,7 +237,8 @@ public class BLEScanActivity extends AppCompatActivity{
             ActivityCompat.requestPermissions(this,
                     LOCATION_PERMISSIONS,
                     PERMISSION_REQUEST_LOCATION);
-        }
+            return false;
+        } else return true;
 
     }
 
@@ -254,9 +246,11 @@ public class BLEScanActivity extends AppCompatActivity{
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         if (requestCode == PERMISSION_REQUEST_LOCATION
-                && grantResults[0] == PackageManager.PERMISSION_DENIED) {
-            finish();
-            return;
+                && (grantResults[0] == PackageManager.PERMISSION_DENIED ||
+                    grantResults[1] == PackageManager.PERMISSION_DENIED)) {
+            announce("Location permission not granted");
+        } else {
+            mLocationManager.connect();
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
     }

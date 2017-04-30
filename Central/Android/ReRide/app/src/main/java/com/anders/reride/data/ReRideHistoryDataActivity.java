@@ -185,7 +185,7 @@ public class ReRideHistoryDataActivity extends AppCompatActivity {
         @Override
         public void onBindViewHolder(final ItemViewHolder holder, int position) {
             final ReRideDataItemsItemPayloadSensorsItem sensorData = data.get(position);
-            holder.sensorName.setText(sensorData.getSensorId());
+            holder.sensorName.setText(sensorData.getName());
             holder.sensorUnit.setText(sensorData.getUnit());
             holder.sensorValue.setText(sensorData.getValue());
         }

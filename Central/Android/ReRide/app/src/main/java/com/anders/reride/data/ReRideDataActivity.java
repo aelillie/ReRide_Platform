@@ -20,7 +20,6 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.anders.reride.ble.BLEScanActivity;
 import com.anders.reride.R;
 import com.anders.reride.ble.BLEDeviceControlService;
 
@@ -173,11 +172,11 @@ public class ReRideDataActivity extends AppCompatActivity {
         public void onBindViewHolder(final ItemViewHolder holder, int position) {
             try {
                 JSONObject sensorData = data.getJSONObject(position);
-                holder.sensorName.setText(sensorData.getString(ReRideJSON.SENSOR_ID));
+                holder.sensorName.setText(sensorData.getString(ReRideJSON.SENSOR_NAME));
                 holder.sensorUnit.setText(sensorData.getString(ReRideJSON.SENSOR_UNIT));
                 holder.sensorValue.setText(sensorData.getString(ReRideJSON.VALUE));
                 holder.characteristicName.setText(sensorData.getString(
-                        ReRideJSON.CHARACTERISTIC_NAME));
+                        ReRideJSON.CHARACTERISTIC));
             } catch (JSONException e) {
                 announce(e.getMessage());
                 e.printStackTrace();

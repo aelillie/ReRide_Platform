@@ -148,6 +148,7 @@ public class AWSIoTMQTTClient extends AWSIoTDataBroker{
     }
 
     public boolean disconnect() {
+        if (!mConnected) return true;
         if (TEST_MODE) {
             mConnected = false;
             return true;

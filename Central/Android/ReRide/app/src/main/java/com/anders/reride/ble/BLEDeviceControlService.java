@@ -20,7 +20,6 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.anders.reride.R;
 import com.anders.reride.aws.AWSIoTShadowClient;
 import com.anders.reride.aws.AWSIoTMQTTClient;
 import com.anders.reride.data.ReRideJSON;
@@ -116,7 +115,7 @@ public class BLEDeviceControlService extends Service {
         }
     }
 
-    private void handleData(String deviceName, String data, String characteristicName) {
+    private void handleData(String deviceName, String data, String characteristicUuid) {
         Log.d(TAG, "Handling data");
         Intent intent = new Intent(ACTION_DATA_UPDATE);
         if (mLocationManager.isConnected()) {
@@ -130,7 +129,7 @@ public class BLEDeviceControlService extends Service {
         double lat = mLastLocation.getLatitude();
         String time = ReRideTimeManager.now();
         mReRideJSON.putSensorValue(deviceName, data == null ? "No data" : data,
-                characteristicName);
+                characteristicUuid);
         mReRideJSON.putRiderProperties(time, lon, lat);
         Log.d(TAG, "Sending data package!");
         mAWSIoTMQTTClient.publish(mReRideJSON);
@@ -187,6 +186,7 @@ public class BLEDeviceControlService extends Service {
         }
         mLocationManager.disconnect();
         mAWSIoTMQTTClient.disconnect();
+        mReRideJSON.clear();
         mBleService = null;
     }
 
@@ -254,7 +254,7 @@ public class BLEDeviceControlService extends Service {
 
 
     private void enableNotification(BluetoothDevice device,
-                                 BluetoothGattCharacteristic gattCharacteristic) {
+                                    BluetoothGattCharacteristic gattCharacteristic) {
         List<BluetoothGattDescriptor> descriptors =
                                 gattCharacteristic.getDescriptors();
         String uuid;
@@ -348,13 +348,13 @@ public class BLEDeviceControlService extends Service {
                 }
                 case BLEService.ACTION_DATA_AVAILABLE: {
                     String data = intent.getStringExtra(BLEService.EXTRA_DATA);
-                    String characteristicName = intent.getStringExtra(
-                            BLEService.EXTRA_CHARACTERISTIC_NAME);
+                    String characteristicUuid = intent.getStringExtra(
+                            BLEService.EXTRA_CHARACTERISTIC_UUID);
                     Log.d(TAG, "Data: " + data);
                     String deviceAddress = intent.getStringExtra(BLEService.EXTRA_DEVICE_ADDRESS);
                     handleData(mBluetoothAdapter.getRemoteDevice(deviceAddress).getName(),
                             data,
-                            characteristicName);
+                            characteristicUuid);
                     break;
                 }
                 case BLEService.ACTION_WRITE: {

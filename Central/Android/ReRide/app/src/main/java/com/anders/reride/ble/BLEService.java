@@ -89,9 +89,9 @@ public class BLEService extends Service{
     }
 
     private String getValueUINT16(BluetoothGattCharacteristic characteristic, int offset) {
-        int value = characteristic.getValue()[0];
-//        int value = characteristic.getIntValue(
-//                BluetoothGattCharacteristic.FORMAT_UINT16, offset);
+        //int value = characteristic.getValue()[0];
+        int value = characteristic.getIntValue(
+                BluetoothGattCharacteristic.FORMAT_UINT16, offset);
         Log.d(TAG, "DATA: " + value);
         return String.valueOf(value);
     }

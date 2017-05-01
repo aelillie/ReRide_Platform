@@ -280,10 +280,14 @@ public class BLEDeviceControlService extends Service {
 
     private void readCharacteristics(BluetoothDevice device) {
         for (BluetoothGattCharacteristic characteristic : mGattCharacteristicMap.get(device)) {
-            if (characteristic.getUuid().toString().equals(GattAttributes.AGE)) continue;
+            //if (characteristic.getUuid().toString().equals(GattAttributes.AGE)) continue;
             //enableNotification(device, characteristic);
             readCharacteristic(device, characteristic);
-            //Would make sense to sleep here
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                Log.d(TAG, e.getMessage());
+            }
         }
     }
 

@@ -13,13 +13,17 @@ import java.util.List;
  * AWS API Gateway SDK for custom requests
  */
 public class AWSApiClient {
-    ApiClientFactory factory = new ApiClientFactory();
+    private ApiClientFactory factory = new ApiClientFactory();
 
-    final ReRideClient mReRideClient = factory.build(ReRideClient.class);
+    private final ReRideClient mReRideClient = factory.build(ReRideClient.class);
 
-    public List<ReRideDataItemsItemPayload> getData(String id, String from, String to,
-                                                    String timeZone) {
-        ReRideData r = mReRideClient.rideDataGet(from, timeZone, id, to);
+    public List<ReRideDataItemsItemPayload> getData(String id, int from, int to,
+                                                     String timezone) {
+        ReRideData r = mReRideClient.rideDataGet(
+                String.valueOf(from),
+                timezone,
+                id,
+                String.valueOf(to));
         if (r.getCount()==0) return new ArrayList<>();
         List<ReRideDataItemsItem> items = r.getItems();
         List<ReRideDataItemsItemPayload> payloads = new ArrayList<>();
@@ -30,7 +34,7 @@ public class AWSApiClient {
     }
 
     public ReRideDataItemsItemPayload getDataLatest(String id, String timeZone) {
-        List<ReRideDataItemsItemPayload> data = getData(id, "0", "0", timeZone);
+        List<ReRideDataItemsItemPayload> data = getData(id, 0, 0, timeZone);
         return data.isEmpty() ? null : data.get(0);
     }
 }

@@ -1,10 +1,8 @@
 package com.anders.reride.data;
 
 import android.content.Context;
-import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -26,7 +24,9 @@ import com.anders.reride.model.ReRideDataItemsItemPayload;
 import com.anders.reride.model.ReRideDataItemsItemPayloadSensorsItem;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Takes care of visualization of data
@@ -38,7 +38,8 @@ public class ReRideHistoryDataActivity extends AppCompatActivity {
 
     private AWSApiClient mAWSApiClient;
     private ViewAdapter mAdapter;
-    private List<ReRideDataItemsItemPayloadSensorsItem> mRiderData;
+    private List<SensorHistoryData> mRiderData;
+    private ReRideDataItemsItemPayloadSensorsItem sampleSensor;
 
     private String mId = ReRideUserData.USER_ID;
     private String mTimeZone = ReRideTimeManager.TIMEZONE;
@@ -49,6 +50,7 @@ public class ReRideHistoryDataActivity extends AppCompatActivity {
     private TextView mLatText;
     private TextView mLonText;
     private Button mDataButton;
+    private String startTime, endTime, startLon, startLat, endLon, endLat;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -123,40 +125,118 @@ public class ReRideHistoryDataActivity extends AppCompatActivity {
                     try
                     {
                         Thread.sleep(BLEDeviceControlService.UPDATE_FREQUENCY);
-                        final ReRideDataItemsItemPayload data =
-                                mAWSApiClient.getDataLatest(mId, mTimeZone);
+                        final List<ReRideDataItemsItemPayload> data =
+                                mAWSApiClient.getData(mId, 15, 0, mTimeZone);
                         if (data == null) continue;
-                        Log.d(TAG, "Got latest data");
-                        runOnUiThread(new Runnable() // start actions in UI thread
-                        {
-
-                            @Override
-                            public void run()
-                            {
-                                getData(data); // this action have to be in UI thread
-                            }
-                        });
+                        Log.d(TAG, "Got data");
+                        try {
+                            compute(data);
+                        } catch (final IllegalArgumentException e) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    announce(e.getMessage());
+                                }
+                            });
+                        }
                     }
                     catch (InterruptedException e)
                     {
-                        announce("Operation halted");
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                announce("Operation halted");
+                            }
+                        });
                     }
             }
         })).start(); // the while thread will start in BG thread
     }
 
-    private void getData(ReRideDataItemsItemPayload data) {
-        if (!data.getId().equals(mId)) {
-            announce("ID not identical");
-            return;
+    private void compute(List<ReRideDataItemsItemPayload> data)
+            throws IllegalArgumentException{
+        ReRideDataItemsItemPayload sampleItem = data.get(0);
+        String id = sampleItem.getId();
+        if (!id.equals(mId)) {
+            throw new IllegalArgumentException("IDs do not match");
         }
+
+        //Start position
+        startLon = sampleItem.getLongitude();
+        startLat = sampleItem.getLatitude();
+        startTime = sampleItem.getTime();
+        //End position
+        int end = data.size()-1;
+        endLon = data.get(end).getLongitude();
+        endLat = data.get(end).getLatitude();
+        endTime = data.get(end).getTime();
+
+
         mRiderData.clear();
-        mRiderData.addAll(data.getSensors());
+        //Find average values
+        for (ReRideDataItemsItemPayload payload : data) { //Go through all data
+            List<Integer> sensorValues = new ArrayList<>();
+            List<ReRideDataItemsItemPayloadSensorsItem> sensors = payload.getSensors();
+            for (int i = 0; i < sensors.size(); i++) {
+                int oldVal = sensorValues.get(j);
+                sensorValues.set(j, oldVal + Integer.parseInt(sensor.getValue()));
+
+                mRiderData.add(new SensorHistoryData(sensor.getCharacteristic(),
+                        sensor.getName(), sensor.getUnit(), ))
+            }
+        }
+
+
+
+        runOnUiThread(new Runnable() // start actions in UI thread
+        {
+
+            @Override
+            public void run()
+            {
+                showData(); // this action have to be in UI thread
+            }
+        });
+    }
+
+    private class SensorHistoryData {
+        private String sensorCharacteristic;
+        private String sensorName;
+        private String sensorUnit;
+        private String sensorValue;
+
+        public SensorHistoryData(String sensorCharacteristic, String sensorName, String sensorUnit,
+                                 String sensorValue) {
+            this.sensorCharacteristic = sensorCharacteristic;
+            this.sensorName = sensorName;
+            this.sensorUnit = sensorUnit;
+            this.sensorValue = sensorValue;
+        }
+
+        String getSensorCharacteristic() {
+            return sensorCharacteristic;
+        }
+
+        String getSensorName() {
+            return sensorName;
+        }
+
+        String getSensorUnit() {
+            return sensorUnit;
+        }
+
+        String getSensorValue() {
+            return sensorValue;
+        }
+    }
+
+
+    private void showData() {
         mAdapter.notifyDataSetChanged();
         mIdText.setText(mId);
-        mTimeText.setText(formatTime(data.getTime()));
-        mLonText.setText(data.getLongitude());
-        mLatText.setText(data.getLatitude());
+        mTimeText.setText(startTime);
+        mLonText.setText(startLon);
+        mLatText.setText(startLat);
         Log.d(TAG, "Updated UI with data");
     }
 
@@ -170,8 +250,8 @@ public class ReRideHistoryDataActivity extends AppCompatActivity {
     }
 
     private class ViewAdapter extends RecyclerView.Adapter<ViewAdapter.ItemViewHolder> {
-        private List<ReRideDataItemsItemPayloadSensorsItem> data;
-        ViewAdapter(List<ReRideDataItemsItemPayloadSensorsItem> data) {
+        private List<SensorHistoryData> data;
+        ViewAdapter(List<SensorHistoryData> data) {
             this.data = data;
         }
 
@@ -184,7 +264,7 @@ public class ReRideHistoryDataActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(final ItemViewHolder holder, int position) {
-            final ReRideDataItemsItemPayloadSensorsItem sensorData = data.get(position);
+            final SensorHistoryData sensorData = data.get(position);
             holder.sensorName.setText(sensorData.getName());
             holder.sensorUnit.setText(sensorData.getUnit());
             holder.sensorValue.setText(sensorData.getValue());

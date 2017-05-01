@@ -45,8 +45,7 @@ public class BLEDeviceControlService extends Service {
     public static final String ACTION_DATA_UPDATE =
             "com.anders.reride.ble.ACTION_DATA_UPDATE";
 
-    private static final int SLEEP_TIME = 500; //ms
-    public static final int UPDATE_FREQUENCY = 1000; //ms
+    public static final int UPDATE_FREQUENCY = 500; //ms
 
     //Debug settings
     public static boolean TEST_GMS = false;
@@ -86,12 +85,6 @@ public class BLEDeviceControlService extends Service {
     private BluetoothAdapter mBluetoothAdapter;
     private ReRideLocationManager mLocationManager;
     private Random mRandomGenerator; //For testing
-    private Runnable mStreamer = new Runnable() {
-        @Override
-        public void run() {
-            streamData();
-        }
-    };
 
 
     private void streamData() {
@@ -103,20 +96,12 @@ public class BLEDeviceControlService extends Service {
                     readCharacteristics(device);
                 }
                 publish();
-                //streamData();
                 mHandler.post(new Runnable() {
                     @Override
                     public void run() {
                         streamData();
                     }
                 });
-                //mHandler.postDelayed(mStreamer, UPDATE_FREQUENCY);
-                /*try {
-                    Thread.sleep(UPDATE_FREQUENCY);
-                    streamData();
-                } catch (InterruptedException e) {
-                    Log.d(TAG, e.getMessage());
-                }*/
             }
         }
     }
@@ -248,7 +233,7 @@ public class BLEDeviceControlService extends Service {
                         streamData();
 
                     }
-                }, 1000);
+                }, UPDATE_FREQUENCY);
             }
         }
         return super.onStartCommand(intent, flags, startId);
@@ -262,9 +247,6 @@ public class BLEDeviceControlService extends Service {
 
 
 
-
-
-
     private void enableNotification(BluetoothDevice device,
                                     BluetoothGattCharacteristic gattCharacteristic) {
         List<BluetoothGattDescriptor> descriptors =
@@ -272,8 +254,6 @@ public class BLEDeviceControlService extends Service {
         String uuid;
         for (BluetoothGattDescriptor descriptor : descriptors) {
             uuid = descriptor.getUuid().toString();
-            int p = descriptor.getPermissions();
-            byte[] val = descriptor.getValue();
             if (uuid.equals(GattAttributes.CLIENT_CHARACTERISTIC_CONFIGURATION)){
                 descriptor.setValue(
                         BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
@@ -287,19 +267,17 @@ public class BLEDeviceControlService extends Service {
 
     private void readCharacteristics(final BluetoothDevice device) {
         for (final BluetoothGattCharacteristic characteristic : mGattCharacteristicMap.get(device)) {
-            //if (characteristic.getUuid().toString().equals(GattAttributes.AGE)) continue;
-            //enableNotification(device, characteristic);
             mHandler.post(new Runnable() {
                 @Override
                 public void run() {
                     readCharacteristic(device, characteristic);
+                    try {
+                        Thread.sleep(UPDATE_FREQUENCY);
+                    } catch (InterruptedException e) {
+                        Log.d(TAG, e.getMessage());
+                    }
                 }
             });
-            /*try {
-                Thread.sleep(200);
-            } catch (InterruptedException e) {
-                Log.d(TAG, e.getMessage());
-            }*/
         }
     }
 
@@ -315,10 +293,10 @@ public class BLEDeviceControlService extends Service {
             }
             mBleService.readCharacteristic(device, characteristic);
         }
-        if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
+        /*if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
             mNotifyCharacteristic = characteristic;
             mBleService.setCharacteristicNotification(device, characteristic, true);
-        }
+        }*/
     }
 
     static IntentFilter makeGattUpdateIntentFilter() {
@@ -365,12 +343,6 @@ public class BLEDeviceControlService extends Service {
                             searchGattCharacteristics(device);
                         }
                         streamData();
-                        /*mHandler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                streamData();
-                            }
-                        }, SLEEP_TIME); //ms*/
                     }
                     break;
                 }

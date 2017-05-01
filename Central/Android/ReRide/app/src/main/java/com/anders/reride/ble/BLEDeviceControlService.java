@@ -103,13 +103,20 @@ public class BLEDeviceControlService extends Service {
                     readCharacteristics(device);
                 }
                 publish();
+                //streamData();
+                mHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        streamData();
+                    }
+                });
                 //mHandler.postDelayed(mStreamer, UPDATE_FREQUENCY);
-                try {
+                /*try {
                     Thread.sleep(UPDATE_FREQUENCY);
                     streamData();
                 } catch (InterruptedException e) {
                     Log.d(TAG, e.getMessage());
-                }
+                }*/
             }
         }
     }
@@ -278,16 +285,21 @@ public class BLEDeviceControlService extends Service {
         }
     }
 
-    private void readCharacteristics(BluetoothDevice device) {
-        for (BluetoothGattCharacteristic characteristic : mGattCharacteristicMap.get(device)) {
+    private void readCharacteristics(final BluetoothDevice device) {
+        for (final BluetoothGattCharacteristic characteristic : mGattCharacteristicMap.get(device)) {
             //if (characteristic.getUuid().toString().equals(GattAttributes.AGE)) continue;
             //enableNotification(device, characteristic);
-            readCharacteristic(device, characteristic);
-            try {
+            mHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    readCharacteristic(device, characteristic);
+                }
+            });
+            /*try {
                 Thread.sleep(200);
             } catch (InterruptedException e) {
                 Log.d(TAG, e.getMessage());
-            }
+            }*/
         }
     }
 

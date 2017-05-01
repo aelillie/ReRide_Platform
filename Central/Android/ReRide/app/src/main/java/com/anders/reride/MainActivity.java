@@ -29,8 +29,6 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String PREFERENCE_USER_ID =
             "com.anders.reride.PREFERENCE_USER_ID";
-    private static final String PREFERENCE_TIMEZONE =
-            "com.anders.reride.PREFERENCE_TIMEZONE";
     private SharedPreferences mPreferences;
     private Button multiRideButton;
     private Button dataButton;
@@ -50,8 +48,7 @@ public class MainActivity extends AppCompatActivity {
 
         initializeUIComponents();
         mPreferences = this.getPreferences(Context.MODE_PRIVATE);
-        if (mPreferences.contains(PREFERENCE_USER_ID) &&
-                mPreferences.contains(PREFERENCE_TIMEZONE)) {
+        if (mPreferences.contains(PREFERENCE_USER_ID)) {
             String userId = mPreferences.getString(PREFERENCE_USER_ID,
                     getResources().getString(R.string.preference_user_id_default));
             idText.setText(userId);

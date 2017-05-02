@@ -13,7 +13,8 @@ import java.util.List;
  * AWS API Gateway SDK for custom requests
  */
 public class AWSApiClient {
-    private ApiClientFactory factory = new ApiClientFactory();
+    private ApiClientFactory factory = new ApiClientFactory()
+            .apiKey("WmDsguzavl83nutOxZj3L9JLi5g29hlg1Nc86LKu");
 
     private final ReRideClient mReRideClient = factory.build(ReRideClient.class);
 

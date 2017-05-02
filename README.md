@@ -28,6 +28,8 @@ The method request requires the following parameters:
 <li>"timezone": The client's timezone</li>
 </ol>
 
+Example request: https://rzx2umf8a9.execute-api.eu-central-1.amazonaws.com/beta/ride-data?id=1234&from=120&to=60&2. This fetches data for user "1234" in the time period from 2 hours ago until 1 hour ago in the Central Europe timezone.
+
 If only the latest record is wanted, pass 0 as the argument to "from". If all data for the specified user is wanted, pass -1 as the argument to "from".
-Furthermore an API key is required in the request header, which is provided for the client.
+Furthermore an API key is required in the request header for the key "x-api-key", which is provided for the client.
 The response results in the query data in a JSON, following the schema providid in the data files (see above).

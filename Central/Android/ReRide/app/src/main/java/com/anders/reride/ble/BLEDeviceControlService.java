@@ -285,6 +285,7 @@ public class BLEDeviceControlService extends Service {
                                     BluetoothGattCharacteristic characteristic) {
         if (mBleService == null || device == null || characteristic == null) {
             stopSelf();
+            return;
         }
         final int charaProp = characteristic.getProperties();
         if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {

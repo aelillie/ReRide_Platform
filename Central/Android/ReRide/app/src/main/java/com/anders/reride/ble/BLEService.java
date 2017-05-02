@@ -1,5 +1,6 @@
 package com.anders.reride.ble;
 
+import android.app.Notification;
 import android.app.Service;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
@@ -24,6 +25,7 @@ import java.util.Map;
 
 public class BLEService extends Service{
     private static final String TAG = BLEService.class.getSimpleName();
+    private static final int ONGOING_NOTIFICATION_ID = 1; //must not be 0
     private final IBinder binder = new LocalBinder();
 
     private Map<String, BluetoothGatt> mBluetoothGattAPIMap;

@@ -33,3 +33,6 @@ Example request: https://rzx2umf8a9.execute-api.eu-central-1.amazonaws.com/beta/
 If only the latest record is wanted, pass 0 as the argument to "from". If all data for the specified user is wanted, pass -1 as the argument to "from".
 Furthermore an API key is required in the request header for the key "x-api-key", which is provided for the client.
 The response results in the query data in a JSON, following the schema providid in the data files (see above).
+
+##Build and run
+To get going, install the Android Package Kit (APK) from Central\Android\ReRide\app\build\outputs\apk. Configure a BLE peripheral and connect to it with the ReRide app. This requires both location- and bluetooth permissions. Watch live stream or see historical data from device. Or use the above API to get the same data before/after a ride.

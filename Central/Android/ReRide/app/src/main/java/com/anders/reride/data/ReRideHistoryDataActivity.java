@@ -8,10 +8,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -34,6 +36,7 @@ import java.util.List;
 public class ReRideHistoryDataActivity extends AppCompatActivity {
     private static final String TAG = ReRideHistoryDataActivity.class.getSimpleName();
     public static final boolean DEBUG_MODE = false;
+    private static final int MIN_PER_HOUR = 60;
 
     private AWSApiClient mAWSApiClient;
     private ViewAdapter mAdapter;
@@ -107,10 +110,25 @@ public class ReRideHistoryDataActivity extends AppCompatActivity {
         mDataButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (mFromTime.getText().length() > 0 && mEndTime.getText().length() > 0) {
-                    getData();
+                // Check if no view has focus:
+                View v = getCurrentFocus();
+                if (v != null) {
+                    InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                }
+                Editable from = mFromTime.getText();
+                Editable to = mEndTime.getText();
+                if (from.length() > 0 && to.length() > 0) {
+                    int f = Integer.parseInt(from.toString())*MIN_PER_HOUR;
+                    int t = Integer.parseInt(to.toString())*MIN_PER_HOUR;
+                    if (t > f) {
+                        announce("Start time must be greater than end time");
+                    } else {
+                        getData(f,t);
+                    }
                 } else {
-                    announce("Enter time range");
+                    announce("No range specified - fetching all available data");
+                    getData(-1, 0);
                 }
             }
         });
@@ -120,7 +138,7 @@ public class ReRideHistoryDataActivity extends AppCompatActivity {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
-    private void getData() {
+    private void getData(final int fromTime, final int endTime) {
         (new Thread(new Runnable()
         {
 
@@ -128,37 +146,48 @@ public class ReRideHistoryDataActivity extends AppCompatActivity {
             public void run()
             {
                 if (!Thread.interrupted() && isNetworkConnected()) {
-                    try
-                    {
-                        Thread.sleep(BLEDeviceControlService.UPDATE_FREQUENCY);
-                        final List<ReRideDataItemsItemPayload> data =
-                                mAWSApiClient.getData(mId, mFromTime.getText().toString(),
-                                        mEndTime.getText().toString(), mTimeZone);
-                        if (data == null || data.isEmpty()) return;
-                        Log.d(TAG, "Got data");
-                        try {
-                            compute(data);
-                        } catch (final IllegalArgumentException e) {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    announce(e.getMessage());
-                                }
-                            });
-                        }
-                    }
-                    catch (InterruptedException e)
-                    {
+                    final List<ReRideDataItemsItemPayload> data =
+                            mAWSApiClient.getData(mId, fromTime, endTime, mTimeZone);
+                    if (data.isEmpty()) {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                announce("Operation halted");
+                                announce("No data");
+                                clearUI();
+                            }
+                        });
+                        return;
+                    }
+                    Log.d(TAG, "Got data");
+                    try {
+                        compute(data);
+                    } catch (final IllegalArgumentException e) {
+                        Log.d(TAG, e.getMessage());
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                announce(e.getMessage());
                             }
                         });
                     }
+
                 }
             }
         })).start(); // the while thread will start in BG thread
+    }
+
+    private void clearUI() {
+        mRiderData.clear();
+        CharSequence noDataText = getResources().getText(R.string.no_data);
+        mAdapter.notifyDataSetChanged();
+        mIdText.setText(noDataText);
+        mTimeStart.setText(noDataText);
+        mTimeEnd.setText(noDataText);
+        mLonStart.setText(noDataText);
+        mLonEnd.setText(noDataText);
+        mLatStart.setText(noDataText);
+        mLatEnd.setText(noDataText);
+        Log.d(TAG, "Cleared UI");
     }
 
     private void compute(List<ReRideDataItemsItemPayload> data)
@@ -181,7 +210,7 @@ public class ReRideHistoryDataActivity extends AppCompatActivity {
 
         List<ReRideDataItemsItemPayloadSensorsItem> sampleSensors = sampleItem.getSensors();
         int sensorsSize = sampleSensors.size();
-        List<Integer> sensorValues = new ArrayList<>(sensorsSize);
+        int[] sensorValues = new int[sensorsSize];
         //Find average values
         for (ReRideDataItemsItemPayload payload : data) { //Go through all data
             List<ReRideDataItemsItemPayloadSensorsItem> sensors = //Sensors for one item
@@ -189,14 +218,15 @@ public class ReRideHistoryDataActivity extends AppCompatActivity {
             for (int i = 0; i < sensorsSize; i++) {
                 int sensorVal = Integer.parseInt(sensors.get(i).getValue());
                 try {
-                    if (!sensors.isEmpty()) {
-                        int oldVal = sensorValues.get(i);
-                        sensorValues.set(i, oldVal + sensorVal);
+                    if (sensorValues[i] != 0) {
+                        int oldVal = sensorValues[i]/data.size();
+                        sensorValues[i] = oldVal + sensorVal;
                     } else {
-                        sensorValues.add(i, sensorVal);
+                        sensorValues[i] = sensorVal;
                     }
                 } catch (IndexOutOfBoundsException e) {
-                    break;
+                    Log.d(TAG, e.getMessage());
+                    return;
                 }
 
             }
@@ -206,7 +236,8 @@ public class ReRideHistoryDataActivity extends AppCompatActivity {
         for(int i = 0; i < sensorsSize; i++) {
             ReRideDataItemsItemPayloadSensorsItem sensor = sampleSensors.get(i);
             newSensors.add(new SensorHistoryData(sensor.getCharacteristic(),
-                    sensor.getName(), sensor.getUnit(), sensorValues.get(i)));
+                    sensor.getName(), sensor.getUnit(),
+                    String.valueOf(sensorValues[i])));
         }
         runOnUiThread(new Runnable() // start actions in UI thread
         {
@@ -223,10 +254,10 @@ public class ReRideHistoryDataActivity extends AppCompatActivity {
         private String sensorCharacteristic;
         private String sensorName;
         private String sensorUnit;
-        private int sensorValue;
+        private String sensorValue;
 
         SensorHistoryData(String sensorCharacteristic, String sensorName, String sensorUnit,
-                                 int sensorValue) {
+                          String sensorValue) {
             this.sensorCharacteristic = sensorCharacteristic;
             this.sensorName = sensorName;
             this.sensorUnit = sensorUnit;
@@ -245,7 +276,7 @@ public class ReRideHistoryDataActivity extends AppCompatActivity {
             return sensorUnit;
         }
 
-        int getValue() {
+        String getValue() {
             return sensorValue;
         }
     }

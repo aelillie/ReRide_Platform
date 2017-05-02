@@ -36,7 +36,8 @@
             <EditText
                 android:id="@+id/from_text"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content"
+                android:inputType="number"/>
 
         </LinearLayout>
         <LinearLayout
@@ -50,7 +51,8 @@
             <EditText
                 android:id="@+id/end_text"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+                android:layout_height="wrap_content"
+                android:inputType="number"/>
         </LinearLayout>
 
     </LinearLayout>

@@ -25,11 +25,11 @@ public class AWSApiClient {
     public List<ReRideDataItemsItemPayload> getData(String id, int from, int to,
                                                      String timezone) {
         ReRideData r = mReRideClient.rideDataGet(
-                String.valueOf(from),
                 timezone,
+                String.valueOf(from),
                 id,
                 String.valueOf(to));
-        if (r.getCount()==0) return new ArrayList<>();
+        if (r == null || r.getItems() == null) return new ArrayList<>();
         List<ReRideDataItemsItem> items = r.getItems();
         List<ReRideDataItemsItemPayload> payloads = new ArrayList<>();
         for (ReRideDataItemsItem item : items) {

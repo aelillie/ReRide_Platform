@@ -283,6 +283,9 @@ public class BLEDeviceControlService extends Service {
 
     private void readCharacteristic(BluetoothDevice device,
                                     BluetoothGattCharacteristic characteristic) {
+        if (mBleService == null || device == null || characteristic == null) {
+            stopSelf();
+        }
         final int charaProp = characteristic.getProperties();
         if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
             // If there is an active notification on a characteristic, clear it

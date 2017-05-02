@@ -17,6 +17,11 @@ public class AWSApiClient {
 
     private final ReRideClient mReRideClient = factory.build(ReRideClient.class);
 
+    public List<ReRideDataItemsItemPayload> getData(String id, String from, String to,
+                                                    String timezone) {
+        return getData(id, Integer.parseInt(from), Integer.parseInt(to), timezone);
+    }
+
     public List<ReRideDataItemsItemPayload> getData(String id, int from, int to,
                                                      String timezone) {
         ReRideData r = mReRideClient.rideDataGet(

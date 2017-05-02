@@ -29,8 +29,8 @@
     <string name="error">Error!</string>
     <string name="status">Status:</string>
     <string name="aws_title">AWS IoT</string>
-    <string name="label_location_long">Lon:</string>
-    <string name="label_location_lat">Lat:</string>
+    <string name="label_location_lon">Longitude:</string>
+    <string name="label_location_lat">Latitude:</string>
     <string name="label_time">Time:</string>
     <string name="connect">Connect</string>
     <string name="devices_number">Devices:</string>
@@ -53,4 +53,11 @@
     <string name="preference_timezone_default">2</string>
     <string name="change_settings">Change settings</string>
     <string name="label_timezone">Timezone:</string>
+    <string name="start">Start</string>
+    <string name="end">End</string>
+    <string name="attributes">Attributes</string>
+    <string name="sensorLabel">Average sensor values</string>
+    <string name="from_time">From:</string>
+    <string name="end_time">To:</string>
+    <string name="timeRange">Time range from present (minutes)</string>
 </resources>

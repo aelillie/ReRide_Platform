@@ -42,7 +42,7 @@
                       android:layout_margin="10dp">
             <TextView android:layout_width="wrap_content"
                       android:layout_height="wrap_content"
-                      android:text="@string/label_location_long"
+                      android:text="@string/label_location_lon"
                       android:textSize="18sp"/>
             <Space android:layout_width="5dp"
                    android:layout_height="wrap_content"/>

@@ -14,11 +14,12 @@
                      "items": {
                          "type": "object",
                          "properties": {
-                             "sensorId": { "type" : "string" },
+                             "name": { "type" : "string" },
+                             "characteristic": { "type" : "string "},
                              "value": { "type" : "string" },
                              "unit": { "type" : "string" }
                          },
-                        "required": ["sensorId", "value", "unit"]
+                        "required": ["name", "value", "unit"]
                     },
                     "minItems": 1,
                     "uniqueItems": true

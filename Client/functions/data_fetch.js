@@ -12,8 +12,10 @@ exports.handler = function(event, context, callback) {
 
     var id = event.id;
     var from = parseInt(event.from);
+    console.log('From:', from);
     var to = parseInt(event.to);
-    var timeZone = parseInt(event.timeZone);
+    console.log('To:', to);
+    var timeZone = parseInt(event.timezone);
     console.log('Time zone: ', timeZone)
     
     var now = Date.now(); //ms since midnight Jan 1, 1970

@@ -34,7 +34,7 @@ import java.util.Map;
                              "value": { "type" : "string" },
                              "unit": { "type" : "string" }
                          },
-                        "required": ["sensorId", "value", "unit"]
+                        "required": ["name", "value", "unit"]
                     },
                     "minItems": 1,
                     "uniqueItems": true

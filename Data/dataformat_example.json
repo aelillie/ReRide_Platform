@@ -5,7 +5,8 @@
              "time": "20170426123500",
              "sensors": [
                  {
-                     "sensorId": "flex sensor",
+                     "name": "flex sensor",
+                     "characteristic": "Apparent Wind Direction",
                      "value": "45",
                      "unit": "degrees"
                  }

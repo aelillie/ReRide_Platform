@@ -1,0 +1,6 @@
+{
+    "id": "$input.params('id')",
+    "from": "$input.params('from')",
+    "to": "$input.params('to')",
+    "timezone": "$input.params('timezone')"
+}

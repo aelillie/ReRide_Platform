@@ -1,7 +1,5 @@
 package com.anders.reride.gms;
 
-import com.anders.reride.data.ReRideUserData;
-
 import java.util.Calendar;
 import java.util.TimeZone;
 

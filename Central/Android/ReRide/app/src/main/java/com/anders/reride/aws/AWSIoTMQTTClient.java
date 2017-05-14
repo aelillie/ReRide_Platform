@@ -22,9 +22,9 @@ import java.util.UUID;
  */
 
 public class AWSIoTMQTTClient extends AWSIoTDataBroker{
-    static final String LOG_TAG = AWSIoTMQTTClient.class.getCanonicalName();
+    private static final String LOG_TAG = AWSIoTMQTTClient.class.getCanonicalName();
 
-    public static final boolean TEST_MODE = false;
+    private static final boolean TEST_MODE = false;
 
     //AWS management
     private AWSIotMqttManager mqttManager;
@@ -47,16 +47,6 @@ public class AWSIoTMQTTClient extends AWSIoTDataBroker{
         clientId = UUID.randomUUID().toString();
 
         mqttManager = new AWSIotMqttManager(clientId, CUSTOMER_SPECIFIC_ENDPOINT);
-
-        // The following block uses a Cognito credentials provider for authentication with AWS IoT.
-        /*new Thread(new Runnable() {
-            @Override
-            public void run() {
-                mAWSCredentials = credentialsProvider.getCredentials();
-
-            }
-        }).start();*/
-
     }
 
     public boolean isConnected() {

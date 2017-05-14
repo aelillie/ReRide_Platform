@@ -12,10 +12,10 @@ class GattAttributes {
     private static HashMap<String, String> attributes = new HashMap<>();
     private static HashMap<String, String> units = new HashMap<>();
     //Services
-    static String ENVIRONMENTAL_SENSING = uuidSStringFromUInt16("181a");
-    static String BATTERY_SERVICE = uuidSStringFromUInt16("180f");
-    static String USER_DATA = uuidSStringFromUInt16("181c");
-    static String HEART_RATE_SERVICE = uuidSStringFromUInt16("180d");
+    private static String ENVIRONMENTAL_SENSING = uuidSStringFromUInt16("181a");
+    private static String BATTERY_SERVICE = uuidSStringFromUInt16("180f");
+    private static String USER_DATA = uuidSStringFromUInt16("181c");
+    private static String HEART_RATE_SERVICE = uuidSStringFromUInt16("180d");
 
     //Characteristics
     static String BATTERY_LEVEL = uuidSStringFromUInt16("2a19");

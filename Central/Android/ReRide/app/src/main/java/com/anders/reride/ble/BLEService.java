@@ -1,6 +1,5 @@
 package com.anders.reride.ble;
 
-import android.app.Notification;
 import android.app.Service;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;

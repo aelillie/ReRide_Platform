@@ -21,7 +21,6 @@ import android.widget.Toast;
 
 import com.anders.reride.R;
 import com.anders.reride.aws.AWSApiClient;
-import com.anders.reride.ble.BLEDeviceControlService;
 import com.anders.reride.gms.ReRideTimeManager;
 import com.anders.reride.model.ReRideDataItemsItemPayload;
 import com.anders.reride.model.ReRideDataItemsItemPayloadSensorsItem;

@@ -20,8 +20,8 @@ import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.anders.reride.aws.AWSIoTShadowClient;
 import com.anders.reride.aws.AWSIoTMQTTClient;
+import com.anders.reride.aws.AWSIoTShadowClient;
 import com.anders.reride.data.ReRideJSON;
 import com.anders.reride.data.ReRideUserData;
 import com.anders.reride.gms.ReRideLocationManager;

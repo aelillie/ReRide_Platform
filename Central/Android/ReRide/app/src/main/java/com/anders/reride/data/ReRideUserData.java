@@ -1,7 +1,7 @@
 package com.anders.reride.data;
 
 /**
- * Created by Anders on 30-Apr-17.
+ * Holds user information or session data
  */
 
 public class ReRideUserData {

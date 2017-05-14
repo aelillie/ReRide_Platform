@@ -1,11 +1,9 @@
 package com.anders.reride.aws;
 
 import android.content.Context;
-import android.os.Bundle;
 
 import com.amazonaws.auth.CognitoCachingCredentialsProvider;
 import com.amazonaws.regions.Regions;
-import com.anders.reride.ble.BLEDeviceControlService;
 
 /**
  * Handles data transmission with an AWS endpoint

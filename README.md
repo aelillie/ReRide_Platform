@@ -4,7 +4,7 @@ Repository for my IoT Bachelor project 2017 in collaboration with the ReRide tea
 ## GatewayCentral
 This folder contains the "ReRide" Android application, an example data record, and an installable APK of the application.
 ### Installing the APK
-With Android Debug Bridge (adb) available (https://developer.android.com/studio/command-line/adb.html#move), locate the .apk file in a shell and execute "adb install <path-to-apk>" with either an emulator device or physical device connected to the computer.
+With Android Debug Bridge (adb) available (https://developer.android.com/studio/command-line/adb.html#move), locate the .apk file in a shell and execute "adb install {path-to-apk}" with either an emulator device or physical device connected to the computer.
 ### ReRide
 The project creates the Gateway/Central application. It requires an Android BLE and Internet connected device with minimum API level 21. It supports the following GATT characteristics: Battery Level (2a19), Apparent Wind direction(2a73), Age(2a80), Weight(2a98), and Heart Rate Measurement(2a37). 
 
@@ -16,6 +16,7 @@ Launching the app, the following steps sets up the phone as BLE Central and Gate
   <li>Change settings allows the user to change login id.
 </ol>
 
+The source code is copied to the folder "sourcecode - copy" for easy navigation.
 ## Peripheral
 Contains code for a Genuino (Arduino 101) device, publishing data through BLE as the peripheral role. Flex_sensor.ino is used as the primary test client. Environmental Sensing is used as the GATT service, as this contains the Apparent Wind Direction characteristic, which exactly allows integers represented as degress between 0 and 360, which is compliant with the flex sensor used throughout the project.
 

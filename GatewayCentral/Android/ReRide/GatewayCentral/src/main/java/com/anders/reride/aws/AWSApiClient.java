@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class AWSApiClient {
     private ApiClientFactory factory = new ApiClientFactory()
-            .apiKey("WmDsguzavl83nutOxZj3L9JLi5g29hlg1Nc86LKu");
+            .apiKey("F1J4UOStVx7heyvZ93ZDRaUdpHXI6s4tKy2peqe0");
 
     private final ReRideClient mReRideClient = factory.build(ReRideClient.class);
 

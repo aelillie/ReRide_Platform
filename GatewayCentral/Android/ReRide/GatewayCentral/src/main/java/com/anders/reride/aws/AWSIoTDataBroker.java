@@ -14,13 +14,13 @@ abstract class AWSIoTDataBroker {
 
     // IoT endpoint
     protected static final String CUSTOMER_SPECIFIC_ENDPOINT =
-            "a3mcftlm8wc1g9.iot.eu-central-1.amazonaws.com";
+            "ao87a9xyl0izr.iot.ap-southeast-1.amazonaws.com";
     // Cognito pool ID. For this app, pool needs to be unauthenticated pool with
     // AWS IoT permissions.
     protected static final String COGNITO_POOL_ID =
-            "eu-central-1:3f7b1bf2-d066-4976-97ea-f89c6ffbab60";
+            "ap-southeast-1:ee11ced0-cfa8-4578-acfd-9df32f611d4b";
     // Region of AWS IoT
-    protected static final Regions MY_REGION = Regions.EU_CENTRAL_1;
+    protected static final Regions MY_REGION = Regions.AP_SOUTHEAST_1;
 
     protected final Context mContext;
 
